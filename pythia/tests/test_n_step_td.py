@@ -1,4 +1,3 @@
-import unittest
 from collections import deque
 
 import pytest
