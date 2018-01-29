@@ -1,55 +1,70 @@
 import random
-import unittest
+
+import pytest
 
 from pythia.reinforcement.e_greedy_policies import EpsilonGreedyPolicy
 from pythia.reinforcement.q_table import QTable
 
 
-class EpsilonGreedyPolicyTest(unittest.TestCase):
-    def setUp(self):
-        self.q_function = QTable([0, 1])
+class QFunctionWrapper(QTable):
+    def set_state_action_values(self, state, zero_value, one_value):
+        self[state, 0] = zero_value
+        self[state, 1] = one_value
 
-    def test_epsilon_zero(self):
-        policy = self.make_policy(0)
 
-        self.q_function[[0], 0] = -1
-        self.q_function[[0], 1] = 1
+def make_policy(qf, epsilon):
+    return EpsilonGreedyPolicy(qf, epsilon)
 
-        self.assertEqual(1, policy.select([0]))
 
-    def make_policy(self, epsilon):
-        return EpsilonGreedyPolicy(self.q_function, epsilon)
+STATE_A = [0]
+STATE_B = [1]
 
-    def test_multiple_states(self):
-        policy = self.make_policy(0)
 
-        self.q_function[[0], 0] = -1
-        self.q_function[[0], 1] = 1
+@pytest.fixture
+def q_function():
+    """A Q-Table with a 2 dimensional action space [0, 1]"""
+    return QFunctionWrapper([0, 1])
 
-        self.q_function[[1], 0] = 10
-        self.q_function[[1], 1] = -5
 
-        self.assertEqual(1, policy.select([0]))
+def test_epsilon_zero(q_function):
+    policy = make_policy(q_function, 0)
 
-    def test_non_zero_epsilon(self):
-        policy = self.make_policy(0.2)
-        random.seed(1)
+    q_function.set_state_action_values(STATE_A, -1, 1)
 
-        self.q_function[[0], 0] = -1
-        self.q_function[[0], 1] = 1
+    assert policy.select(STATE_A) == 1
 
-        self.assertEqual(0, policy.select([0]))
 
-    def test_epsilon_as_function(self):
-        policy = self.make_policy(lambda: 0.2)
-        random.seed(1)
+def test_multiple_states(q_function):
+    policy = make_policy(q_function, 0)
 
-        self.q_function[[0], 0] = -1
-        self.q_function[[0], 1] = 1
+    q_function.set_state_action_values(STATE_A, -1, 1)
+    q_function.set_state_action_values(STATE_B, 10, -5)
 
-        self.assertEqual(0, policy.select([0]))
+    assert policy.select(STATE_A) == 1
+    assert policy.select(STATE_B) == 0
 
-    def test_incomplete_state(self):
-        policy = self.make_policy(0)
-        self.q_function[[0], 0] = -1
-        self.assertEqual(1, policy.select([0]))
+
+def test_non_zero_epsilon(q_function):
+    policy = make_policy(q_function, 0.2)
+    random.seed(1)
+
+    q_function.set_state_action_values(STATE_A, -1, 1)
+
+    assert policy.select(STATE_A) == 0
+
+
+def test_epsilon_as_function(q_function):
+    policy = make_policy(q_function, lambda: 0.2)
+    random.seed(1)
+
+    q_function.set_state_action_values(STATE_A, -1, 1)
+
+    assert policy.select(STATE_A) == 0
+
+
+def test_incomplete_state(q_function):
+    policy = make_policy(q_function, 0)
+
+    q_function[STATE_A, 0] = -1
+
+    assert policy.select(STATE_A) == 1
