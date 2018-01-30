@@ -6,7 +6,7 @@ from pythia.environment.stocks import StockData, ExceededStockData
 
 
 def make_stock_data():
-    return StockData("test_stock_data.csv")
+    return StockData("../test_integration/test_stock_data.csv")
 
 
 class StockDataTests(unittest.TestCase):

@@ -6,7 +6,7 @@ from pythia.reinforcement.stock_markov_process import StockMarkovProcess
 
 class TradingEnvironmentTests(unittest.TestCase):
     def setUp(self):
-        self.process = StockMarkovProcess(StockData("test_model_data.csv"))
+        self.process = StockMarkovProcess(StockData("../test_integration/test_model_data.csv"))
 
     def test_first_step_states(self):
         states = self.process.get_states_of_step(0)
