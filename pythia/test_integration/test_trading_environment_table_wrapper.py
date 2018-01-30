@@ -5,7 +5,7 @@ from pythia.environment.environment_wrappers import TradingEnvironmentTableWrapp
 
 class TradingEnvironmentTableWrapperTests(unittest.TestCase):
     def setUp(self):
-        self.env = TradingEnvironmentTableWrapper(1000.0, "test_model_data.csv", 0)
+        self.env = TradingEnvironmentTableWrapper(1000.0, "../test_integration/test_model_data.csv", 0)
 
     def test_reset_state(self):
         self.env.step(0)

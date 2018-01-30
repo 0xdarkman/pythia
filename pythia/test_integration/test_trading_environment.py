@@ -5,7 +5,7 @@ from pythia.environment.environment_wrappers import TradingEnvironment, MINIMUM_
 
 class TradingEnvironmentTests(unittest.TestCase):
     def setUp(self):
-        self.environment = TradingEnvironment(1000.0, "test_stock_data.csv")
+        self.environment = TradingEnvironment(1000.0, "../test_integration/test_stock_data.csv")
 
     def test_first_step_holding_action(self):
         new_state, reward, done, info = self.environment.step(0.0)
