@@ -1,6 +1,5 @@
-import unittest
-
 import numpy as np
+import pytest
 
 from pythia.reinforcement.q_ann import QAnn
 from pythia.reinforcement.q_function import InvalidAction
@@ -22,54 +21,56 @@ class ModelFake(object):
         self.received_target_batch = targets
 
 
-class QAnnTests(unittest.TestCase):
-    def setUp(self):
-        self.model = ModelFake()
-
-    def test_action_out_of_action_space(self):
-        qann = self.make_qann()
-        with self.assertRaises(InvalidAction) as cm:
-            unused = qann[[0, 0], 5]
-        self.assertEqual("The action 5 is not part of action space [1, 2]", cm.exception.args[0])
-
-    def make_qann(self, memory_size=1):
-        return QAnn(self.model, [1, 2], memory_size)
-
-    def test_returns_prediction_from_model(self):
-        self.model.prediction = 3
-        qann = self.make_qann()
-        self.assertEqual(3, qann[[1, 4], 2])
-        self.assertTrue(np.array_equal([[1, 4, 2]], self.model.received_state))
-
-    def test_learn_invalid_action(self):
-        qann = self.make_qann()
-        with self.assertRaises(InvalidAction) as cm:
-            qann.learn([0, 0], 0, 0)
-        self.assertEqual("The action 0 is not part of action space [1, 2]", cm.exception.args[0])
-
-    def test_no_training_when_memory_is_not_full(self):
-        qann = self.make_qann(2)
-        qann.learn([0, 0], 1, 0)
-        self.assertIsNone(self.model.received_feature_batch)
-        self.assertIsNone(self.model.received_target_batch)
-
-    def test_training_batch(self):
-        qann = self.make_qann(2)
-        qann.learn([0, 0], 1, 0)
-        qann.learn([0, 1], 2, 3)
-        self.assertTrue(np.array_equal([[0, 0, 1], [0, 1, 2]], self.model.received_feature_batch),
-                        self.model.received_feature_batch)
-        self.assertTrue(np.array_equal([[0], [3]], self.model.received_target_batch), self.model.received_target_batch)
-
-    def test_memory_is_first_in_last_out(self):
-        qann = self.make_qann(2)
-        qann.learn([0, 0], 1, 0)
-        qann.learn([0, 1], 2, 3)
-        qann.learn([1, 0], 1, -1)
-        self.assertTrue(np.array_equal([[0, 1, 2], [1, 0, 1]], self.model.received_feature_batch),
-                        self.model.received_feature_batch)
-        self.assertTrue(np.array_equal([[3], [-1]], self.model.received_target_batch), self.model.received_target_batch)
+@pytest.fixture()
+def qann():
+    """"Creates a default QAnn object with a fake model, actions 1 and 2 and one memory cell"""
+    return QAnn(ModelFake(), [1, 2], 1)
 
 
-if __name__ == '__main__':
-    unittest.main()
+@pytest.fixture()
+def qann_with_memory():
+    """Creates a QAnn object with a fake model, actions 1 and 2 and two memory cells"""
+    return QAnn(ModelFake(), [1, 2], 2)
+
+
+def test_action_out_of_action_space(qann):
+    with pytest.raises(InvalidAction) as e_info:
+        unused = qann[[0, 0], 5]
+    assert e_info.value.args[0] == "The action 5 is not part of action space [1, 2]"
+
+
+def test_returns_prediction_from_model(qann):
+    qann.model.prediction = 3
+    assert qann[[1, 4], 2] == 3
+
+
+def test_hands_state_and_action_to_model(qann):
+    unused = qann[[1, 4], 2]
+    assert np.array_equal([[1, 4, 2]], qann.model.received_state)
+
+
+def test_learn_invalid_action(qann):
+    with pytest.raises(InvalidAction) as e_info:
+        qann.learn([0, 0], 0, 0)
+    assert e_info.value.args[0] == "The action 0 is not part of action space [1, 2]"
+
+
+def test_no_training_when_memory_is_not_full(qann_with_memory):
+    qann_with_memory.learn([0, 0], 1, 0)
+    assert qann_with_memory.model.received_feature_batch is None
+    assert qann_with_memory.model.received_target_batch is None
+
+
+def test_training_batch(qann_with_memory):
+    qann_with_memory.learn([0, 0], 1, 0)
+    qann_with_memory.learn([0, 1], 2, 3)
+    assert np.array_equal(qann_with_memory.model.received_feature_batch, [[0, 0, 1], [0, 1, 2]])
+    assert np.array_equal(qann_with_memory.model.received_target_batch, [[0], [3]])
+
+
+def test_memory_is_first_in_last_out(qann_with_memory):
+    qann_with_memory.learn([0, 0], 1, 0)
+    qann_with_memory.learn([0, 1], 2, 3)
+    qann_with_memory.learn([1, 0], 1, -1)
+    assert np.array_equal(qann_with_memory.model.received_feature_batch, [[0, 1, 2], [1, 0, 1]])
+    assert np.array_equal(qann_with_memory.model.received_target_batch, [[3], [-1]])
