@@ -1,55 +1,61 @@
-import unittest
+import pytest
 
 from pythia.reinforcement.q_function import InvalidAction
 from pythia.reinforcement.q_table import QTable
 
 
-class QTableTests(unittest.TestCase):
-    def setUp(self):
-        self.table = QTable([1, 2, 4])
-
-    def test_creation(self):
-        self.assertIsNotNone(self.table)
-
-    def test_default_initial_value(self):
-        self.assertAlmostEqual(0, self.table[[1, 2, 3], 1])
-
-    def test_initial_value(self):
-        t = QTable(range(0, 2), lambda: 1)
-        self.assertAlmostEqual(1, t[[1, 0], 0])
-
-    def test_update_value(self):
-        self.table[[2, 3], 2] = 7
-        self.table[[2, 3], 1] = 10
-        self.assertAlmostEqual(10, self.table[[2, 3], 1])
-        self.assertAlmostEqual(7, self.table[[2, 3], 2])
-        self.table[[2, 3], 1] = 0
-        self.assertAlmostEqual(0, self.table[[2, 3], 1])
-
-    def test_scalar_state(self):
-        self.table[3, 1] = 6
-        self.assertAlmostEqual(6, self.table[3, 1])
-
-    def test_try_set_action_out_of_action_space(self):
-        with self.assertRaises(InvalidAction):
-            unused = self.table[[2, 3], 0]
-
-    def test_get_max_action_value_of_state(self):
-        self.table[[3, 2, 1], 1] = -15.33
-        self.table[[3, 2, 1], 2] = 298.521
-
-        self.assertAlmostEqual(298.521, self.table.max_value_of([3, 2, 1]))
-
-    def test_state_is_unaltered(self):
-        s = [1, 2]
-        self.table[s, 1] = 10.0
-        self.assertSequenceEqual([1, 2], s)
-        unused = self.table[s, 1]
-        self.assertSequenceEqual([1, 2], s)
-        self.assertSequenceEqual([1, 2], s)
-        self.table.max_value_of(s)
-        self.assertSequenceEqual([1, 2], s)
+@pytest.fixture
+def table():
+    """Returns a default QTable with actions 1, 2, 4 and no initializer"""
+    return QTable([1, 2, 4])
 
 
-if __name__ == '__main__':
-    unittest.main()
+def test_default_initial_value(table):
+    assert table[[1, 2, 3], 1] == 0
+
+
+def test_using_initializer():
+    table = QTable(range(0, 2), lambda: 1)
+    assert table[[1, 0], 0] == 1
+
+
+def test_multiple_action_values(table):
+    table[[2, 3], 2] = 7
+    table[[2, 3], 1] = 10
+    assert table[[2, 3], 1] == 10
+    assert table[[2, 3], 2] == 7
+
+
+def test_update_actions_value(table):
+    table[[2, 3], 2] = 7
+    table[[2, 3], 1] = 10
+
+    table[[2, 3], 1] = 0
+
+    assert table[[2, 3], 1] == 0
+
+
+def test_scalar_state(table):
+    table[3, 1] = 6
+    assert table[3, 1] == 6
+
+
+def test_setting_action_out_of_space_throws_exception(table):
+    with pytest.raises(InvalidAction):
+        unused = table[[2, 3], 0]
+
+
+def test_get_max_action_value_of_state(table):
+    table[[3, 2, 1], 1] = -15.33
+    table[[3, 2, 1], 2] = 298.521
+    assert table.max_value_of([3, 2, 1]) == 298.521
+
+
+def test_state_is_unaltered(table):
+    s = [1, 2]
+    table[s, 1] = 10.0
+    assert s == [1, 2]
+    unused = table[s, 1]
+    assert s == [1, 2]
+    table.max_value_of(s)
+    assert s == [1, 2]
