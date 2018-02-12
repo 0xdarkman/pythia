@@ -1,118 +1,130 @@
-import unittest
+from pytest import approx, fixture
 
 from pythia.environment.environment_wrappers import TradingEnvironment, MINIMUM_ACTION
 
 
-class TradingEnvironmentTests(unittest.TestCase):
-    def setUp(self):
-        self.environment = TradingEnvironment(1000.0, "../test_integration/test_stock_data.csv")
+@fixture
+def environment():
+    return TradingEnvironment(1000.0, "../test_integration/test_stock_data.csv")
 
-    def test_first_step_holding_action(self):
-        new_state, reward, done, info = self.environment.step(0.0)
 
-        self.assertEqual([4.25, 4.31, 3.90, 4.09, 272321.0, 0, 0], new_state.tolist())
-        self.assertAlmostEqual(1000.0, info)
-        self.assertEqual(False, False)
+def test_first_step_holding_action(environment):
+    new_state, reward, done, info = environment.step(0.0)
 
-    def test_first_step_selling_action(self):
-        new_state, _, _, info = self.environment.step(-1.0)
+    assert new_state.tolist() == [4.25, 4.31, 3.90, 4.09, 272321.0, 0, 0]
+    assert info == 1000.0
+    assert done is False
 
-        self.assertAlmostEqual(1000.0, info)
-        self.assertEqual([4.25, 4.31, 3.90, 4.09, 272321.0, 0, 0], new_state.tolist())
 
-    def test_first_step_buying_action(self):
-        new_state, _, _, info = self.environment.step(1.0)
+def test_first_step_selling_action(environment):
+    new_state, _, _, info = environment.step(-1.0)
 
-        self.assertAlmostEqual(2.76, info)
-        self.assertEqual([4.25, 4.31, 3.90, 4.09, 272321.0, 233, 4.28], new_state.tolist())
+    assert info == 1000.0
+    assert new_state.tolist() == [4.25, 4.31, 3.90, 4.09, 272321.0, 0, 0]
 
-    def test_keeps_buying_price(self):
-        self.environment.step(1.0)
-        new_state, _, _, _ = self.environment.step(0.0)
 
-        self.assertEqual([4.17, 4.21, 4.05, 4.21, 126586, 233, 4.28], new_state.tolist())
+def test_first_step_buying_action(environment):
+    new_state, _, _, info = environment.step(1.0)
 
-    def test_buy_percentage(self):
-        _, _, _, info = self.environment.step(0.5)
+    assert info == approx(2.76)
+    assert new_state.tolist() == [4.25, 4.31, 3.90, 4.09, 272321.0, 233, 4.28]
 
-        self.assertAlmostEqual(503.52, info)
 
-    def test_do_not_buy_at_minimum_action(self):
-        _, _, _, info = self.environment.step(MINIMUM_ACTION)
+def test_keeps_buying_price(environment):
+    environment.step(1.0)
+    new_state, _, _, _ = environment.step(0.0)
 
-        self.assertAlmostEqual(1000.0, info)
+    assert new_state.tolist() == [4.17, 4.21, 4.05, 4.21, 126586, 233, 4.28]
 
-    def test_step_moves_forward_in_time(self):
-        self.environment.step(0.0)
 
-        new_state, _, _, _, = self.environment.step(0.0)
+def test_buy_percentage(environment):
+    _, _, _, info = environment.step(0.5)
+    assert info == 503.52
 
-        self.assertEqual([4.17, 4.21, 4.05, 4.21, 126586.0, 0, 0], new_state.tolist())
 
-    def test_selling_with_loss(self):
-        self.environment.step(1.0)
+def test_do_not_buy_at_minimum_action(environment):
+    _, _, _, info = environment.step(MINIMUM_ACTION)
+    assert info == 1000.0
 
-        _, _, _, info = self.environment.step(-1.0)
 
-        self.assertEqual(993.01, info)
+def test_step_moves_forward_in_time(environment):
+    environment.step(0.0)
 
-    def test_selling_with_profit(self):
-        self.environment.step(0.0)
-        self.environment.step(0.0)
-        self.environment.step(1.0)
+    new_state, _, _, _, = environment.step(0.0)
 
-        _, _, _, info = self.environment.step(-1.0)
+    assert new_state.tolist() == [4.17, 4.21, 4.05, 4.21, 126586.0, 0, 0]
 
-        self.assertAlmostEqual(1021.51, info)
 
-    def test_done_when_time_series_ends(self):
-        self.step_right_before_the_end()
+def test_selling_with_loss(environment):
+    environment.step(1.0)
 
-        _, _, done, _ = self.environment.step(0.0)
+    _, _, _, info = environment.step(-1.0)
 
-        self.assertEqual(True, done)
+    assert info == 993.01
 
-    def step_right_before_the_end(self, start_index=0):
-        for _ in range(start_index, len(self.environment.stock_data.data) - 2):
-            self.environment.step(0.0)
 
-    def test_reset(self):
-        self.environment.step(0.0)
-        self.environment.step(1.0)
-        self.environment.step(-1.0)
-        self.environment.step(1.0)
+def test_selling_with_profit(environment):
+    environment.step(0.0)
+    environment.step(0.0)
+    environment.step(1.0)
 
-        first_state = self.environment.reset()
+    _, _, _, info = environment.step(-1.0)
 
-        self.assertEqual([4.28, 4.38, 4.15, 4.25, 101970, 0, 0], first_state.tolist())
-        self.assertEqual(self.environment.wealth, self.environment.portfolio)
-        self.assertEqual(self.environment.previous_wealth, self.environment.portfolio)
-        self.assertEqual(0, len(self.environment.actions))
-        self.assertEqual(0, self.environment.buying_price)
+    assert info == 1021.51
 
-    def test_selling_at_threshold(self):
-        self.environment.step(1.0)
-        _, _, _, info = self.environment.step(-MINIMUM_ACTION)
 
-        self.assertAlmostEqual(2.76, info)
+def step_right_before_the_end(environment, start_index=0):
+    for _ in range(start_index, len(environment.stock_data.data) - 2):
+        environment.step(0.0)
 
-    def test_positive_reward_when_finished(self):
-        self.environment.step(0.0)
-        self.environment.step(0.0)
-        self.environment.step(1.0)
 
-        _, reward, _, _ = self.environment.step(-1.0)
+def test_done_when_time_series_ends(environment):
+    step_right_before_the_end(environment)
 
-        self.assertAlmostEqual(21.51, reward)
+    _, _, done, _ = environment.step(0.0)
 
-    def test_negative_reward_when_finished(self):
-        self.environment.step(1.0)
+    assert done is True
 
-        _, reward, _, _ = self.environment.step(-1.0)
 
-        self.assertAlmostEqual(-6.99, reward)
+def test_reset(environment):
+    environment.step(0.0)
+    environment.step(1.0)
+    environment.step(-1.0)
+    environment.step(1.0)
 
-    def test_buying_has_no_reward(self):
-        _, reward, _, _ = self.environment.step(1.0)
+    first_state = environment.reset()
 
-        self.assertAlmostEqual(0.0, reward)
+    assert first_state.tolist() == [4.28, 4.38, 4.15, 4.25, 101970, 0, 0]
+    assert environment.wealth == environment.portfolio
+    assert environment.previous_wealth == environment.portfolio
+    assert 0 == len(environment.actions)
+    assert 0 == environment.buying_price
+
+
+def test_selling_at_threshold(environment):
+    environment.step(1.0)
+    _, _, _, info = environment.step(-MINIMUM_ACTION)
+    assert info == approx(2.76)
+
+
+def test_positive_reward_when_finished(environment):
+    environment.step(0.0)
+    environment.step(0.0)
+    environment.step(1.0)
+
+    _, reward, _, _ = environment.step(-1.0)
+
+    assert reward == approx(21.51)
+
+
+def test_negative_reward_when_finished(environment):
+    environment.step(1.0)
+
+    _, reward, _, _ = environment.step(-1.0)
+
+    assert reward == approx(-6.99)
+
+
+def test_buying_has_no_reward(environment):
+    _, reward, _, _ = environment.step(1.0)
+    assert reward == 0.0
