@@ -5,7 +5,7 @@ from pythia.environment.environment_wrappers import TradingEnvironmentTableWrapp
 
 @fixture
 def env():
-    return TradingEnvironmentTableWrapper(1000.0, "../test_integration/test_model_data.csv", 0)
+    return TradingEnvironmentTableWrapper(1000.0, "test_model_data.csv", 0)
 
 
 def make_state(price, step, buying_price):

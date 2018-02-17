@@ -6,7 +6,7 @@ from pythia.environment.stocks import StockData, ExceededStockData
 
 @pytest.fixture
 def stocks():
-    return StockData("../test_integration/test_stock_data.csv")
+    return StockData("test_stock_data.csv")
 
 
 def test_get_period_returns_sequence_of_stock_data(stocks):

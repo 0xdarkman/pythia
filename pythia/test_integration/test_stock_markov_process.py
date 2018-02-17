@@ -6,7 +6,7 @@ from pythia.reinforcement.stock_markov_process import StockMarkovProcess
 
 @pytest.fixture
 def process():
-    return StockMarkovProcess(StockData("../test_integration/test_model_data.csv"))
+    return StockMarkovProcess(StockData("test_model_data.csv"))
 
 
 def test_first_step_states(process):

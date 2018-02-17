@@ -5,7 +5,7 @@ from pythia.environment.environment_wrappers import TradingEnvironment, MINIMUM_
 
 @fixture
 def environment():
-    return TradingEnvironment(1000.0, "../test_integration/test_stock_data.csv")
+    return TradingEnvironment(1000.0, "test_stock_data.csv")
 
 
 def test_first_step_holding_action(environment):
