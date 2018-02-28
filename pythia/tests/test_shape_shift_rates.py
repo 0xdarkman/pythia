@@ -2,7 +2,8 @@ import io
 
 import pytest
 
-from pythia.streams.shape_shift_rates import RatesPair, ShapeShiftRates
+from pythia.streams.shape_shift_rates import ShapeShiftRates
+from pythia.tests.doubles import PairEntryStub
 
 
 class RecordsStub(io.StringIO):
@@ -13,23 +14,6 @@ class RecordsStub(io.StringIO):
 
     def finish(self):
         self.seek(0)
-
-
-class PairEntryStub(RatesPair):
-    def __init__(self, pair, rate, limit, maxLimit, min, minerFee):
-        super().__init__({"pair": pair,
-                          "rate": rate,
-                          "limit": limit,
-                          "maxLimit": maxLimit,
-                          "min": min,
-                          "minerFee": minerFee})
-
-    def __eq__(self, other):
-        return self.rate == other.rate and \
-               self.limit == other.limit and \
-               self.maxLimit == other.maxLimit and \
-               self.min == other.min and \
-               self.minerFee == other.minerFee
 
 
 @pytest.fixture

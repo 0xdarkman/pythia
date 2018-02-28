@@ -1,14 +1,16 @@
 import json
 
+from decimal import Decimal
+
 
 class RatesPair:
     def __init__(self, info):
         self._pair = info["pair"]
-        self.rate = float(info["rate"])
+        self.rate = Decimal(info["rate"])
         self.limit = float(info["limit"])
         self.maxLimit = float(info["maxLimit"])
         self.min = float(info["min"])
-        self.minerFee = float(info["minerFee"])
+        self.minerFee = Decimal(info["minerFee"])
 
     def __str__(self):
         return '{{"rate":"{}","limit":{},"pair":"{}","maxLimit":{},"min":{},"minerFee":{}}}' \
