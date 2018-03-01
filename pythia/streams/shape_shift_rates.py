@@ -10,7 +10,7 @@ class RatesPair:
         self.limit = float(info["limit"])
         self.maxLimit = float(info["maxLimit"])
         self.min = float(info["min"])
-        self.minerFee = Decimal(info["minerFee"])
+        self.minerFee = Decimal(str(info["minerFee"]))
 
     def __str__(self):
         return '{{"rate":"{}","limit":{},"pair":"{}","maxLimit":{},"min":{},"minerFee":{}}}' \
@@ -38,3 +38,6 @@ class ShapeShiftRates:
             pairs[pair["pair"]] = RatesPair(pair)
 
         return pairs
+
+    def reset(self):
+        self.stream.seek(0)

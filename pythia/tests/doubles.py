@@ -1,3 +1,5 @@
+import io
+
 from pythia.reinforcement.q_table import QTable
 from pythia.streams.shape_shift_rates import RatesPair
 
@@ -23,3 +25,13 @@ class PairEntryStub(RatesPair):
                self.maxLimit == other.maxLimit and \
                self.min == other.min and \
                self.minerFee == other.minerFee
+
+
+class RecordsStub(io.StringIO):
+    def add_record(self, *pairs):
+        string = "{2018-02-23 07:55:01.668919: b'[" + ",".join(map(str, pairs)) + "]'}\n"
+        self.write(string)
+        return self
+
+    def finish(self):
+        self.seek(0)
