@@ -1,7 +1,7 @@
 import io
 
 from pythia.reinforcement.q_table import QTable
-from pythia.streams.shape_shift_rates import RatesPair
+from pythia.streams.shape_shift_rates import RatesPair, ShapeShiftRates
 
 
 class QFunctionWrapper(QTable):
@@ -35,3 +35,23 @@ class RecordsStub(io.StringIO):
 
     def finish(self):
         self.seek(0)
+
+
+class RatesStub(ShapeShiftRates):
+    def __init__(self, stream):
+        super().__init__(stream)
+        self.stream = stream
+
+    def add_record(self, *pairs):
+        self.stream.add_record(*pairs)
+        return self
+
+    def finish(self):
+        self.stream.finish()
+
+    def close(self):
+        self.stream.close()
+
+
+def entry(pair, rate, miner_fee="0.5"):
+    return PairEntryStub(pair, rate, "0.7", "6.2", "0.1", miner_fee)

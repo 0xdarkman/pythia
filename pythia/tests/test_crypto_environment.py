@@ -4,23 +4,7 @@ from decimal import Decimal
 
 from pythia.environment.crypto_environment import CryptoEnvironment, EnvironmentFinished
 from pythia.streams.shape_shift_rates import ShapeShiftRates
-from pythia.tests.doubles import RecordsStub, PairEntryStub
-
-
-class RatesStub(ShapeShiftRates):
-    def __init__(self, stream):
-        super().__init__(stream)
-        self.stream = stream
-
-    def add_record(self, *pairs):
-        self.stream.add_record(*pairs)
-        return self
-
-    def finish(self):
-        self.stream.finish()
-
-    def close(self):
-        self.stream.close()
+from pythia.tests.doubles import RecordsStub, RatesStub, entry
 
 
 @pytest.fixture
@@ -56,10 +40,6 @@ def three_steps(rates):
         .add_record(entry("BTC_ETH", "3")).finish()
     yield make_env(rates)
     rates.close()
-
-
-def entry(pair, rate, miner_fee="0.5"):
-    return PairEntryStub(pair, rate, "0.7", "6.2", "0.1", miner_fee)
 
 
 def test_empty(empty):
