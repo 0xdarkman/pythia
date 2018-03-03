@@ -38,13 +38,21 @@ class CryptoEnvironment:
         return self._current_state, None, self._next_state is None, None
 
     def _exchange_coin(self, action):
-        exchange = self._current_state[self.coin + "_" + action]
+        exchange = self._get_exchange_to(action)
         self._coin = action
         self._amount = (self._amount * exchange.rate) - exchange.minerFee
+
+    def _get_exchange_to(self, other_coin):
+        return self._current_state[self.coin + "_" + other_coin]
 
     def _move_to_next_state(self):
         self._current_state = self._next_state
         self._next_state = next(self.rates_stream, None)
+
+    def balance_in(self, coin):
+        if self.coin == coin:
+            return self.amount
+        return self.amount if self.coin == coin else self.amount * self._get_exchange_to(coin).rate
 
 
 class EnvironmentFinished(StopIteration):

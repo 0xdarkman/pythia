@@ -110,3 +110,26 @@ def test_exchange_back_and_forth(rates):
     env.step("BTC")
     assert env.amount == Decimal("2.39974")
     assert env.coin == "BTC"
+
+
+def test_initial_balance(rates):
+    rates.add_record(entry("BTC_ETH", "2")).add_record(entry("BTC_ETH", "3")).finish()
+    env = make_env(rates, start_coin="BTC", start_amount=Decimal(2))
+    assert env.balance_in("BTC") == Decimal("2")
+    assert env.balance_in("ETH") == Decimal("4")
+
+
+def test_current_balance(rates):
+    rates.add_record(entry("BTC_ETH", "2")).add_record(entry("BTC_ETH", "3")).finish()
+    env = make_env(rates, start_coin="BTC", start_amount=Decimal(2))
+    env.step(None)
+    assert env.balance_in("BTC") == Decimal("2")
+    assert env.balance_in("ETH") == Decimal("6")
+
+
+def test_balance_after_exchange(rates):
+    rates.add_record(entry("BTC_ETH", "2", miner_fee="0.1")).add_record(entry("ETH_BTC", "1")).finish()
+    env = make_env(rates, start_coin="BTC", start_amount=Decimal(2))
+    env.step("ETH")
+    assert env.balance_in("BTC") == Decimal("3.9")
+    assert env.balance_in("ETH") == Decimal("3.9")
