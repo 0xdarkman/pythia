@@ -1,8 +1,8 @@
 import numpy as np
 import pytest
 
-from pythia.reinforcement.q_ann import QAnn
-from pythia.reinforcement.q_function import InvalidAction
+from pythia.core.reinforcement.q_ann import QAnn
+from pythia.core.reinforcement.q_function import InvalidAction
 
 
 class ModelFake(object):

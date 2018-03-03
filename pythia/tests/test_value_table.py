@@ -4,8 +4,8 @@ from contextlib import contextmanager
 
 import pytest
 
-from pythia.reinforcement.value_table import ValueTable
-from pythia.utils.ansi_formats import Formats
+from pythia.core.reinforcement.value_table import ValueTable
+from pythia.core.utils.ansi_formats import Formats
 
 
 @contextmanager

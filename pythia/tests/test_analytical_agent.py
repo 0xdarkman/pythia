@@ -1,6 +1,6 @@
 import pytest
 
-from pythia.agents.analytical_agent import AnalyticalAgent
+from pythia.core.agents.analytical_agent import AnalyticalAgent
 from pythia.tests.doubles import PairEntryStub
 
 

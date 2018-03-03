@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from pythia.environment.stocks import StockData, ExceededStockData
+from pythia.core.environment.stocks import StockData, ExceededStockData
 
 
 @pytest.fixture

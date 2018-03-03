@@ -1,7 +1,7 @@
 import pytest
 
-from pythia.reinforcement.q_function import InvalidAction
-from pythia.reinforcement.q_table import QTable
+from pythia.core.reinforcement.q_function import InvalidAction
+from pythia.core.reinforcement.q_table import QTable
 
 
 @pytest.fixture

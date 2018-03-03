@@ -6,8 +6,8 @@ from keras.models import Sequential
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.preprocessing import OneHotEncoder
 
-from pythia.environment.simulators import PsychicTrader
-from pythia.environment.stocks import StockData, StockVisualizer
+from pythia.core.environment.simulators import PsychicTrader
+from pythia.core.environment.stocks import StockData, StockVisualizer
 
 TEST_SIZE = 100
 LOOK_BACK = 60

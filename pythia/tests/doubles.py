@@ -1,7 +1,7 @@
 import io
 
-from pythia.reinforcement.q_table import QTable
-from pythia.streams.shape_shift_rates import RatesPair, ShapeShiftRates
+from pythia.core.reinforcement.q_table import QTable
+from pythia.core.streams.shape_shift_rates import RatesPair, ShapeShiftRates
 
 
 class QFunctionWrapper(QTable):

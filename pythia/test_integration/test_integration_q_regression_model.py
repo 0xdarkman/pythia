@@ -1,8 +1,8 @@
 import numpy as np
 import pytest
 
-from pythia.reinforcement.q_model import InvalidDataSize
-from pythia.reinforcement.q_regression_model import QRegressionModel
+from pythia.core.reinforcement.q_model import InvalidDataSize
+from pythia.core.reinforcement.q_regression_model import QRegressionModel
 
 
 def make_model(input_size, hidden=None):

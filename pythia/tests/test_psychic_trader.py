@@ -1,4 +1,4 @@
-from pythia.environment.simulators import PsychicTrader
+from pythia.core.environment.simulators import PsychicTrader
 
 
 def make_trader(portfolio, period, threshold=0.01):

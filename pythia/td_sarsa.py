@@ -1,5 +1,5 @@
-from pythia.environment.environment_wrappers import TradingEnvironmentTableWrapper
-from pythia.reinforcement.q_table import QTable
+from pythia.core.environment.environment_wrappers import TradingEnvironmentTableWrapper
+from pythia.core.reinforcement.q_table import QTable
 
 # env = gym.make('FrozenLake-v0')
 env = TradingEnvironmentTableWrapper(1000.0, "tests/test_model_data.csv", 0)

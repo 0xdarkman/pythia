@@ -2,7 +2,7 @@ import random
 
 import pytest
 
-from pythia.reinforcement.e_greedy_policies import EpsilonGreedyPolicy
+from pythia.core.reinforcement.e_greedy_policies import EpsilonGreedyPolicy
 from pythia.tests.doubles import QFunctionWrapper
 
 

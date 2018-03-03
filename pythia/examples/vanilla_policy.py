@@ -2,7 +2,7 @@ import numpy as np
 import tensorflow as tf
 import tensorflow.contrib.slim as slim
 
-from pythia.environment.environment_wrappers import TradingEnvironment
+from pythia.core.environment.environment_wrappers import TradingEnvironment
 
 env = TradingEnvironment(2000.0, "model_data/sxe.csv")
 gamma = 0.99

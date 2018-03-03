@@ -1,7 +1,7 @@
 import pytest
 
-from pythia.environment.stocks import StockData
-from pythia.reinforcement.stock_markov_process import StockMarkovProcess
+from pythia.core.environment.stocks import StockData
+from pythia.core.reinforcement.stock_markov_process import StockMarkovProcess
 
 
 @pytest.fixture

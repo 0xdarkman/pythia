@@ -2,7 +2,7 @@ import io
 
 import pytest
 
-from pythia.streams.shape_shift_rates import ShapeShiftRates
+from pythia.core.streams.shape_shift_rates import ShapeShiftRates
 from pythia.tests.doubles import PairEntryStub, RecordsStub
 
 

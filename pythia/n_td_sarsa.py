@@ -1,7 +1,7 @@
-from pythia.environment.environment_wrappers import TradingEnvironmentTableWrapper
-from pythia.reinforcement.e_greedy_policies import EpsilonGreedyPolicy
-from pythia.reinforcement.n_step_sarsa import NStepSarsa
-from pythia.reinforcement.q_table import QTable
+from pythia.core.environment.environment_wrappers import TradingEnvironmentTableWrapper
+from pythia.core.reinforcement.e_greedy_policies import EpsilonGreedyPolicy
+from pythia.core.reinforcement.n_step_sarsa import NStepSarsa
+from pythia.core.reinforcement.q_table import QTable
 
 # env = gym.make('FrozenLake-v0')
 env = TradingEnvironmentTableWrapper(1000.0, "tests/test_stock_data.csv", 0)

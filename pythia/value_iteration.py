@@ -1,9 +1,9 @@
 import numpy as np
 
-from pythia.environment.environment_wrappers import TradingEnvironment
-from pythia.environment.stocks import StockData
-from pythia.reinforcement.stock_markov_process import StockMarkovProcess
-from pythia.reinforcement.value_table import ValueTable
+from pythia.core.environment.environment_wrappers import TradingEnvironment
+from pythia.core.environment.stocks import StockData
+from pythia.core.reinforcement.stock_markov_process import StockMarkovProcess
+from pythia.core.reinforcement.value_table import ValueTable
 
 stock_data = StockData("tests/test_model_data.csv")
 number_of_stocks = stock_data.number_of_stocks()

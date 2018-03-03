@@ -1,6 +1,6 @@
 from pytest import fixture
 
-from pythia.environment.environment_wrappers import TradingEnvironmentTableWrapper
+from pythia.core.environment.environment_wrappers import TradingEnvironmentTableWrapper
 
 
 @fixture

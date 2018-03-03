@@ -2,7 +2,7 @@ import pickle
 
 import numpy as np
 
-from pythia.environment.environment_wrappers import TradingEnvironment
+from pythia.core.environment.environment_wrappers import TradingEnvironment
 
 env = TradingEnvironment(2000.0, "tests/test_stock_data.csv")
 
