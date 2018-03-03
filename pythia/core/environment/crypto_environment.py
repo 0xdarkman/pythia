@@ -3,6 +3,15 @@ from decimal import Decimal
 
 class CryptoEnvironment:
     def __init__(self, rates, start_coin, start_amount):
+        """
+        Environment representing crypto coin exchanges. Provides exchange states containing rates, miner fees and other
+        market data. Implements a mechanism to exchange coins against other coins. Keeps track of currently active coin
+        and a total balance of coins
+
+        :param rates: source stream containing market information for coin exchanges
+        :param start_coin: crypto coin the starting balance is held in
+        :param start_amount: the starting balance
+        """
         self.rates_stream = rates
         self._amount = Decimal(start_amount)
         self._coin = start_coin
