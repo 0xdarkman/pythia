@@ -7,6 +7,16 @@ from pythia.core.streams.shape_shift_rates import ShapeShiftRates
 from pythia.tests.doubles import RecordsStub, RatesStub, entry
 
 
+class ExchangeListenerSpy:
+    def __init__(self):
+        self.received_time = None
+        self.received_exchange = None
+
+    def __call__(self, time, exchange):
+        self.received_time = time
+        self.received_exchange = exchange
+
+
 @pytest.fixture
 def empty():
     stream = io.StringIO("")
@@ -42,6 +52,11 @@ def three_steps(rates):
     rates.close()
 
 
+@pytest.fixture
+def listener():
+    return ExchangeListenerSpy()
+
+
 def test_empty(empty):
     with pytest.raises(EnvironmentFinished) as e_info:
         make_env(empty)
@@ -75,6 +90,22 @@ def test_reset_returns_first_state(rates):
         .add_record(entry("BTC_ETH", "1.2")).finish()
     env = make_env(rates)
     assert env.reset()[1]["BTC_ETH"] == entry("BTC_ETH", "1.1")
+
+
+def test_reset_sets_coin_to_start_coin(three_steps):
+    three_steps.step("ETH")
+    three_steps.reset()
+    three_steps.step("ETH")
+
+
+def test_reset_sets_amount_to_start_amount(rates):
+    rates.add_record(entry("BTC_ETH", "2")) \
+        .add_record(entry("BTC_ETH", "3")).finish()
+    env = make_env(rates, start_amount="2")
+    env.step("ETH")
+    env.reset()
+    assert env.amount == 2
+
 
 
 def test_last_step_yields_done_true(two_steps):
@@ -135,3 +166,26 @@ def test_balance_after_exchange(rates):
     env.step("ETH")
     assert env.balance_in("BTC") == Decimal("3.9")
     assert env.balance_in("ETH") == Decimal("3.9")
+
+
+def test_notify_listeners_when_exchanging(three_steps, listener):
+    three_steps.register_listener(listener)
+    three_steps.step(None)
+
+    assert listener.received_time is None
+    assert listener.received_exchange is None
+
+    three_steps.step("ETH")
+
+    assert listener.received_time == 1
+    assert listener.received_exchange == "ETH"
+
+
+def test_time_resets(three_steps, listener):
+    three_steps.register_listener(listener)
+    three_steps.step("ETH")
+
+    three_steps.reset()
+    three_steps.step("ETH")
+
+    assert listener.received_time == 0
