@@ -24,7 +24,7 @@ class AnalyticalAgent:
         rate_info = rates[exchange]
         self._record(rate_info)
         if self._should_exchange(rate_info):
-            return self._do_exchange(current_coin)
+            return self._do_exchange(current_coin, rates)
 
         return None
 
@@ -51,10 +51,11 @@ class AnalyticalAgent:
         self.differential_records = next_rec
         return reduce(calc_diff, zip(cur_rec, next_rec), Decimal(0)) / len(self.differential_records)
 
-    def _do_exchange(self, new_target):
+    def _do_exchange(self, new_target, rates):
         t = self.target
         self.target = new_target
 
         self.start_rate = None
-        self.differential_records = self.differential_records[-1:]
+        self.differential_records.clear()
+        self._record(rates[t + "_" + self.target])
         return t

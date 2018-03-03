@@ -5,7 +5,7 @@ from pythia.core.environment.crypto_environment import CryptoEnvironment
 from pythia.core.sessions.crypto_exchange_session import CryptoExchangeSession
 from pythia.core.streams.shape_shift_rates import ShapeShiftRates
 
-agent = AnalyticalAgent('0.04', '0.0001', 2)
+agent = AnalyticalAgent('0.06', '0.001', 2)
 
 if __name__ == '__main__':
     path = "../data/recordings/2018-02-28-shapeshift-exchange-records.json" if len(sys.argv) == 1 else sys.argv[0]

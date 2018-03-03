@@ -92,7 +92,8 @@ def simple_env(env):
 def test_agent_receives_all_states_but_last(env, agent_spy):
     env.add_record(entry("BTC_ETH", 1)).add_record(entry("BTC_ETH", 2)).add_record(entry("BTC_ETH", 3)).finish()
     CryptoExchangeSession(env, agent_spy).run()
-    assert agent_spy.received_states == [{"BTC_ETH": entry("BTC_ETH", 1)}, {"BTC_ETH": entry("BTC_ETH", 2)}]
+    assert agent_spy.received_states == [("BTC", {"BTC_ETH": entry("BTC_ETH", 1)}),
+                                         ("BTC", {"BTC_ETH": entry("BTC_ETH", 2)})]
 
 
 def test_environment_receives_agent_actions(env_spy, agent):

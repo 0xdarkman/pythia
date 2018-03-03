@@ -32,7 +32,7 @@ class CryptoEnvironment:
         try:
             self._current_state = next(self.rates_stream)
             self._next_state = next(self.rates_stream)
-            return self._current_state
+            return self.coin, self._current_state
         except StopIteration:
             raise EnvironmentFinished("A Crypto environment needs at least 2 entries to be initialised.")
 
@@ -44,7 +44,7 @@ class CryptoEnvironment:
             self._exchange_coin(action)
 
         self._move_to_next_state()
-        return self._current_state, None, self._next_state is None, None
+        return (self.coin, self._current_state), None, self._next_state is None, None
 
     def _exchange_coin(self, action):
         exchange = self._get_exchange_to(action)

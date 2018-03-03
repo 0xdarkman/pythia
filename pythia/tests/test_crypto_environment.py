@@ -54,7 +54,8 @@ def test_step_yields_next_state(rates):
 
     env = make_env(rates)
     s, _, _, _ = env.step(None)
-    assert s["BTC_ETH"] == entry("BTC_ETH", "1.2")
+    assert s[0] == "BTC"
+    assert s[1]["BTC_ETH"] == entry("BTC_ETH", "1.2")
 
 
 def test_reset_returns_environment_to_start(rates):
@@ -65,14 +66,15 @@ def test_reset_returns_environment_to_start(rates):
 
     env.reset()
     s, _, _, _ = env.step(None)
-    assert s["BTC_ETH"] == entry("BTC_ETH", "1.2")
+    assert s[0] == "BTC"
+    assert s[1]["BTC_ETH"] == entry("BTC_ETH", "1.2")
 
 
 def test_reset_returns_first_state(rates):
     rates.add_record(entry("BTC_ETH", "1.1")) \
         .add_record(entry("BTC_ETH", "1.2")).finish()
     env = make_env(rates)
-    assert env.reset()["BTC_ETH"] == entry("BTC_ETH", "1.1")
+    assert env.reset()[1]["BTC_ETH"] == entry("BTC_ETH", "1.1")
 
 
 def test_last_step_yields_done_true(two_steps):
