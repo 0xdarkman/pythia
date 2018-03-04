@@ -3,7 +3,7 @@ from functools import reduce
 
 
 class AnalyticalAgent:
-    def __init__(self, min_distance, diff_threshold, diff_window):
+    def __init__(self, min_distance, diff_threshold, diff_window, targets):
         """
         Analytical agent is exchanging coins depending on a normalized minimum distance and a differential threshold
 
@@ -14,48 +14,64 @@ class AnalyticalAgent:
         self.min_distance = Decimal(min_distance)
         self.differential_threshold = Decimal(diff_threshold)
         self.differential_window = diff_window
-        self.differential_records = list()
-        self.start_rate = None
-        self.target = "ETH"
+        self.targets = targets
+
+        self._rate_recordings = dict()
+        self._current_coin = None
 
     def step(self, state):
-        current_coin, rates = state
-        exchange = current_coin + "_" + self.target
-        rate_info = rates[exchange]
-        self._record(rate_info)
-        if self._should_exchange(rate_info):
-            return self._do_exchange(current_coin, rates)
+        self._current_coin, markets = state
+        for target in self.targets:
+            market = self._get_market_info_of(markets, target)
+            if market.rate == Decimal('0'):
+                continue
+
+            self._record_for(market, target)
+            if self._should_exchange(market, target):
+                return self._do_exchange(markets, target)
 
         return None
 
-    def _record(self, rate_info):
-        if self.start_rate is None:
-            self.start_rate = rate_info.rate
-        self.differential_records.append(rate_info.rate)
+    def _get_market_info_of(self, rates, target):
+        exchange = self._current_coin + "_" + target
+        rate_info = rates[exchange]
+        return rate_info
 
-    def _should_exchange(self, rates_info):
-        if len(self.differential_records) == self.differential_window:
-            distance = ((rates_info.rate - rates_info.minerFee) - self.start_rate) / self.start_rate
-            differential = self._calc_differential()
+    def _record_for(self, market, target):
+        if target not in self._rate_recordings:
+            self._rate_recordings[target] = self._Recording(market.rate)
+        self._rate_recordings[target].differentials.append(market.rate)
+
+    def _should_exchange(self, rates_info, target):
+        rec = self._rate_recordings[target]
+        if len(rec.differentials) == self.differential_window:
+            distance = ((rates_info.rate - rates_info.minerFee) - rec.initial_rate) / rec.initial_rate
+            differential = self._calc_differential(target)
             return distance >= self.min_distance and differential >= self.differential_threshold
 
         return False
 
-    def _calc_differential(self):
+    def _calc_differential(self, target):
         def calc_diff(dist, rec_touple):
             prev, cur = rec_touple
             return dist + ((prev - cur) / prev)
 
-        next_rec = self.differential_records[1:]
-        cur_rec = self.differential_records[:-1]
-        self.differential_records = next_rec
-        return reduce(calc_diff, zip(cur_rec, next_rec), Decimal(0)) / len(self.differential_records)
+        rec = self._rate_recordings[target]
+        next_rec = rec.differentials[1:]
+        cur_rec = rec.differentials[:-1]
+        self._rate_recordings[target].differentials = next_rec
+        return reduce(calc_diff, zip(cur_rec, next_rec), Decimal(0)) / len(next_rec)
 
-    def _do_exchange(self, new_target, rates):
-        t = self.target
-        self.target = new_target
+    def _do_exchange(self, rates, target):
+        self.targets.remove(target)
+        self.targets.append(self._current_coin)
 
-        self.start_rate = None
-        self.differential_records.clear()
-        self._record(rates[t + "_" + self.target])
-        return t
+        self._rate_recordings.clear()
+        for new_t in self.targets:
+            self._record_for(rates[target + "_" + new_t], new_t)
+        return target
+
+    class _Recording:
+        def __init__(self, init_rate):
+            self.initial_rate = init_rate
+            self.differentials = list()

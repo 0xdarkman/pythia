@@ -4,9 +4,15 @@ from pythia.core.agents.analytical_agent import AnalyticalAgent
 from pythia.tests.doubles import PairEntryStub
 
 
+def make_agent(dist, diff_thresh, diff_window, targets=None):
+    if targets is None:
+        targets = ["ETH"]
+    return AnalyticalAgent(dist, diff_thresh, diff_window, targets)
+
+
 @pytest.fixture
 def agent():
-    return AnalyticalAgent("0.4", "0.001", 2)
+    return make_agent("0.4", "0.001", 2)
 
 
 def exchange(pair, rate, minerFee):
@@ -28,6 +34,12 @@ def state(coin, exchange_info):
 
 def test_no_records(agent):
     assert agent.step(state("BTC", exchange("BTC_ETH", "10", "0.001"))) is None
+
+
+def test_zero_rates(agent):
+    assert agent.step(state("BTC", exchange("BTC_ETH", "0", "0.001"))) is None
+    assert agent.step(state("BTC", exchange("BTC_ETH", "0", "0.001"))) is None
+    assert agent.step(state("BTC", exchange("BTC_ETH", "0", "0.001"))) is None
 
 
 def test_records_but_no_change(agent):
@@ -70,29 +82,29 @@ def test_switch_back_and_forth(agent):
 
 
 def test_differential_is_normalized():
-    agent = AnalyticalAgent("0.5", "0.1", 2)
+    agent = make_agent("0.5", "0.1", 2)
     agent.step(state("BTC", exchange("BTC_ETH", "0.01", "0.001")))
     agent.step(state("BTC", exchange("BTC_ETH", "0.07", "0.001")))
     assert agent.step(state("BTC", exchanges(("BTC_ETH", "0.063", "0.001"), ("ETH_BTC", "15", "0.001")))) == "ETH"
 
 
 def test_differential_is_not_enough():
-    agent = AnalyticalAgent("0.5", "0.1", 2)
+    agent = make_agent("0.5", "0.1", 2)
     agent.step(state("BTC", exchange("BTC_ETH", "0.01", "0.001")))
     agent.step(state("BTC", exchange("BTC_ETH", "0.07", "0.001")))
     assert agent.step(state("BTC", exchange("BTC_ETH", "0.0631", "0.001"))) is None
 
 
 def test_differential_window_falling_steadily():
-    agent = AnalyticalAgent("0.5", "0.1", 3)
+    agent = make_agent("0.5", "0.1", 3)
     agent.step(state("BTC", exchange("BTC_ETH", "0.01", "0.001")))
     agent.step(state("BTC", exchange("BTC_ETH", "0.07", "0.001")))
     agent.step(state("BTC", exchange("BTC_ETH", "0.063", "0.001")))
-    assert agent.step(state("BTC",exchanges(("BTC_ETH", "0.0567", "0.001"), ("ETH_BTC", "15", "0.001")))) == "ETH"
+    assert agent.step(state("BTC", exchanges(("BTC_ETH", "0.0567", "0.001"), ("ETH_BTC", "15", "0.001")))) == "ETH"
 
 
 def test_differential_window_not_falling_enough():
-    agent = AnalyticalAgent("0.5", "0.1", 3)
+    agent = make_agent("0.5", "0.1", 3)
     agent.step(state("BTC", exchange("BTC_ETH", "0.01", "0.001")))
     agent.step(state("BTC", exchange("BTC_ETH", "0.07", "0.001")))
     agent.step(state("BTC", exchange("BTC_ETH", "0.063", "0.001")))
@@ -100,7 +112,7 @@ def test_differential_window_not_falling_enough():
 
 
 def test_differential_window_rising_in_between():
-    agent = AnalyticalAgent("0.5", "0.1", 3)
+    agent = make_agent("0.5", "0.1", 3)
     agent.step(state("BTC", exchange("BTC_ETH", "0.01", "0.001")))
     agent.step(state("BTC", exchange("BTC_ETH", "0.07", "0.001")))
     agent.step(state("BTC", exchange("BTC_ETH", "0.071", "0.001")))
@@ -108,8 +120,38 @@ def test_differential_window_rising_in_between():
 
 
 def test_differential_window_falling_too_far_in_between():
-    agent = AnalyticalAgent("0.5", "0.1", 3)
+    agent = make_agent("0.5", "0.1", 3)
     agent.step(state("BTC", exchange("BTC_ETH", "0.01", "0.001")))
     agent.step(state("BTC", exchange("BTC_ETH", "0.07", "0.001")))
     agent.step(state("BTC", exchange("BTC_ETH", "0.056", "0.001")))
     assert agent.step(state("BTC", exchange("BTC_ETH", "0.0561", "0.001"))) is None
+
+
+def test_is_monitoring_multiple_targets():
+    agent = make_agent("0.5", "0.1", 2, ["ETH", "SALT"])
+    agent.step(state("BTC", exchanges(("BTC_ETH", "9", "0.001"), ("BTC_SALT", "0.01", "0.001"))))
+    agent.step(state("BTC", exchanges(("BTC_ETH", "8", "0.001"), ("BTC_SALT", "0.07", "0.001"))))
+    assert agent.step(state("BTC", exchanges(("BTC_ETH", "8", "0.001"), ("BTC_SALT", "0.063", "0.001"),
+                                             ("SALT_ETH", "120", "0.001"), ("SALT_BTC", "15", "0.001")))) == "SALT"
+
+
+def test_multiple_targets_back_and_forth():
+    agent = make_agent("0.4", "0.001", 2, ["ETH", "SALT"])
+    agent.step(state("BTC", exchanges(("BTC_ETH", "12", "0.001"), ("BTC_SALT", "0.1", "0.001"))))
+    agent.step(state("BTC", exchanges(("BTC_ETH", "11", "0.001"), ("BTC_SALT", "0.15", "0.001"))))
+    assert agent.step(state("BTC", exchanges(("BTC_ETH", "10", "0.001"), ("BTC_SALT", "0.141", "0.001"),
+                                             ("SALT_ETH", "70", "0.001"), ("SALT_BTC", "7", "0.001")))) == "SALT"
+    agent.step(state("SALT", exchanges(("SALT_ETH", "60", "0.001"), ("SALT_BTC", "10.5", "0.001"))))
+    assert agent.step(state("SALT", exchanges(("SALT_ETH", "50", "0.001"), ("SALT_BTC", "9.9", "0.001"),
+                                             ("BTC_ETH", "5", "0.001"), ("BTC_SALT", "0.1", "0.001")))) == "BTC"
+
+
+def test_multiple_targets_switch_between_targets():
+    agent = make_agent("0.4", "0.001", 2, ["ETH", "SALT"])
+    agent.step(state("BTC", exchanges(("BTC_ETH", "12", "0.001"), ("BTC_SALT", "10", "0.001"))))
+    agent.step(state("BTC", exchanges(("BTC_ETH", "11", "0.001"), ("BTC_SALT", "15", "0.001"))))
+    assert agent.step(state("BTC", exchanges(("BTC_ETH", "10", "0.001"), ("BTC_SALT", "14.001", "0.001"),
+                                             ("SALT_ETH", "0.7", "0.001"), ("SALT_BTC", "0.07", "0.001")))) == "SALT"
+    agent.step(state("SALT", exchanges(("SALT_ETH", "1.05", "0.001"), ("SALT_BTC", "0.105", "0.001"))))
+    assert agent.step(state("SALT", exchanges(("SALT_ETH", "0.99", "0.001"), ("SALT_BTC", "0.106", "0.001"),
+                                             ("ETH_SALT", "1", "0.001"), ("ETH_BTC", "0.106", "0.001")))) == "ETH"
