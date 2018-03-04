@@ -1,6 +1,7 @@
 import json
 
 from decimal import Decimal
+from functools import reduce
 
 SUPPORTED_COINS = [
     "BTC",
@@ -79,19 +80,29 @@ class RatesPair:
 
 
 class ShapeShiftRates:
-    def __init__(self, stream):
+    def __init__(self, stream, preload=False):
         """
         Thin wrapper around a shape shift coin exchange market info json file. Provides simple iterator mechanics to
         walk efficiently through the coin exchange stream. Random access is not provided and stream has to be reset.
 
         :param stream: Steam of data containing a new line separated list of shapeshift market info json strings
+        :param preload: Optionally load the rates data into memory for faster access
         """
         self.stream = stream
+        self.preload = preload
+        self.cache = None
+        self.cache_idx = 0
+        if self.preload:
+            self.cache = [p for p in self]
+            self.reset()
 
     def __iter__(self):
         return self
 
     def __next__(self):
+        if self.cache is not None:
+            return self._return_from_cache()
+
         line = self.stream.readline()
         if line == "":
             raise StopIteration
@@ -103,5 +114,23 @@ class ShapeShiftRates:
 
         return pairs
 
+    def _return_from_cache(self):
+        self.cache_idx += 1
+        if self.cache_idx > len(self.cache):
+            raise StopIteration
+        return self.cache[self.cache_idx - 1]
+
     def reset(self):
         self.stream.seek(0)
+        self.cache_idx = 0
+
+
+def rates_filter(in_stream, exchanges):
+    def concat_rates(rates_str, pairs):
+        f = {k: pairs[k] for k in exchanges if k in pairs} if exchanges != [] else pairs
+        if bool(f) is False:
+            return rates_str
+
+        return rates_str + "[ " + ",".join(map(str, f.values())) + "]\n"
+
+    return reduce(concat_rates, in_stream, "")
