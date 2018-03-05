@@ -141,6 +141,8 @@ ANALYSIS_STR_HEADER = " EXCHANGE |   MEAN   |    SD    |  MEDIAN  |   MIN   |   
                       "---------------------------------------------------------------\n"
 
 
+ANALYSIS_CSV_HEADER = "EXCHANGE,MEAN,SD,MEDIAN,MIN,MAX\n"
+
 class CoinExchangeReport:
     def __init__(self):
         self.records = list()
@@ -158,6 +160,16 @@ class CoinExchangeReport:
                 .format(exchange, str(mean), str(sd), str(median), str(min), str(max))
 
         return reduce(print_records, self.records, ANALYSIS_STR_HEADER)
+
+    def to_csv(self):
+        if len(self.records) == 0:
+            return ""
+
+        def print_records(report, columns):
+            return report + ",".join(map(str, columns)) + "\n"
+
+        return reduce(print_records, self.records, ANALYSIS_CSV_HEADER)
+
 
 
 def analyze(rates):

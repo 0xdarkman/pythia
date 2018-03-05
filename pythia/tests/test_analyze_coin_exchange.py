@@ -1,6 +1,7 @@
 import pytest
+from decimal import Decimal
 
-from pythia.core.streams.shape_shift_rates import analyze
+from pythia.core.streams.shape_shift_rates import analyze, CoinExchangeReport
 from pythia.tests.doubles import RecordsStub, RatesStub, entry
 
 
@@ -52,6 +53,7 @@ def test_calculate_correct_statistics(rates):
                                   "---------------------------------------------------------------\n" \
                                   " BTC_ETH  |         9|2.94392028|        10|        5|       12\n"
 
+
 def test_calculate_correct_statistics_of_multiple_entries(rates):
     rates.add_record(entry("BTC_ETH", "10"), entry("LIC_GAME", "2")) \
         .add_record(entry("BTC_ETH", "6"), entry("LIC_GAME", "1")).finish()
@@ -59,3 +61,12 @@ def test_calculate_correct_statistics_of_multiple_entries(rates):
                                   "---------------------------------------------------------------\n" \
                                   " BTC_ETH  |         8|       2.0|        10|        6|       10\n" \
                                   " LIC_GAME |       1.5|       0.5|         2|        1|        2\n"
+
+
+def test_report_csv_export():
+    report = CoinExchangeReport()
+    report.append("BTC_ETH", Decimal("1.267"), Decimal("0.23"), Decimal("1.5"), Decimal("0.3"), Decimal("1.998"))
+    report.append("LIC_GAME", Decimal("11.2"), Decimal("12.3456789"), Decimal("12.2"), Decimal("10"), Decimal("20.12"))
+    assert report.to_csv() == "EXCHANGE,MEAN,SD,MEDIAN,MIN,MAX\n" \
+                              "BTC_ETH,1.267,0.23,1.5,0.3,1.998\n" \
+                              "LIC_GAME,11.2,12.3456789,12.2,10,20.12\n"
