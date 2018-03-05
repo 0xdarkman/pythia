@@ -2,6 +2,7 @@ import json
 
 from decimal import Decimal
 from functools import reduce
+from math import sqrt
 
 SUPPORTED_COINS = [
     "BTC",
@@ -134,3 +135,49 @@ def rates_filter(in_stream, exchanges):
         return rates_str + "[ " + ",".join(map(str, f.values())) + "]\n"
 
     return reduce(concat_rates, in_stream, "")
+
+
+ANALYSIS_STR_HEADER = " EXCHANGE |   MEAN   |    SD    |  MEDIAN  |   MIN   |   MAX   \n" \
+                      "---------------------------------------------------------------\n"
+
+
+class CoinExchangeReport:
+    def __init__(self):
+        self.records = list()
+
+    def append(self, *columns):
+        self.records.append(columns)
+
+    def __str__(self):
+        if len(self.records) == 0:
+            return ""
+
+        def print_records(report, columns):
+            exchange, mean, sd, median, min, max = columns
+            return report + " {:<9}|{:>10.10}|{:>10.10}|{:>10.10}|{:>9.9}|{:>9.9}\n" \
+                .format(exchange, str(mean), str(sd), str(median), str(min), str(max))
+
+        return reduce(print_records, self.records, ANALYSIS_STR_HEADER)
+
+
+def analyze(rates):
+    def fold_rates(all, pairs):
+        for key in pairs:
+            if key not in all:
+                all[key] = list()
+            all[key].append(pairs[key].rate)
+        return all
+
+    exchanges = reduce(fold_rates, rates, dict())
+
+    report = CoinExchangeReport()
+    for k in exchanges:
+        r = sorted(exchanges[k])
+        s = sum(r)
+        l = len(r)
+        mean = s / l
+        median = r[(l // 2)]
+        sd = sqrt(reduce(lambda t, x: t + (x - mean)**2, r, Decimal(0)) / l)
+        report.append(k, mean, sd, median, min(r), max(r))
+
+    return report
