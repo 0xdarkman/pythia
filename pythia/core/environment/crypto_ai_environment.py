@@ -60,6 +60,7 @@ class CryptoAiEnvironment(CryptoEnvironment):
         self.starting_balance = Decimal(start_amount)
         num_exchanges = len(self.exchange_ranges) if exchange_filter is None else len(exchange_filter)
         self.window = deque([], maxlen=(window_size * num_exchanges))
+        self.prev_state = None
         self.state = None
         rates.reset()
         super().__init__(rates, start_coin, start_amount)
@@ -71,10 +72,14 @@ class CryptoAiEnvironment(CryptoEnvironment):
         return self._next_ai_state()
 
     def _next_ai_state(self):
-        b = self.balance_in(self.index_to_coin[0])
-        nb = (b - self.starting_balance) / self.starting_balance
-        self.state = [self.coin_to_index[self.coin], float(nb)] + list(self.window)
+        self.prev_state = self.state
+        self.state = [self.coin_to_index[self.coin], self.normalized_balance] + list(self.window)
         return self.state
+
+    @property
+    def normalized_balance(self):
+        b = self.balance_in(self.index_to_coin[0])
+        return float((b - self.starting_balance) / self.starting_balance)
 
     def _fill_window(self):
         while not len(self.window) == self.window.maxlen:

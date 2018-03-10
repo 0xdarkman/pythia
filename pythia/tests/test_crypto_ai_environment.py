@@ -1,6 +1,7 @@
 import pytest
 
 from pythia.core.environment.crypto_ai_environment import CryptoAiEnvironment, WindowError
+from pythia.core.environment.crypto_rewards import TotalBalanceReward, RatesChangeReward
 from pythia.tests.doubles import RecordsStub, RatesStub, entry
 
 
@@ -39,9 +40,11 @@ def rates():
 def calc_spy():
     return RewardCalculatorSpy()
 
+
 def make_env(rates, start_coin="0", start_amount="1", window=1, exchange_filter=None, index_to_coin=None,
-             reward_calc=RewardCalculatorStub(0)):
+             reward_calc=None):
     index_to_coin = {0: '0', 1: '1'} if index_to_coin is None else index_to_coin
+    reward_calc = RewardCalculatorStub(0) if reward_calc is None else reward_calc
     return CryptoAiEnvironment(rates, start_coin, start_amount, window, index_to_coin, reward_calc, exchange_filter)
 
 
@@ -125,3 +128,31 @@ def test_environment_has_last_state(rates):
     env.step(None)
     assert env.state == [0, 0.0, 0.5]
 
+
+@pytest.mark.parametrize("coin_rates, expected_reward", [
+    ([(entry("BTC_ETH", "2", "0"), entry("ETH_BTC", "0.5", "0")),
+      (entry("BTC_ETH", "1", "0"), entry("ETH_BTC", "1", "0"))], 1.0),
+    ([(entry("BTC_ETH", "2", "0"), entry("ETH_BTC", "0.5", "0")),
+      (entry("BTC_ETH", "4", "0"), entry("ETH_BTC", "0.25", "0"))], -0.5),
+])
+def test_total_balance_reward(rates, coin_rates, expected_reward):
+    rates.add_record(*coin_rates[0]).add_record(*coin_rates[1]).finish()
+    _, r, _, _ = make_env(rates, start_coin="BTC", index_to_coin={0: "BTC", 1: "ETH"},
+                          reward_calc=TotalBalanceReward()).step(1)
+    assert r == expected_reward
+
+
+def test_change_in_rates_reward(rates):
+    env = make_env(rates.add_pairs((1, 1.5, 1.25, 2.0)), reward_calc=RatesChangeReward())
+    assert env.step(None)[1] == 0.5
+    assert env.step(None)[1] == -0.25
+
+
+def test_change_in_rates_reward_takes_rates_change_into_account(rates):
+    rates.add_record(entry("BTC_ETH", "2"), entry("ETH_BTC", "10")) \
+        .add_record(entry("BTC_ETH", "1"), entry("ETH_BTC", "12")) \
+        .add_record(entry("BTC_ETH", "3"), entry("ETH_BTC", "20")).finish()
+    env = make_env(rates, start_coin="BTC", index_to_coin={0: "BTC", 1: "ETH"},
+                   reward_calc=RatesChangeReward())
+    env.step(1)
+    assert env.step(None)[1] == 0.8
