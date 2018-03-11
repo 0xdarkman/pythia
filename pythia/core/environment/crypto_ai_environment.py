@@ -52,6 +52,19 @@ def _calculate_exchange_ranges(rates):
 
 class CryptoAiEnvironment(CryptoEnvironment):
     def __init__(self, rates, start_coin, start_amount, window_size, index_to_coin, reward_calc, exchange_filter=None):
+        """
+        Environment representing crypto coin exchanges. Represents rates, current wallet balance, and currently held
+        coin in an AI friendly format. Implements a mechanism to perform a coin exchange by specifying the index of the
+        requested coin. Floating point data like rates and current balance are normalized
+
+        :param rates: source stream containing market information for coin exchanges
+        :param start_coin: crypto coin the starting balance is held in
+        :param start_amount: the starting balance
+        :param window_size: the size of the moving rates window
+        :param index_to_coin: dictionary that maps indices to coin strings like {0:"BTC", 1:"ETH")
+        :param reward_calc: callable object (CryptoAiEnvironment):float that calculates a reward given the environment
+        :param exchange_filter: (optional) list that filters the rates in the state showing only the coins specified
+        """
         self.exchange_ranges = _calculate_exchange_ranges(rates)
         self.index_to_coin = index_to_coin
         self.coin_to_index = {v: k for k, v in self.index_to_coin.items()}
