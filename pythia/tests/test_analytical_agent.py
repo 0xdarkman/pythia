@@ -32,6 +32,10 @@ def state(coin, exchange_info):
     return coin, exchange_info
 
 
+def test_start_no_action(agent):
+    assert agent.start(state("BTC", exchange("BTC_ETH", "10", "0.001"))) is None
+
+
 def test_no_records(agent):
     assert agent.step(state("BTC", exchange("BTC_ETH", "10", "0.001"))) is None
 
@@ -62,6 +66,12 @@ def test_distance_reached_but_no_positive_differential(agent):
 
 def test_records_indicate_exchange_opportunity(agent):
     assert agent.step(state("BTC", exchange("BTC_ETH", "10", "0.001"))) is None
+    assert agent.step(state("BTC", exchange("BTC_ETH", "15", "0.001"))) is None
+    assert agent.step(state("BTC", exchanges(("BTC_ETH", "14.001", "0.001"), ("ETH_BTC", "0.07", "0.001")))) == "ETH"
+
+
+def test_records_include_starting_state(agent):
+    assert agent.start(state("BTC", exchange("BTC_ETH", "10", "0.001"))) is None
     assert agent.step(state("BTC", exchange("BTC_ETH", "15", "0.001"))) is None
     assert agent.step(state("BTC", exchanges(("BTC_ETH", "14.001", "0.001"), ("ETH_BTC", "0.07", "0.001")))) == "ETH"
 
@@ -143,7 +153,7 @@ def test_multiple_targets_back_and_forth():
                                              ("SALT_ETH", "70", "0.001"), ("SALT_BTC", "7", "0.001")))) == "SALT"
     agent.step(state("SALT", exchanges(("SALT_ETH", "60", "0.001"), ("SALT_BTC", "10.5", "0.001"))))
     assert agent.step(state("SALT", exchanges(("SALT_ETH", "50", "0.001"), ("SALT_BTC", "9.9", "0.001"),
-                                             ("BTC_ETH", "5", "0.001"), ("BTC_SALT", "0.1", "0.001")))) == "BTC"
+                                              ("BTC_ETH", "5", "0.001"), ("BTC_SALT", "0.1", "0.001")))) == "BTC"
 
 
 def test_multiple_targets_switch_between_targets():
@@ -154,4 +164,8 @@ def test_multiple_targets_switch_between_targets():
                                              ("SALT_ETH", "0.7", "0.001"), ("SALT_BTC", "0.07", "0.001")))) == "SALT"
     agent.step(state("SALT", exchanges(("SALT_ETH", "1.05", "0.001"), ("SALT_BTC", "0.105", "0.001"))))
     assert agent.step(state("SALT", exchanges(("SALT_ETH", "0.99", "0.001"), ("SALT_BTC", "0.106", "0.001"),
-                                             ("ETH_SALT", "1", "0.001"), ("ETH_BTC", "0.106", "0.001")))) == "ETH"
+                                              ("ETH_SALT", "1", "0.001"), ("ETH_BTC", "0.106", "0.001")))) == "ETH"
+
+
+def test_finish_does_nothing(agent):
+    agent.finish(10)

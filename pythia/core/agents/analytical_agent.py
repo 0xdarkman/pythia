@@ -19,7 +19,10 @@ class AnalyticalAgent:
         self._rate_recordings = dict()
         self._current_coin = None
 
-    def step(self, state):
+    def start(self, state):
+        return self.step(state)
+
+    def step(self, state, reward=None):  # rewards are not used by this agent
         self._current_coin, markets = state
         for target in self.targets:
             market = self._get_market_info_of(markets, target)
@@ -70,6 +73,9 @@ class AnalyticalAgent:
         for new_t in self.targets:
             self._record_for(rates[target + "_" + new_t], new_t)
         return target
+
+    def finish(self, reward):
+        pass
 
     class _Recording:
         def __init__(self, init_rate):

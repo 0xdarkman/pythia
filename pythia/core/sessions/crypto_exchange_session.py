@@ -14,10 +14,14 @@ class CryptoExchangeSession:
     def run(self):
         s = self.environment.reset()
         self._start_balance = self.environment.balance_in(self._start_coin)
-        done = False
-        while not done:
-            a = self.agent.step(s)
-            s, _, done, _ = self.environment.step(a)
+        a = self.agent.start(s)
+        while True:
+            s, r, done, _ = self.environment.step(a)
+            if not done:
+                a = self.agent.step(s, r)
+            else:
+                self.agent.finish(r)
+                break
 
     def difference(self):
         return self.environment.balance_in(self._start_coin) - self._start_balance
