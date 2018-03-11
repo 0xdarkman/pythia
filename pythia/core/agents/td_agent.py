@@ -39,46 +39,60 @@ class Records:
 
 
 class TDAgent:
-    def __init__(self, policy, q_function, n, gamma):
+    def __init__(self, policy, q_function, n, gamma, alpha):
+        """
+        Temporal difference learning agent, that implements an n-step sarsa algorithm
+
+        :param policy: action selection policy implementation to be used
+        :param q_function: the Q value function used to learn and predict the Q value
+        :param n: number of steps the TD algorithm takes
+        :param gamma: discounting factor of future rewards
+        :param alpha: step size of signal
+        """
         self.policy = policy
         self.q = q_function
         self.n = n
         self.gamma = gamma
+        self.alpha = alpha
 
         self._record = Records(self.n)
 
     def start(self, state):
         self._record.clear()
-        return self._select_action_and_store(state)
+        a = self.policy.select(state, self.q)
+        return self._take_and_record(state, a)
 
-    def _select_action_and_store(self, s):
-        a = self.policy.select(s, self.q)
+    def _take_and_record(self, s, a):
         self._record.record_state_action(s, a)
         return a
 
     def step(self, state, reward):
         self._record.record_reward(reward)
+        action = self.policy.select(state, self.q)
         if self._record.is_full:
-            self._learn()
+            self._learn(state, action)
 
-        return self._select_action_and_store(state)
+        return self._take_and_record(state, action)
 
-    def _learn(self):
-        signal = self._calc_signal()
+    def _learn(self, s_next, a_next):
+        g = self._calc_recorded_rewards_sum()
+        g += pow(self.gamma, self.n) * self.q[s_next, a_next]
         s, a = next(self._record)
-        signal += pow(self.gamma, self.n) * self.q[s, a]
-        self.q.learn(s, a, signal)
+        self.q.learn(s, a, self._calc_signal(s, a, g))
 
-    def _calc_signal(self):
+    def _calc_recorded_rewards_sum(self):
         def decaying_sum(acc, enum):
             i, r = enum
             return acc + pow(self.gamma, max(i, 0)) * r
 
         return reduce(decaying_sum, enumerate(self._record.rewards), 0)
 
+    def _calc_signal(self, s, a, signal):
+        return self.alpha * (signal - self.q[s, a])
+
     def finish(self, reward):
         self._record.record_reward(reward)
         while not self._record.is_empty:
-            sig = self._calc_signal()
+            g = self._calc_recorded_rewards_sum()
             s, a = next(self._record)
-            self.q.learn(s, a, sig)
+            self.q.learn(s, a, self._calc_signal(s, a, g))

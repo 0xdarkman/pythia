@@ -46,7 +46,7 @@ class CryptoEnvironment:
         if self._next_state is None:
             raise EnvironmentFinished("CryptoEnvironment finished. No further steps possible.")
 
-        if action is not None:
+        if action is not None and action != self.coin:
             self._exchange_coin(action)
 
         self._move_to_next_state()

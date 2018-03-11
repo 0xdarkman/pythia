@@ -17,7 +17,7 @@ class NStepSarsa(object):
         self.record.clear()
         s = self.env.reset()
         done = False
-        a = self.policy.select(s)
+        a = self.policy.select(s, self.q_function)
         while not done:
             s1, r, done, _ = self.env.step(a)
             self.record.append((r, s, a))
@@ -30,7 +30,7 @@ class NStepSarsa(object):
                     G += r_t * pow(self.gamma, i)
                     i += 1
                 if not done:
-                    a1 = self.policy.select(s1)
+                    a1 = self.policy.select(s1, self.q_function)
                     G += pow(self.gamma, self.steps) * self.q_function[s1, a1]
 
                 _, s_t, a_t = self.record.popleft()

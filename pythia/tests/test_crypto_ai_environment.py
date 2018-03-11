@@ -111,6 +111,24 @@ def test_normalized_balance(rates):
     assert s[1] == 1.0
 
 
+def test_action_not_in_mapping_counts_as_none(rates):
+    rates.add_record(entry("BTC_ETH", "2", "0"), entry("ETH_BTC", "0.5", "0")) \
+        .add_record(entry("BTC_ETH", "1", "0"), entry("ETH_BTC", "1", "0")).finish()
+    s, _, _, _ = make_env(rates, start_coin="BTC", index_to_coin={1: "BTC", 2: "ETH"}).step(0)
+    assert s[1] == 0.0
+
+
+def test_state_coin_index_is_range_starting_at_zero(rates):
+    rates.add_record(entry("BTC_ETH", "2"), entry("ETH_BTC", "10")) \
+        .add_record(entry("BTC_ETH", "1"), entry("ETH_BTC", "12")) \
+        .add_record(entry("BTC_ETH", "3"), entry("ETH_BTC", "20")).finish()
+    env = make_env(rates, start_coin="BTC", index_to_coin={3: "BTC", 5: "ETH"})
+    s, _, _, _ = env.step(0)
+    assert s[0] == 0
+    s, _, _, _ = env.step(5)
+    assert s[0] == 1
+
+
 def test_returns_calculated_reward(rates):
     rates.add_pairs((1, 2, 3))
     _, r, _, _ = make_env(rates, reward_calc=RewardCalculatorStub(10.0)).step(None)

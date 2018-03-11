@@ -134,6 +134,15 @@ def test_exchanging(rates):
     assert env.coin == "ETH"
 
 
+def test_exchanging_to_itself(rates):
+    rates.add_record(entry("BTC_ETH", "12", "0.002")) \
+        .add_record(entry("BTC_ETH", "14")).finish()
+    env = make_env(rates, "BTC", "2")
+    env.step("BTC")
+    assert env.amount == Decimal("2")
+    assert env.coin == "BTC"
+
+
 def test_exchange_back_and_forth(rates):
     rates.add_record(entry("BTC_ETH", "12", "0.002")) \
         .add_record(entry("ETH_BTC", "0.1", "0.00006")) \

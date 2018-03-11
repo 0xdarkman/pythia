@@ -50,8 +50,19 @@ def _calculate_exchange_ranges(rates):
     return reduce(extend_exchange_ranges, rates, ExchangeRanges())
 
 
+def _make_coin_to_index(action_mapping, start_coin):
+    coin_index = dict()
+    i = 0
+    coin_index[start_coin] = i
+    for coin in action_mapping.values():
+        if coin not in coin_index:
+            i += 1
+            coin_index[coin] = i
+    return coin_index
+
+
 class CryptoAiEnvironment(CryptoEnvironment):
-    def __init__(self, rates, start_coin, start_amount, window_size, index_to_coin, reward_calc, exchange_filter=None):
+    def __init__(self, rates, start_coin, start_amount, window_size, action_to_coin, reward_calc, exchange_filter=None):
         """
         Environment representing crypto coin exchanges. Represents rates, current wallet balance, and currently held
         coin in an AI friendly format. Implements a mechanism to perform a coin exchange by specifying the index of the
@@ -61,13 +72,13 @@ class CryptoAiEnvironment(CryptoEnvironment):
         :param start_coin: crypto coin the starting balance is held in
         :param start_amount: the starting balance
         :param window_size: the size of the moving rates window
-        :param index_to_coin: dictionary that maps indices to coin strings like {0:"BTC", 1:"ETH")
+        :param action_to_coin: dictionary that maps action indices to coin strings like {0:"BTC", 1:"ETH")
         :param reward_calc: callable object (CryptoAiEnvironment):float that calculates a reward given the environment
         :param exchange_filter: (optional) list that filters the rates in the state showing only the coins specified
         """
         self.exchange_ranges = _calculate_exchange_ranges(rates)
-        self.index_to_coin = index_to_coin
-        self.coin_to_index = {v: k for k, v in self.index_to_coin.items()}
+        self.action_to_coin = action_to_coin
+        self.coin_to_index = _make_coin_to_index(self.action_to_coin, start_coin)
         self.reward_calc = reward_calc
         self.exchange_filter = exchange_filter
         self.starting_balance = Decimal(start_amount)
@@ -91,7 +102,7 @@ class CryptoAiEnvironment(CryptoEnvironment):
 
     @property
     def normalized_balance(self):
-        b = self.balance_in(self.index_to_coin[0])
+        b = self.balance_in(self._start_coin)
         return float((b - self.starting_balance) / self.starting_balance)
 
     def _fill_window(self):
@@ -112,7 +123,8 @@ class CryptoAiEnvironment(CryptoEnvironment):
             self.window.append(self.exchange_ranges.normalize_rate(n, pair.rate))
 
     def step(self, action):
-        s, _, done, _ = super().step(self.index_to_coin[action] if action is not None else None)
+        a = self.action_to_coin[action] if action in self.action_to_coin else None
+        s, _, done, _ = super().step(a)
         self._append_normalized_pairs(s[1])
         return self._next_ai_state(), self.reward_calc(self), done, _
 

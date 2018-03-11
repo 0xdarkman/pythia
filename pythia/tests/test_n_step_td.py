@@ -46,7 +46,7 @@ class PolicyStub(object):
     def __init__(self, *selected_actions):
         self.selected_actions = deque(selected_actions)
 
-    def select(self, state):
+    def select(self, state, q_func):
         return self.selected_actions.popleft()
 
 
@@ -64,7 +64,7 @@ def environment_spy():
 
 def make_n_step_td(env, action_space, gamma=1.0, alpha=1.0, steps=1):
     q_table = QTable(action_space)
-    policy = EpsilonGreedyPolicy(q_table, 0)
+    policy = EpsilonGreedyPolicy(0)
     tdn = NStepSarsa(env, q_table, policy, action_space)
     tdn.steps = steps
     tdn.gamma = gamma

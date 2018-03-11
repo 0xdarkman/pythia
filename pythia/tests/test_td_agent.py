@@ -12,18 +12,21 @@ class QFake:
         self.learned.append(Learned(state, action, signal))
 
     def __getitem__(self, state_action):
-        return self.prediction.pop()
+        return self.prediction[state_action]
 
 
-class Predictions(list):
+class Predictions(dict):
     def __init__(self, default):
         super().__init__()
-        self.append(default)
+        self.default = default
 
-    def next(self, prediction):
-        self.append(prediction)
+    def __getitem__(self, state_action):
+        s, a = state_action
+        return self.get((s.t, a.t), self.default)
 
-    next = property(None, next)
+    def __setitem__(self, state_action, value):
+        s, a = state_action
+        super().__setitem__((s.t, a.t), value)
 
 
 class LearnedContainer(list):
@@ -109,10 +112,10 @@ def n2_agent(q):
     return make_agent(n=2, q=q)
 
 
-def make_agent(n, q=None, p=None, gamma=1.0):
+def make_agent(n, q=None, p=None, gamma=1.0, alpha=1.0):
     q = QFake() if q is None else q
     p = PolicyStub() if p is None else p
-    return TDAgent(p, q, n, gamma)
+    return TDAgent(p, q, n, gamma, alpha)
 
 
 def test_agent_start(n1_agent):
@@ -150,7 +153,7 @@ def test_finishing_one_step_td_learns_previous_to_last_state(n1_agent):
 def test_discounted_prediction_is_part_of_reward_signal(q):
     agent = make_agent(n=1, q=q, gamma=0.5)
     agent.start(State(0))
-    q.prediction.next = 5.0
+    q.prediction[State(1), Action(1)] = 5.0
     agent.step(State(1), 10.0)
     assert q.learned.last == Learned(State(0), Action(0), signal=12.5)
 
@@ -161,13 +164,17 @@ def test_not_enough_data_for_learning(n2_agent):
     assert n2_agent.q.learned.nothing
 
 
-def test_reward_signal_is_decaying_sum_of_observed_rewards_and_next_prediction(q):
-    agent = make_agent(n=2, gamma=0.5, q=q)
+def test_reward_signal_is_weighted_difference_of_decaying_reward_sum_and_previous_prediction(q):
+    """
+    Q(s, a) = Q(s, a) + alpha * [G - Q(s, a)]
+    """
+    agent = make_agent(n=2, gamma=0.5, alpha=0.1, q=q)
     agent.start(State(0))
     agent.step(State(1), -3.0)
-    q.prediction.next = 4.0
+    q.prediction[State(2), Action(2)] = 4.0
+    q.prediction[State(0), Action(0)] = 1.0
     agent.step(State(2), 10.0)
-    assert q.learned.last == Learned(State(0), Action(0), signal=(-3.0 + 0.5 * 10.0 + 0.25 * 4.0))
+    assert q.learned.last == Learned(State(0), Action(0), signal=0.1 * ((-3.0 + 0.5 * 10.0 + 0.25 * 4.0) - 1.0))
 
 
 def test_handling_remaining_steps_when_finishing(q):
