@@ -2,7 +2,7 @@ import sys
 
 from pythia.core.agents.td_agent import TDAgent
 from pythia.core.environment.crypto_ai_environment import CryptoAiEnvironment
-from pythia.core.environment.crypto_rewards import RatesChangeReward
+from pythia.core.environment.crypto_rewards import RatesChangeReward, TotalBalanceReward
 from pythia.core.reinforcement.e_greedy_policies import NormalEpsilonGreedyPolicy
 from pythia.core.reinforcement.q_ann import QAnn
 from pythia.core.reinforcement.q_regression_model import QRegressionModel
@@ -15,11 +15,11 @@ COIN_A = "BTC"
 COIN_B = "ETH"
 LEARNING_RATE = 0.01
 MEMORY_SIZE = 10
-ALPHA = 0.8
-GAMMA = 0.99
-WINDOW = 1
-START_EPS = 100
-TOTAL_EPISODES = 10000
+ALPHA = 0.2
+GAMMA = 0.9
+WINDOW = 10
+START_EPS = 1
+TOTAL_EPISODES = 1000
 
 model = QRegressionModel(3 + WINDOW * 2, [100], LEARNING_RATE)
 Q = QAnn(model, [0, 1, 2], MEMORY_SIZE)
@@ -32,7 +32,7 @@ if __name__ == '__main__':
         with clock_block("Initialization"):
             rates = ShapeShiftRates(stream, preload=True)
             vis = CoinExchangeVisualizer(rates)
-            env = CryptoAiEnvironment(rates, COIN_A, "0.1", 1, {1: COIN_A, 2: COIN_B}, RatesChangeReward())
+            env = CryptoAiEnvironment(rates, COIN_A, "0.1", 1, {1: COIN_A, 2: COIN_B}, TotalBalanceReward())
             env.register_listener(vis.record_exchange)
             sess = CryptoExchangeSession(env, agent)
 
