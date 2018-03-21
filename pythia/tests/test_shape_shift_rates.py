@@ -3,7 +3,7 @@ import io
 import pytest
 
 from pythia.core.streams.shape_shift_rates import ShapeShiftRates, rates_filter
-from pythia.tests.doubles import PairEntryStub, RecordsStub
+from pythia.tests.crypto_doubles import PairEntryStub, RecordsStub
 
 
 @pytest.fixture

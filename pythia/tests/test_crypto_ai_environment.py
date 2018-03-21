@@ -2,7 +2,7 @@ import pytest
 
 from pythia.core.environment.crypto_ai_environment import CryptoAiEnvironment, WindowError
 from pythia.core.environment.crypto_rewards import TotalBalanceReward, RatesChangeReward
-from pythia.tests.doubles import RecordsStub, RatesStub, entry
+from pythia.tests.crypto_doubles import RecordsStub, RatesStub, entry
 
 
 class AiRatesStub(RatesStub):

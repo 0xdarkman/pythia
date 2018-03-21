@@ -2,7 +2,7 @@ import pytest
 import matplotlib.pyplot as plt
 from decimal import Decimal
 
-from pythia.tests.doubles import RatesStub, RecordsStub, entry
+from pythia.tests.crypto_doubles import RatesStub, RecordsStub, entry
 from pythia.core.visualization.coin_exchange_visualizer import CoinExchangeVisualizer
 
 

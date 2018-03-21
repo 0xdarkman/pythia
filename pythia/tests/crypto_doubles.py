@@ -1,13 +1,6 @@
 import io
 
-from pythia.core.reinforcement.q_table import QTable
 from pythia.core.streams.shape_shift_rates import RatesPair, ShapeShiftRates
-
-
-class QFunctionWrapper(QTable):
-    def set_state_action_values(self, state, zero_value, one_value):
-        self[state, 0] = zero_value
-        self[state, 1] = one_value
 
 
 class PairEntryStub(RatesPair):

@@ -3,7 +3,7 @@ import random
 import pytest
 
 from pythia.core.reinforcement.e_greedy_policies import EpsilonGreedyPolicy
-from pythia.tests.doubles import QFunctionWrapper
+from pythia.tests.q_doubles import QFunctionWrapper
 
 
 def make_policy(epsilon):

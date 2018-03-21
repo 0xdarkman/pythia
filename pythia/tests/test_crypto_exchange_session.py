@@ -5,7 +5,7 @@ from decimal import Decimal
 
 from pythia.core.environment.crypto_environment import CryptoEnvironment
 from pythia.core.sessions.crypto_exchange_session import CryptoExchangeSession
-from pythia.tests.doubles import RatesStub, entry, RecordsStub
+from pythia.tests.crypto_doubles import RatesStub, entry, RecordsStub
 
 
 class EnvironmentStub(CryptoEnvironment):

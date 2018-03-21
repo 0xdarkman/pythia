@@ -2,7 +2,7 @@ import pytest
 from decimal import Decimal
 
 from pythia.core.streams.shape_shift_rates import analyze, CoinExchangeReport
-from pythia.tests.doubles import RecordsStub, RatesStub, entry
+from pythia.tests.crypto_doubles import RecordsStub, RatesStub, entry
 
 
 @pytest.fixture

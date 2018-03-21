@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 
 from pythia.core.reinforcement.e_greedy_policies import NormalEpsilonGreedyPolicy
-from pythia.tests.doubles import QFunctionWrapper
+from pythia.tests.q_doubles import QFunctionWrapper
 
 STATE_A = [0]
 STATE_B = [1]

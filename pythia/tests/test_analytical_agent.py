@@ -1,7 +1,7 @@
 import pytest
 
 from pythia.core.agents.analytical_agent import AnalyticalAgent
-from pythia.tests.doubles import PairEntryStub
+from pythia.tests.crypto_doubles import PairEntryStub
 
 
 def make_agent(dist, diff_thresh, diff_window, targets=None):
