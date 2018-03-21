@@ -20,11 +20,12 @@ GAMMA = 0.9
 WINDOW = 10
 START_EPS = 1
 TOTAL_EPISODES = 1000
+n = 10
 
 model = QRegressionModel(3 + WINDOW * 2, [100], LEARNING_RATE)
 Q = QAnn(model, [0, 1, 2], MEMORY_SIZE)
 episode = 0
-agent = TDAgent(NormalEpsilonGreedyPolicy(lambda: (START_EPS / (episode + 1))), Q, WINDOW, GAMMA, ALPHA)
+agent = TDAgent(NormalEpsilonGreedyPolicy(lambda: (START_EPS / (episode + 1))), Q, n, GAMMA, ALPHA)
 
 if __name__ == '__main__':
     path = "../data/recordings/filtered/2018-02-28-shapeshift-BTC_ETH.json" if len(sys.argv) == 1 else sys.argv[0]
@@ -32,7 +33,7 @@ if __name__ == '__main__':
         with clock_block("Initialization"):
             rates = ShapeShiftRates(stream, preload=True)
             vis = CoinExchangeVisualizer(rates)
-            env = CryptoAiEnvironment(rates, COIN_A, "0.1", 1, {1: COIN_A, 2: COIN_B}, TotalBalanceReward())
+            env = CryptoAiEnvironment(rates, COIN_A, "0.1", WINDOW, {1: COIN_A, 2: COIN_B}, TotalBalanceReward())
             env.register_listener(vis.record_exchange)
             sess = CryptoExchangeSession(env, agent)
 
