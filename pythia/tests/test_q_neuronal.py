@@ -30,7 +30,7 @@ def test_prediction():
 
 
 def test_learning():
-    ann = MockAnn(expected_inputs=[[0.5, 0.2, 0.1, 1]], expected_signals=[-0.9])
+    ann = MockAnn(expected_inputs=[[0.5, 0.2, 0.1, 1]], expected_signals=[[-0.9]])
     q = make_q(ann)
     q.learn([0.5, 0.2, 0.1], 1, -0.9)
     assert ann.train_was_called
@@ -44,7 +44,7 @@ def test_memory_not_filled():
 
 
 def test_train_on_memory_batch():
-    ann = MockAnn(expected_inputs=[[0.5, 0.2, 1], [0.1, 0.9, 0]], expected_signals=[-0.3, 1.7])
+    ann = MockAnn(expected_inputs=[[0.5, 0.2, 1], [0.1, 0.9, 0]], expected_signals=[[-0.3], [1.7]])
     q = make_q(ann, memory_size=2)
     q.learn([0.5, 0.2], 1, -0.3)
     q.learn([0.1, 0.9], 0, 1.7)
