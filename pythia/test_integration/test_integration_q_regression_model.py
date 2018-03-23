@@ -8,12 +8,20 @@ import tensorflow as tf
 
 
 @pytest.fixture(scope="session", autouse=True)
-def config_session():
+def config_tensorflow():
+    original_v = tf.logging.get_verbosity()
     tf.logging.set_verbosity(3)
     tf.set_random_seed(42)
     yield
-    tf.logging.set_verbosity(0)
-    tf.set_random_seed(None)
+    tf.logging.set_verbosity(original_v)
+
+
+@pytest.fixture(autouse=True)
+def set_session():
+    tf.reset_default_graph()
+    with tf.Session():
+        yield
+
 
 @pytest.fixture
 def two_in_model():

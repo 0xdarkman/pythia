@@ -42,6 +42,7 @@ class QNeuronal:
 
     def __getitem__(self, state_action):
         s, a = state_action
+        # TODO there might be a bug where it returns a single element list for the reward and/or needs a list of lists as input
         return self.ann.predict(self._make_input(s, a))
 
     @staticmethod

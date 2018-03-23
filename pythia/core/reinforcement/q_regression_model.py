@@ -16,7 +16,6 @@ class QRegressionModel(QModel):
         :param seed: Seed used by random operations
         """
         QModel.__init__(self, input_size)
-        tf.reset_default_graph()
         self.x = tf.placeholder(tf.float32, [None, input_size])
         layer = self.x
         prev_size = input_size
@@ -34,11 +33,10 @@ class QRegressionModel(QModel):
         self.loss = tf.losses.mean_squared_error(self.y_, self.y)
         self.train_step = tf.train.GradientDescentOptimizer(lr).minimize(self.loss)
 
-        self.sess = tf.InteractiveSession()
         tf.global_variables_initializer().run()
 
     def do_prediction(self, state):
-        return self.sess.run(self.y, feed_dict={self.x: state})[0]
+        return self.y.eval(feed_dict={self.x: state})[0]
 
     def do_training(self, states, targets):
-        self.sess.run(self.train_step, feed_dict={self.x: states, self.y_: targets})
+        self.train_step.run(feed_dict={self.x: states, self.y_: targets})
