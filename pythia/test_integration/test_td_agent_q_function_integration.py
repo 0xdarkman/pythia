@@ -1,6 +1,5 @@
-import random
-
 import pytest
+import tensorflow as tf
 
 from pythia.core.agents.td_agent import TDAgent
 from pythia.core.environment.crypto_ai_environment import CryptoAiEnvironment
@@ -11,6 +10,22 @@ from pythia.core.reinforcement.q_regression_model import QRegressionModel
 from pythia.core.reinforcement.q_table import QTable
 from pythia.core.sessions.crypto_exchange_session import CryptoExchangeSession
 from pythia.tests.crypto_doubles import RecordsStub, RatesStub, entry
+
+
+@pytest.fixture(scope="session", autouse=True)
+def config_tensorflow():
+    original_v = tf.logging.get_verbosity()
+    tf.logging.set_verbosity(3)
+    tf.set_random_seed(42)
+    yield
+    tf.logging.set_verbosity(original_v)
+
+
+@pytest.fixture(autouse=True)
+def set_session():
+    tf.reset_default_graph()
+    with tf.Session():
+        yield
 
 
 @pytest.fixture
