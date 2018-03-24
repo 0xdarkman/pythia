@@ -1,3 +1,5 @@
+from collections import deque
+
 from pythia.core.reinforcement.q_neuronal import QNeuronal
 
 
@@ -19,12 +21,22 @@ class MockAnn:
         self.train_was_called = True
 
 
-def make_q(ann, memory_size=None):
-    return QNeuronal(ann, memory_size)
+class MockSeqAnn:
+    def __init__(self, expected_inputs, predicts):
+        self.expected_inputs = deque(expected_inputs)
+        self.predicts = deque(predicts)
+
+    def predict(self, ann_input):
+        assert ann_input == self.expected_inputs.popleft()
+        return self.predicts.popleft()
+
+
+def make_q(ann, n=2, memory_size=None):
+    return QNeuronal(ann, n, memory_size)
 
 
 def test_prediction():
-    ann = MockAnn(expected_input=[0.5, 0.2, 0.1, 1], predicts=0.3)
+    ann = MockAnn(expected_input=[[0.5, 0.2, 0.1, 1]], predicts=[[0.3]])
     q = make_q(ann)
     assert q[[0.5, 0.2, 0.1], 1] == 0.3
 
@@ -49,3 +61,14 @@ def test_train_on_memory_batch():
     q.learn([0.5, 0.2], 1, -0.3)
     q.learn([0.1, 0.9], 0, 1.7)
     assert ann.train_was_called
+
+
+def test_get_action_space():
+    q = make_q(MockAnn(), 3)
+    assert q.action_space == [0, 1, 2]
+
+
+def test_get_all_action_values_for_state():
+    q = make_q(MockSeqAnn(expected_inputs=[[[0.5, 0.2, 0]], [[0.5, 0.2, 1]], [[0.5, 0.2, 2]]],
+                          predicts=[[[-0.3]], [[1.7]], [[0]]]), n=3)
+    assert q.all_values_of_state([0.5, 0.2]) == [-0.3, 1.7, 0.0]

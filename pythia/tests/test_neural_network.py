@@ -7,7 +7,7 @@ class AnnBuilder:
     def __init__(self, input_size, seed):
         self.ann = NeuralNetwork(input_size, seed)
         self.loss = 'mean_squared_error'
-        self.optimizer = 'gradient_decent'
+        self.optimizer = 'gradient_descent'
         self.lr = 0.1
 
     def add_layer(self, units, activation, weight_init, bias_init='zeros'):
@@ -104,24 +104,24 @@ class NeuralNetworkTest(tf.test.TestCase):
             ann.train([[3, 1], [1, 2]], [[-1], [2]])
         self.assertEqual(str(e_info.exception), "The network needs to be compiled before it can be trained")
 
-    def test_mean_squared_error_gradient_decent_training(self):
+    def test_mean_squared_error_gradient_descent_training(self):
         with self.test_session():
             ann = make_ann(input_size=1).add_layer(1, 'linear', 'zeros') \
-                .compile('mean_squared_error', 'gradient_decent', lr=0.5).finish()
+                .compile('mean_squared_error', 'gradient_descent', lr=0.5).finish()
             ann.train([[0]], [[10]])
             self.assertAllClose(ann.predict([[0]]), [[10]])
 
     def test_different_learning_rate(self):
         with self.test_session():
             ann = make_ann(input_size=1).add_layer(1, 'linear', 'zeros') \
-                .compile('mean_squared_error', 'gradient_decent', lr=0.1).finish()
+                .compile('mean_squared_error', 'gradient_descent', lr=0.1).finish()
             ann.train([[0]], [[10]])
             self.assertAllClose(ann.predict([[0]]), [[2]])
 
     def test_missing_loss_function(self):
         with self.assertRaises(NotImplementedError) as e_info, self.test_session():
             make_ann(input_size=1).add_layer(1, 'linear', 'zeros') \
-                .compile('MISSING', 'gradient_decent', lr=0.1).finish()
+                .compile('MISSING', 'gradient_descent', lr=0.1).finish()
         self.assertEqual(str(e_info.exception), "The specified loss function 'MISSING' has not been implemented")
 
     def test_missing_optimizer(self):
@@ -134,7 +134,7 @@ class NeuralNetworkTest(tf.test.TestCase):
         with self.assertRaises(InvalidOperationError) as e_info, self.test_session():
             ann = NeuralNetwork(input_size=1)
             ann.add_layer(1, 'linear', 'zeros')
-            ann.compile('mean_squared_error', 'gradient_decent', 0.1)
+            ann.compile('mean_squared_error', 'gradient_descent', 0.1)
             ann.add_layer(1, 'linear', 'zeros')
         self.assertEqual(str(e_info.exception), "Adding layers after compiling a network is not supported")
 
@@ -147,7 +147,7 @@ class NeuralNetworkTest(tf.test.TestCase):
     def test_deep_neural_network_training(self):
         with self.test_session():
             ann = make_ann(input_size=1).add_layer(1, 'linear', 'zeros').add_layer(1, 'linear', 'zeros') \
-                .compile('mean_squared_error', 'gradient_decent', lr=0.5).finish()
+                .compile('mean_squared_error', 'gradient_descent', lr=0.5).finish()
             ann.train([[0]], [[10]])
             self.assertAllClose(ann.predict([[0]]), [[10]])
 

@@ -1,5 +1,6 @@
 import tensorflow as tf
 
+from pythia.core.reinforcement.neural_network import NeuralNetwork
 from .q_model import QModel
 
 
@@ -16,27 +17,14 @@ class QRegressionModel(QModel):
         :param seed: Seed used by random operations
         """
         QModel.__init__(self, input_size)
-        self.x = tf.placeholder(tf.float32, [None, input_size])
-        layer = self.x
-        prev_size = input_size
-        for i, layer_size in enumerate(hidden_layers):
-            W = tf.get_variable("W{}".format(i), shape=[prev_size, layer_size], initializer=tf.glorot_uniform_initializer(seed))
-            b = tf.Variable(tf.zeros([layer_size]))
-            layer = tf.nn.relu(tf.matmul(layer, W) + b)
-            prev_size = layer_size
-
-        W_o = tf.get_variable("W_o", shape=[prev_size, 1], initializer=tf.glorot_uniform_initializer(seed))
-        b_o = tf.Variable(tf.zeros([1]))
-        self.y = tf.matmul(layer, W_o) + b_o
-
-        self.y_ = tf.placeholder(tf.float32, [None, 1])
-        self.loss = tf.losses.mean_squared_error(self.y_, self.y)
-        self.train_step = tf.train.GradientDescentOptimizer(lr).minimize(self.loss)
-
-        tf.global_variables_initializer().run()
+        self.ann = NeuralNetwork(input_size, seed)
+        for units in hidden_layers:
+            self.ann.add_layer(units, activation='relu', weight_init='glorot_uniform')
+        self.ann.add_layer(1, activation='linear', weight_init='glorot_uniform')
+        self.ann.compile('mean_squared_error', 'gradient_descent', lr)
 
     def do_prediction(self, state):
-        return self.y.eval(feed_dict={self.x: state})[0]
+        return self.ann.predict(state)
 
     def do_training(self, states, targets):
-        self.train_step.run(feed_dict={self.x: states, self.y_: targets})
+        self.ann.train(states, targets)

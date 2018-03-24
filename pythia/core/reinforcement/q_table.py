@@ -18,7 +18,7 @@ class QTable(QFunction):
         self.storage[state] = value
 
     def max_value_of(self, state):
-        return np.max(self.get_action_values_of_state(state))
+        return np.max(self.all_values_of_state(state))
 
     def learn(self, state, action, signal):
         self[state, action] += signal

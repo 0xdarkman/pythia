@@ -26,7 +26,7 @@ class QFunction(object, metaclass=ABCMeta):
         self.check_action(action)
         return state, action
 
-    def get_action_values_of_state(self, state):
+    def all_values_of_state(self, state):
         state = self.box_state(state)
         num_actions = len(self.action_space)
         vs = np.zeros(num_actions)

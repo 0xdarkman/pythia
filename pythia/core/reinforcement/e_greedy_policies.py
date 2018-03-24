@@ -16,7 +16,7 @@ class EpsilonGreedyPolicy(object):
         if random.random() < e:
             return random.choice(action_space)
 
-        vs = q_function.get_action_values_of_state(state)
+        vs = q_function.all_values_of_state(state)
         return action_space[np.argmax(vs)]
 
 
@@ -31,5 +31,5 @@ class NormalEpsilonGreedyPolicy:
             e = self.epsilon
 
         action_space = q_function.action_space
-        vs = q_function.get_action_values_of_state(state)
+        vs = q_function.all_values_of_state(state)
         return action_space[np.argmax(vs + np.random.randn(1, len(action_space)) * e)]

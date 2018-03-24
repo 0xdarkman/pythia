@@ -64,19 +64,19 @@ def test_states_and_targets_not_matching(two_in_model):
 
 
 def test_initialization():
-    assert make_model(1).predict([[1]])[0] == approx(-0.055630207)
+    assert make_model(1).predict([[1]])[0][0] == approx(-0.055630207)
 
 
 def test_train_gravitates_towards_signal():
     model = make_model(1)
     model.train([[1]], [[1]])
-    assert model.predict([[1]])[0] == approx(-0.013404997)
+    assert model.predict([[1]])[0][0] == approx(-0.013404997)
 
 
 def test_learning_rate():
     model = make_model(1, lr=1)
     model.train([[1]], [[1]])
-    assert model.predict([[1]])[0] == approx(4.1668906)
+    assert model.predict([[1]])[0][0] == approx(4.1668906)
 
 
 def test_training_deep_model():
@@ -84,5 +84,5 @@ def test_training_deep_model():
     for _ in range(0, 500):
         model.train([[0, 0], [0, 1]] * 30, [[3.0], [-1.5]] * 30)
 
-    assert model.predict([[0, 0]])[0] == approx(3.0, rel=1e-2)
-    assert model.predict([[0, 1]])[0] == approx(-1.5, rel=1e-2)
+    assert model.predict([[0, 0]])[0][0] == approx(3.0, rel=1e-2)
+    assert model.predict([[0, 1]])[0][0] == approx(-1.5, rel=1e-2)
