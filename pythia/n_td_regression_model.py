@@ -4,7 +4,7 @@ import time
 from pythia.core.environment.environment_wrappers import TradingEnvironmentTableWrapper
 from pythia.core.reinforcement.e_greedy_policies import EpsilonGreedyPolicy, NormalEpsilonGreedyPolicy
 from pythia.core.reinforcement.n_step_sarsa import NStepSarsa
-from pythia.core.reinforcement.q_ann import QAnn
+from pythia.core.reinforcement.q_neuronal import QNeuronal
 from pythia.core.reinforcement.q_regression_model import QRegressionModel
 
 # env = gym.make('FrozenLake-v0')
@@ -13,11 +13,10 @@ model_dir = "reinforcement/model_data"
 for f in os.listdir(model_dir):
     os.remove(os.path.join(model_dir, f))
 
-action_space = range(0, env.action_space.n)
 model = QRegressionModel(env.action_space.n + 1, [100], 0.01)
-Q = QAnn(model, action_space, 10)
+Q = QNeuronal(model,  env.action_space.n, 10)
 episode = 0
-tdn = NStepSarsa(env, Q, NormalEpsilonGreedyPolicy(lambda: (100 / (episode + 1))), action_space)
+tdn = NStepSarsa(env, Q, NormalEpsilonGreedyPolicy(lambda: (100 / (episode + 1))), Q.action_space)
 tdn.steps = 1
 tdn.gamma = 0.99
 tdn.alpha = 0.8

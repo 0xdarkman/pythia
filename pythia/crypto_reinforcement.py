@@ -1,11 +1,11 @@
 import sys
+
 import tensorflow as tf
 
 from pythia.core.agents.td_agent import TDAgent
 from pythia.core.environment.crypto_ai_environment import CryptoAiEnvironment
-from pythia.core.environment.crypto_rewards import RatesChangeReward, TotalBalanceReward
+from pythia.core.environment.crypto_rewards import TotalBalanceReward
 from pythia.core.reinforcement.e_greedy_policies import NormalEpsilonGreedyPolicy
-from pythia.core.reinforcement.q_ann import QAnn
 from pythia.core.reinforcement.q_neuronal import QNeuronal
 from pythia.core.reinforcement.q_regression_model import QRegressionModel
 from pythia.core.sessions.crypto_exchange_session import CryptoExchangeSession

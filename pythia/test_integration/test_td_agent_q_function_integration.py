@@ -5,7 +5,7 @@ from pythia.core.agents.td_agent import TDAgent
 from pythia.core.environment.crypto_ai_environment import CryptoAiEnvironment
 from pythia.core.environment.crypto_rewards import TotalBalanceReward
 from pythia.core.reinforcement.e_greedy_policies import EpsilonGreedyPolicy, NormalEpsilonGreedyPolicy
-from pythia.core.reinforcement.q_ann import QAnn
+from pythia.core.reinforcement.q_neuronal import QNeuronal
 from pythia.core.reinforcement.q_regression_model import QRegressionModel
 from pythia.core.reinforcement.q_table import QTable
 from pythia.core.sessions.crypto_exchange_session import CryptoExchangeSession
@@ -55,7 +55,7 @@ def test_td_agent_produces_sensible_q_values(env):
 
 def test_td_agent_produces_sensible_regression_model_predictions(env):
     model = QRegressionModel(5, [100], 0.1)
-    Q = QAnn(model, [0, 1, 2], 10)
+    Q = QNeuronal(model, 3, 10)
     episode = 0
     agent = TDAgent(NormalEpsilonGreedyPolicy(lambda: (1 / (episode + 1))), Q, 1, 0.9, 0.1)
     sess = CryptoExchangeSession(env, agent)
