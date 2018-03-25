@@ -3,11 +3,12 @@ import random
 import pytest
 
 from pythia.core.reinforcement.e_greedy_policies import EpsilonGreedyPolicy
+from pythia.tests.common_doubles import Call, MockFilter
 from pythia.tests.q_doubles import QFunctionWrapper
 
 
-def make_policy(epsilon):
-    return EpsilonGreedyPolicy(epsilon)
+def make_policy(epsilon, filter=None):
+    return EpsilonGreedyPolicy(epsilon, filter)
 
 
 STATE_A = [0]
@@ -22,19 +23,19 @@ def q_function():
 @pytest.fixture
 def zero_policy():
     """Returns a normal e greedy policy with epsilon 0"""
-    return EpsilonGreedyPolicy(0)
+    return make_policy(0)
 
 
 @pytest.fixture
 def epsilon_policy():
     """Returns a normal e greedy policy with epsilon 0.2"""
-    return EpsilonGreedyPolicy(0.2)
+    return make_policy(0.2)
 
 
 @pytest.fixture
 def function_policy():
     """Returns a normal e greedy policy with epsilon 0.2 provided by a function"""
-    return EpsilonGreedyPolicy(lambda: 0.2)
+    return make_policy(lambda: 0.2)
 
 
 def test_epsilon_zero(zero_policy, q_function):
@@ -71,3 +72,11 @@ def test_incomplete_state(zero_policy, q_function):
     q_function[STATE_A, 0] = -1
 
     assert zero_policy.select(STATE_A, q_function) == 1
+
+
+def test_invalid_actions_are_ignored(q_function):
+    q_function[STATE_A, 0] = 10
+    q_function[STATE_A, 1] = -1
+    filter = MockFilter(Call((STATE_A, 0), returns=False), Call((STATE_A, 1), returns=True))
+    policy = make_policy(0, filter)
+    assert policy.select(STATE_A, q_function) == 1
