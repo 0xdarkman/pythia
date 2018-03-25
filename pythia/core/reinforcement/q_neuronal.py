@@ -1,5 +1,7 @@
 from collections import deque
 
+from pythia.core.reinforcement.q_function import QFunction
+
 
 class Memory:
     def __init__(self, size):
@@ -23,7 +25,7 @@ class Memory:
         return self._signal_records
 
 
-class QNeuronal:
+class QNeuronal(QFunction):
     def __init__(self, ann, n, memory_size=None):
         """
         This class implements a nonlinear Q function approximation using an artificial neural network. The ANN is
@@ -38,23 +40,14 @@ class QNeuronal:
         :param n: Number of actions
         :param memory_size: (optional) Size of recorded state, signal pairs that are passed to the ANN to as a batch.
         """
+        super().__init__(list(range(n)))
         self.ann = ann
         self.memory = Memory(1 if memory_size is None else memory_size)
-        self.action_space = list(range(n))
 
     def __getitem__(self, state_action):
-        s, a = state_action
-        return self.ann.predict([self._make_input(list(s), a)])[0][0]
-
-    @staticmethod
-    def _make_input(s, a):
-        s.append(a)
-        return s
+        return self.ann.predict([self._make_input_state(state_action)])[0][0]
 
     def learn(self, state, action, signal):
-        self.memory.record(self._make_input(state, action), signal)
+        self.memory.record(self._make_input_state((state, action)), signal)
         if self.memory.is_full:
             self.ann.train(self.memory.inputs, self.memory.signals)
-
-    def all_values_of_state(self, state):
-        return [self[state, a] for a in self.action_space]

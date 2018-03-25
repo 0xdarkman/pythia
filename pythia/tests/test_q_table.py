@@ -45,17 +45,11 @@ def test_setting_action_out_of_space_throws_exception(table):
         unused = table[[2, 3], 0]
 
 
-def test_get_max_action_value_of_state(table):
-    table[[3, 2, 1], 1] = -15.33
-    table[[3, 2, 1], 2] = 298.521
-    assert table.max_value_of([3, 2, 1]) == 298.521
-
-
 def test_state_is_unaltered(table):
     s = [1, 2]
     table[s, 1] = 10.0
     assert s == [1, 2]
     unused = table[s, 1]
     assert s == [1, 2]
-    table.max_value_of(s)
+    unused = table[s, 2]
     assert s == [1, 2]

@@ -2,7 +2,13 @@ import random
 import numpy as np
 
 
-class EpsilonGreedyPolicy(object):
+class Policy:
+    @staticmethod
+    def _get_q_values_of_state(state, q_function):
+        return [q_function[state, a] for a in q_function.action_space]
+
+
+class EpsilonGreedyPolicy(Policy):
     def __init__(self, epsilon):
         self.epsilon = epsilon
 
@@ -16,11 +22,11 @@ class EpsilonGreedyPolicy(object):
         if random.random() < e:
             return random.choice(action_space)
 
-        vs = q_function.all_values_of_state(state)
+        vs = self._get_q_values_of_state(state, q_function)
         return action_space[np.argmax(vs)]
 
 
-class NormalEpsilonGreedyPolicy:
+class NormalEpsilonGreedyPolicy(Policy):
     def __init__(self, epsilon):
         self.epsilon = epsilon
 
@@ -31,5 +37,5 @@ class NormalEpsilonGreedyPolicy:
             e = self.epsilon
 
         action_space = q_function.action_space
-        vs = q_function.all_values_of_state(state)
+        vs = self._get_q_values_of_state(state, q_function)
         return action_space[np.argmax(vs + np.random.randn(1, len(action_space)) * e)]
