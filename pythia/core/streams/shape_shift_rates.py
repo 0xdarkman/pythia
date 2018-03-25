@@ -137,11 +137,11 @@ def rates_filter(in_stream, exchanges):
     return reduce(concat_rates, in_stream, "")
 
 
-ANALYSIS_STR_HEADER = " EXCHANGE |   MEAN   |    SD    |  MEDIAN  |   MIN   |   MAX   \n" \
-                      "---------------------------------------------------------------\n"
+ANALYSIS_STR_HEADER = " EXCHANGE |   MEAN   |    SD    |  MEDIAN  |   MIN   |   MAX   |   DIF   \n" \
+                      "-------------------------------------------------------------------------\n"
 
+ANALYSIS_CSV_HEADER = "EXCHANGE,MEAN,SD,MEDIAN,MIN,MAX,DIF\n"
 
-ANALYSIS_CSV_HEADER = "EXCHANGE,MEAN,SD,MEDIAN,MIN,MAX\n"
 
 class CoinExchangeReport:
     def __init__(self):
@@ -155,9 +155,9 @@ class CoinExchangeReport:
             return ""
 
         def print_records(report, columns):
-            exchange, mean, sd, median, min, max = columns
-            return report + " {:<9}|{:>10.10}|{:>10.10}|{:>10.10}|{:>9.9}|{:>9.9}\n" \
-                .format(exchange, str(mean), str(sd), str(median), str(min), str(max))
+            exchange, mean, sd, median, min, max, dif = columns
+            return report + " {:<9}|{:>10.10}|{:>10.10}|{:>10.10}|{:>9.9}|{:>9.9}|{:>9.9}\n" \
+                .format(exchange, str(mean), str(sd), str(median), str(min), str(max), str(dif))
 
         return reduce(print_records, self.records, ANALYSIS_STR_HEADER)
 
@@ -169,7 +169,6 @@ class CoinExchangeReport:
             return report + ",".join(map(str, columns)) + "\n"
 
         return reduce(print_records, self.records, ANALYSIS_CSV_HEADER)
-
 
 
 def analyze(rates):
@@ -184,12 +183,14 @@ def analyze(rates):
 
     report = CoinExchangeReport()
     for k in exchanges:
-        r = sorted(exchanges[k])
+        r = exchanges[k]
+        dif = r[-1] - r[0]
+        r = sorted(r)
         s = sum(r)
         l = len(r)
         mean = s / l
         median = r[(l // 2)]
-        sd = sqrt(reduce(lambda t, x: t + (x - mean)**2, r, Decimal(0)) / l)
-        report.append(k, mean, sd, median, min(r), max(r))
+        sd = sqrt(reduce(lambda t, x: t + (x - mean) ** 2, r, Decimal(0)) / l)
+        report.append(k, mean, sd, median, min(r), max(r), dif)
 
     return report

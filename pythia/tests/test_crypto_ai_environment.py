@@ -1,6 +1,6 @@
 import pytest
 
-from pythia.core.environment.crypto_ai_environment import CryptoAiEnvironment, WindowError
+from pythia.core.environment.crypto_ai_environment import CryptoAiEnvironment, WindowError, ActionFilter
 from pythia.core.environment.crypto_rewards import TotalBalanceReward, RatesChangeReward
 from pythia.tests.crypto_doubles import RecordsStub, RatesStub, entry
 
@@ -174,3 +174,32 @@ def test_change_in_rates_reward_takes_rates_change_into_account(rates):
                    reward_calc=RatesChangeReward())
     env.step(1)
     assert env.step(None)[1] == 0.8
+
+
+def test_holding_is_always_a_valid_action(rates):
+    rates.add_record(entry("BTC_ETH", "2"), entry("ETH_BTC", "10")) \
+        .add_record(entry("BTC_ETH", "1"), entry("ETH_BTC", "12")) \
+        .add_record(entry("BTC_ETH", "3"), entry("ETH_BTC", "20")).finish()
+    action_filter = ActionFilter(make_env(rates, start_coin="BTC", index_to_coin={3: "BTC", 5: "ETH"}))
+    # holding is any action idx not specified in index_to_coin
+    assert action_filter(([0, 0.0, 0.5, 0.0, 0.1], 9)) is True
+    assert action_filter(([1, 0.0, 0.5, 0.0, 0.1], 9)) is True
+
+
+def test_exchange_to_itself_is_an_invalid_action(rates):
+    rates.add_record(entry("BTC_ETH", "2"), entry("ETH_BTC", "10")) \
+        .add_record(entry("BTC_ETH", "1"), entry("ETH_BTC", "12")) \
+        .add_record(entry("BTC_ETH", "3"), entry("ETH_BTC", "20")).finish()
+    action_filter = ActionFilter(make_env(rates, start_coin="BTC", index_to_coin={3: "BTC", 5: "ETH"}))
+    assert action_filter(([0, 0.0, 0.5, 0.0, 0.1], 3)) is False
+    assert action_filter(([1, 0.0, 0.5, 0.0, 0.1], 5)) is False
+
+
+def test_exchange_to_other_coin_is_valid_action(rates):
+    rates.add_record(entry("BTC_ETH", "2"), entry("ETH_BTC", "10")) \
+        .add_record(entry("BTC_ETH", "1"), entry("ETH_BTC", "12")) \
+        .add_record(entry("BTC_ETH", "3"), entry("ETH_BTC", "20")).finish()
+    action_filter = ActionFilter(make_env(rates, start_coin="BTC", index_to_coin={3: "BTC", 5: "ETH"}))
+    assert action_filter(([0, 0.0, 0.5, 0.0, 0.1], 5)) is True
+    assert action_filter(([1, 0.0, 0.5, 0.0, 0.1], 3)) is True
+

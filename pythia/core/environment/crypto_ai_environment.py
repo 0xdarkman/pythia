@@ -131,3 +131,15 @@ class CryptoAiEnvironment(CryptoEnvironment):
 
 class WindowError(Exception):
     pass
+
+
+class ActionFilter:
+    def __init__(self, env):
+        self.env = env
+
+    def __call__(self, state_action):
+        s, a = state_action
+        if a not in self.env.action_to_coin:
+            return True
+
+        return s[0] != self.env.coin_to_index[self.env.action_to_coin[a]]

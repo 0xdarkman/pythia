@@ -2,7 +2,7 @@ import pytest
 import tensorflow as tf
 
 from pythia.core.agents.td_agent import TDAgent
-from pythia.core.environment.crypto_ai_environment import CryptoAiEnvironment
+from pythia.core.environment.crypto_ai_environment import CryptoAiEnvironment, ActionFilter
 from pythia.core.environment.crypto_rewards import TotalBalanceReward
 from pythia.core.reinforcement.e_greedy_policies import EpsilonGreedyPolicy, NormalEpsilonGreedyPolicy
 from pythia.core.reinforcement.q_neuronal import QNeuronal
@@ -65,3 +65,14 @@ def test_td_agent_produces_sensible_regression_model_predictions(env):
 
     assert Q[[0, 0.0, 1.0, 0.0], 2] > Q[[0, 0.0, 1.0, 0.0], 0]
     assert Q[[0, 0.0, 1.0, 0.0], 2] > Q[[0, 0.0, 1.0, 0.0], 1]
+
+
+def test_td_agent_does_not_perform_invalid_actions_when_filtered(env):
+    q_table = QTable([0, 1, 2], initializer=lambda: 0)
+    agent = TDAgent(EpsilonGreedyPolicy(0.2, ActionFilter(env)), q_table, 1, 0.9, 0.1)
+    sess = CryptoExchangeSession(env, agent)
+    for _ in range(0, 100):
+        sess.run()
+
+    assert q_table[[0, 0.0, 1.0, 0.0], 1] == 0
+
