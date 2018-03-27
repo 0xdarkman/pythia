@@ -194,3 +194,61 @@ def analyze(rates):
         report.append(k, mean, sd, median, min(r), max(r), dif)
 
     return report
+
+
+class ExchangeRanges:
+    def __init__(self):
+        self.ranges = dict()
+
+    def __getitem__(self, pair_name):
+        return self.ranges[pair_name]
+
+    def extend(self, pair):
+        if pair.name not in self.ranges:
+            self.ranges[pair.name] = pair
+        else:
+            self.ranges[pair.name].extend(pair)
+
+        return self
+
+    def normalize_rate(self, name, rate):
+        r = self.ranges[name]
+        return (float(rate) - r.min) / (r.max - r.min)
+
+    def __len__(self):
+        return len(self.ranges)
+
+
+class PairRange:
+    def __init__(self, index, named_pair):
+        self.min_position = index
+        self.max_position = index
+        name, pair = named_pair
+        self.name = name
+        self.min = float(pair.rate)
+        self.max = float(pair.rate)
+
+    def extend(self, other):
+        assert self.name == other.name
+        if other.min < self.min:
+            self.min = other.min
+            self.min_position = other.min_position
+        if other.max > self.max:
+            self.max = other.max
+            self.max_position = other.max_position
+        return self
+
+
+def _to_pair_ranges(idx_pairs):
+    idx, pairs = idx_pairs
+    return map(lambda pair: PairRange(idx, pair), pairs.items())
+
+
+def calculate_exchange_ranges(rates):
+    def fold_to_extreme_values(ranges, pair):
+        return ranges.extend(pair)
+
+    def extend_exchange_ranges(ranges, idx_pairs):
+        return reduce(fold_to_extreme_values, _to_pair_ranges(idx_pairs), ranges)
+
+    return reduce(extend_exchange_ranges, enumerate(rates), ExchangeRanges())

@@ -1,53 +1,8 @@
 from decimal import Decimal
 from collections import deque
-from functools import reduce
 
 from pythia.core.environment.crypto_environment import CryptoEnvironment, EnvironmentFinished
-
-
-class ExchangeRanges:
-    def __init__(self):
-        self.ranges = dict()
-
-    def extend(self, pair):
-        if pair.name not in self.ranges:
-            self.ranges[pair.name] = pair
-        else:
-            self.ranges[pair.name].extend(pair)
-
-        return self
-
-    def normalize_rate(self, name, rate):
-        r = self.ranges[name]
-        return (float(rate) - r.min) / (r.max - r.min)
-
-    def __len__(self):
-        return len(self.ranges)
-
-
-class PairRanges:
-    def __init__(self, named_pair):
-        name, pair = named_pair
-        self.name = name
-        self.min = float(pair.rate)
-        self.max = float(pair.rate)
-
-    def extend(self, other):
-        assert self.name == other.name
-        self.min = min(self.min, other.min)
-        self.max = max(self.max, other.max)
-        return self
-
-
-def _pairs_to_extremes(pairs):
-    return map(lambda pair: PairRanges(pair), pairs.items())
-
-
-def _calculate_exchange_ranges(rates):
-    def extend_exchange_ranges(ranges, pairs):
-        return reduce(lambda r, p: r.extend(p), _pairs_to_extremes(pairs), ranges)
-
-    return reduce(extend_exchange_ranges, rates, ExchangeRanges())
+from pythia.core.streams.shape_shift_rates import calculate_exchange_ranges
 
 
 def _make_coin_to_index(action_mapping, start_coin):
@@ -76,7 +31,7 @@ class CryptoAiEnvironment(CryptoEnvironment):
         :param reward_calc: callable object (CryptoAiEnvironment):float that calculates a reward given the environment
         :param exchange_filter: (optional) list that filters the rates in the state showing only the coins specified
         """
-        self.exchange_ranges = _calculate_exchange_ranges(rates)
+        self.exchange_ranges = calculate_exchange_ranges(rates)
         self.action_to_coin = action_to_coin
         self.coin_to_index = _make_coin_to_index(self.action_to_coin, start_coin)
         self.reward_calc = reward_calc

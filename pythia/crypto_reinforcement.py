@@ -5,7 +5,7 @@ import tensorflow as tf
 from pythia.core.agents.td_agent import TDAgent
 from pythia.core.environment.crypto_ai_environment import CryptoAiEnvironment, ActionFilter
 from pythia.core.environment.crypto_rewards import TotalBalanceReward
-from pythia.core.reinforcement.e_greedy_policies import NormalEpsilonGreedyPolicy, EpsilonGreedyPolicy
+from pythia.core.reinforcement.e_greedy_policies import NormalEpsilonGreedyPolicy, EpsilonGreedyPolicy, RiggedPolicy
 from pythia.core.reinforcement.q_neuronal import QNeuronal
 from pythia.core.reinforcement.q_regression_model import QRegressionModel
 from pythia.core.sessions.crypto_exchange_session import CryptoExchangeSession
@@ -36,7 +36,8 @@ if __name__ == '__main__':
             model = QRegressionModel(3 + WINDOW * 2, [100], LEARNING_RATE)
             Q = QNeuronal(model, MEMORY_SIZE)
             episode = 0
-            agent = TDAgent(EpsilonGreedyPolicy(0.1, ActionFilter(env)), Q, n, GAMMA, ALPHA)
+            policy = RiggedPolicy(env, EpsilonGreedyPolicy(0.1, ActionFilter(env)), 0.5, 10)
+            agent = TDAgent(policy, Q, n, GAMMA, ALPHA)
             sess = CryptoExchangeSession(env, agent)
 
         for e in range(TOTAL_EPISODES):
@@ -45,9 +46,10 @@ if __name__ == '__main__':
                 sess.run()
             print("Episode {} finished.".format(episode))
             print("The td agent crated a coin difference of: {0}".format(sess.difference()))
+            print("Rigged actions: {}", policy.rigging_count)
+
 
         print("Current balance: {0} {1}".format(env.amount, env.coin))
         print("Exchange actions: {0}".format(vis.actions))
-
         rates.reset()
         vis.render("BTC_ETH")
