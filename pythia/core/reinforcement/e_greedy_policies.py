@@ -5,7 +5,7 @@ from collections import deque
 
 import numpy as np
 
-from pythia.core.streams.shape_shift_rates import calculate_exchange_ranges
+from pythia.core.streams.shape_shift_rates import calculate_exchange_ranges, interim_lookahead
 
 
 class Policy:
@@ -95,8 +95,8 @@ class RiggedPolicy:
         return self.inner_policy.select(state, q_function)
 
     def _make_rigged_actions(self):
-        # TODO deepcopy doesn't work with non-string streams
-        exchange_ranges = calculate_exchange_ranges(self._take_up_to_distance(copy.deepcopy(self.env.rates_stream)))
+        with interim_lookahead(self.env.rates_stream):
+            exchange_ranges = calculate_exchange_ranges(self._take_up_to_distance(self.env.rates_stream))
         if len(exchange_ranges) == 0:
             return deque()
 

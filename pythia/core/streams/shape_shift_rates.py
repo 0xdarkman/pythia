@@ -2,6 +2,7 @@ import json
 
 from decimal import Decimal
 from functools import reduce
+from io import SEEK_CUR
 from math import sqrt
 
 SUPPORTED_COINS = [
@@ -135,6 +136,31 @@ def rates_filter(in_stream, exchanges):
         return rates_str + "[ " + ",".join(map(str, f.values())) + "]\n"
 
     return reduce(concat_rates, in_stream, "")
+
+
+class InterimLookahead:
+    def __init__(self, rates):
+        self.rates = rates
+        self.cache_idx = None
+        self.seek_offset = None
+
+    def __enter__(self):
+        if self.rates.cache is not None:
+            self.cache_idx = self.rates.cache_idx
+        else:
+            self.seek_offset = self.rates.stream.seek(0, SEEK_CUR)
+
+        return self.rates
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if self.cache_idx is not None:
+            self.rates.cache_idx = self.cache_idx
+        else:
+            self.rates.stream.seek(self.seek_offset)
+
+
+def interim_lookahead(rates):
+    return InterimLookahead(rates)
 
 
 ANALYSIS_STR_HEADER = " EXCHANGE |   MEAN   |    SD    |  MEDIAN  |   MIN   |   MAX   |   DIF   \n" \

@@ -13,8 +13,8 @@ from pythia.core.streams.shape_shift_rates import ShapeShiftRates
 from pythia.core.utils.profiling import clock_block
 from pythia.core.visualization.coin_exchange_visualizer import CoinExchangeVisualizer
 
-COIN_A = "RLC"
-COIN_B = "WINGS"
+COIN_A = "BTC"
+COIN_B = "ETH"
 LEARNING_RATE = 0.01
 MEMORY_SIZE = 10
 ALPHA = 0.2
@@ -30,13 +30,15 @@ if __name__ == '__main__':
         with clock_block("Initialization"):
             rates = ShapeShiftRates(stream, preload=True)
             vis = CoinExchangeVisualizer(rates)
-            env = CryptoAiEnvironment(rates, COIN_A, "0.1", WINDOW, {1: COIN_A, 2: COIN_B}, TotalBalanceReward())
+            env = CryptoAiEnvironment(rates, COIN_A, "10", WINDOW, {1: COIN_A, 2: COIN_B}, TotalBalanceReward())
             env.register_listener(vis.record_exchange)
 
             model = QRegressionModel(3 + WINDOW * 2, [100], LEARNING_RATE)
             Q = QNeuronal(model, MEMORY_SIZE)
             episode = 0
-            policy = RiggedPolicy(env, EpsilonGreedyPolicy(0.1, ActionFilter(env)), 0.5, 10)
+            policy = RiggedPolicy(env,
+                                  NormalEpsilonGreedyPolicy(lambda: START_EPS / (episode + 1), ActionFilter(env)),
+                                  0.5, 10)
             agent = TDAgent(policy, Q, n, GAMMA, ALPHA)
             sess = CryptoExchangeSession(env, agent)
 
@@ -46,7 +48,6 @@ if __name__ == '__main__':
                 sess.run()
             print("Episode {} finished.".format(episode))
             print("The td agent crated a coin difference of: {0}".format(sess.difference()))
-            print("Rigged actions: {}", policy.rigging_count)
 
 
         print("Current balance: {0} {1}".format(env.amount, env.coin))

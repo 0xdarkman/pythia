@@ -1,5 +1,6 @@
 from decimal import Decimal
 
+
 class CryptoEnvironment:
     def __init__(self, rates, start_coin, start_amount):
         """

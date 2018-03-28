@@ -1,8 +1,9 @@
+import copy
 import io
 
 import pytest
 
-from pythia.core.streams.shape_shift_rates import ShapeShiftRates, rates_filter
+from pythia.core.streams.shape_shift_rates import ShapeShiftRates, rates_filter, interim_lookahead
 from pythia.tests.crypto_doubles import PairEntryStub, RecordsStub
 
 
@@ -131,3 +132,18 @@ def test_preloaded(stream):
     assert pairs["ETH_1ST"] == entry("ETH_1ST", "1.1", 0.1, 4.1, 1.1, "0.5")
     with pytest.raises(StopIteration):
         next(iter(rates))
+
+
+@pytest.mark.parametrize("should_preload", [False, True])
+def test_interim_look_ahead(stream, should_preload):
+    stream.add_record(entry("ETH_SALT", 1.1, 0.7, 6.2, 0.1, 0.5))\
+        .add_record(entry("ETH_SALT", 1.2, 0.5, 6.7, 0.3, 0.9))\
+        .add_record(entry("ETH_SALT", 1.3, 0.6, 6.3, 0.2, 0.7)).finish()
+
+    rates = ShapeShiftRates(stream, preload=should_preload)
+    next(rates)
+    with interim_lookahead(rates):
+        assert next(rates)["ETH_SALT"] == entry("ETH_SALT", 1.2, 0.5, 6.7, 0.3, 0.9)
+        assert next(rates)["ETH_SALT"] == entry("ETH_SALT", 1.3, 0.6, 6.3, 0.2, 0.7)
+    assert next(rates)["ETH_SALT"] == entry("ETH_SALT", 1.2, 0.5, 6.7, 0.3, 0.9)
+    assert next(rates)["ETH_SALT"] == entry("ETH_SALT", 1.3, 0.6, 6.3, 0.2, 0.7)
