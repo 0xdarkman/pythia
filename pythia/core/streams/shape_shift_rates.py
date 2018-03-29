@@ -257,24 +257,59 @@ class PairRange:
     def extend(self, other):
         assert self.name == other.name
         if other.min < self.min:
-            self.min = other.min
-            self.min_position = other.min_position
+            self._set_minimum(other)
         if other.max > self.max:
-            self.max = other.max
-            self.max_position = other.max_position
+            self._set_maximum(other)
         return self
 
+    def _set_maximum(self, other):
+        self.max = other.max
+        self.max_position = other.max_position
 
-def _to_pair_ranges(idx_pairs):
+    def _set_minimum(self, other):
+        self.min = other.min
+        self.min_position = other.min_position
+
+
+class PairMaxDifference(PairRange):
+    def __init__(self, index, named_pair):
+        super().__init__(index, named_pair)
+        self.max_difference = 0
+        self.start_position = 0
+        self.end_position = 0
+
+    def _set_minimum(self, other):
+        super()._set_minimum(other)
+        d = self.max - self.min
+        if d > self.max_difference:
+            self.max_difference = d
+            self.end_position = self.min_position
+            self.start_position = self.max_position
+
+    def _set_maximum(self, other):
+        super()._set_maximum(other)
+        self.min = self.max
+        self.min_position = self.max_position
+
+
+def _pair_to_accumulator(idx_pairs, accumulator):
     idx, pairs = idx_pairs
-    return map(lambda pair: PairRange(idx, pair), pairs.items())
+    return map(lambda pair: accumulator(idx, pair), pairs.items())
 
 
-def calculate_exchange_ranges(rates):
+def _reduce_to_pairs_to_accumulator(rates, accumulator):
     def fold_to_extreme_values(ranges, pair):
         return ranges.extend(pair)
 
     def extend_exchange_ranges(ranges, idx_pairs):
-        return reduce(fold_to_extreme_values, _to_pair_ranges(idx_pairs), ranges)
+        return reduce(fold_to_extreme_values, _pair_to_accumulator(idx_pairs, accumulator), ranges)
 
     return reduce(extend_exchange_ranges, enumerate(rates), ExchangeRanges())
+
+
+def calculate_exchange_ranges(rates):
+    return _reduce_to_pairs_to_accumulator(rates, PairRange)
+
+
+def calculate_exchange_max_differences(rates):
+    return _reduce_to_pairs_to_accumulator(rates, PairMaxDifference)

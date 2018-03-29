@@ -167,3 +167,37 @@ def test_count_number_of_riggings(q_function):
     env.step(policy.select(A_STATE, q_function))
     env.step(policy.select(A_STATE, q_function))
     assert policy.rigging_count == 1
+
+
+def test_return_maximum_difference_exchange_actions(q_function):
+    env = CryptoEnvironmentStub(action_to_coin={1: "BTC", 2: "ETH"}, active_coin="BTC")
+    env.add_record(entry("BTC_ETH", "3")). \
+        add_record(entry("BTC_ETH", "1")). \
+        add_record(entry("BTC_ETH", "5")). \
+        add_record(entry("BTC_ETH", "2")). \
+        add_record(entry("BTC_ETH", "6")). \
+        add_record(entry("BTC_ETH", "4")).finish()
+    policy = make_policy(env, PolicyDummy(), 1.0)
+    assert policy.select(A_STATE, q_function) == 0
+    assert policy.select(A_STATE, q_function) == 0
+    assert policy.select(A_STATE, q_function) == 2
+    assert policy.select(A_STATE, q_function) == 1
+
+
+@pytest.mark.skip
+def test_return_good_exchange_in_complex_environment(q_function):
+    env = CryptoEnvironmentStub(action_to_coin={1: "BTC", 2: "ETH"}, active_coin="BTC")
+    env.add_record(entry("BTC_ETH", "2")). \
+        add_record(entry("BTC_ETH", "3")). \
+        add_record(entry("BTC_ETH", "1")). \
+        add_record(entry("BTC_ETH", "2")). \
+        add_record(entry("BTC_ETH", "4")). \
+        add_record(entry("BTC_ETH", "6")). \
+        add_record(entry("BTC_ETH", "4")). \
+        add_record(entry("BTC_ETH", "5")). \
+        add_record(entry("BTC_ETH", "3")). \
+        add_record(entry("BTC_ETH", "1")). \
+        add_record(entry("BTC_ETH", "2")). \
+        add_record(entry("BTC_ETH", "7")). \
+        add_record(entry("BTC_ETH", "3")).finish()
+

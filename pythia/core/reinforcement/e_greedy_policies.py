@@ -1,11 +1,10 @@
-import copy
 import itertools
 import random
 from collections import deque
 
 import numpy as np
 
-from pythia.core.streams.shape_shift_rates import calculate_exchange_ranges, interim_lookahead
+from pythia.core.streams.shape_shift_rates import interim_lookahead, calculate_exchange_max_differences
 
 
 class Policy:
@@ -96,7 +95,7 @@ class RiggedPolicy:
 
     def _make_rigged_actions(self):
         with interim_lookahead(self.env.rates_stream):
-            exchange_ranges = calculate_exchange_ranges(self._take_up_to_distance(self.env.rates_stream))
+            exchange_ranges = calculate_exchange_max_differences(self._take_up_to_distance(self.env.rates_stream))
         if len(exchange_ranges) == 0:
             return deque()
 
@@ -124,9 +123,9 @@ class RiggedPolicy:
     def _find_best_exchange(self, ranges, exchanges):
         best_target = None
         biggest_diff = float("-inf")
-        positive_exchanges = lambda e: ranges[e].max_position < ranges[e].min_position
+        positive_exchanges = lambda e: ranges[e].max_difference > 0
         for target in filter(positive_exchanges, exchanges):
-            diff = ranges[target].max - ranges[target].min
+            diff = ranges[target].max_difference
             if diff > biggest_diff:
                 biggest_diff = diff
                 best_target = target
@@ -136,9 +135,9 @@ class RiggedPolicy:
     def _make_rigged_actions_sequence(self, best_target, ranges):
         exchange_to = self._coin_to_action(best_target.split('_')[1])
         exchange_back = self._coin_to_action(self.env.coin)
-        max_pos = ranges[best_target].max_position
-        diff_pos = max_pos - ranges[best_target].min_position
-        return [0] * max_pos + [exchange_to] + [0] * (diff_pos - 1) + [exchange_back]
+        start_pos = ranges[best_target].start_position
+        diff_pos = ranges[best_target].end_position - start_pos
+        return [0] * start_pos + [exchange_to] + [0] * (diff_pos - 1) + [exchange_back]
 
     def _coin_to_action(self, coin):
         for k, v in self.env.action_to_coin.items():
