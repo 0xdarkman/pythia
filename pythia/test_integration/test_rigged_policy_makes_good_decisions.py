@@ -1,3 +1,6 @@
+import inspect
+import os
+
 import pytest
 
 from pythia.core.environment.crypto_ai_environment import CryptoAiEnvironment
@@ -20,7 +23,8 @@ class QDummy:
 
 @pytest.fixture
 def env():
-    path = "test_data/2018-02-28-shapeshift-BTC_ETH.json".format(COIN_A, COIN_B)
+    dir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+    path = os.path.join(dir, "test_data/2018-02-28-shapeshift-BTC_ETH.json".format(COIN_A, COIN_B))
     with open(path) as stream:
         rates = ShapeShiftRates(stream, preload=True)
         yield CryptoAiEnvironment(rates, COIN_A, "10", 1, {1: COIN_A, 2: COIN_B}, TotalBalanceReward())
