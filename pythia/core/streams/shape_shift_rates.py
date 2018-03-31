@@ -239,6 +239,9 @@ class ExchangeRanges:
 
     def normalize_rate(self, name, rate):
         r = self.ranges[name]
+        if (r.max - r.min) == 0:
+            return 0
+
         return (float(rate) - r.min) / (r.max - r.min)
 
     def __len__(self):

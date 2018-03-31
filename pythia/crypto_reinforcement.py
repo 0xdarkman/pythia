@@ -14,8 +14,8 @@ from pythia.core.streams.shape_shift_rates import ShapeShiftRates
 from pythia.core.utils.profiling import clock_block
 from pythia.core.visualization.coin_exchange_visualizer import CoinExchangeVisualizer
 
-COIN_A = "BTC"
-COIN_B = "ETH"
+COIN_A = "RLC"
+COIN_B = "WINGS"
 LEARNING_RATE = 0.01
 MEMORY_SIZE = 10
 ALPHA = 0.2
@@ -39,7 +39,7 @@ if __name__ == '__main__':
             episode = 0
             policy = RiggedPolicy(env,
                                   NormalEpsilonGreedyPolicy(lambda: START_EPS / (episode + 1), ActionFilter(env)),
-                                  0.5, rigging_distance=STOP_AT_THRESHOLD, threshold=0.1)
+                                  0.5, rigging_distance=STOP_AT_THRESHOLD, threshold=0.5)
             agent = TDAgent(policy, Q, n, GAMMA, ALPHA)
             sess = CryptoExchangeSession(env, agent)
 
