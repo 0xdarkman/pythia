@@ -2,7 +2,7 @@ import random
 
 import pytest
 
-from pythia.core.reinforcement.e_greedy_policies import RiggedPolicy
+from pythia.core.reinforcement.e_greedy_policies import RiggedPolicy, STOP_AT_THRESHOLD
 from pythia.tests.crypto_doubles import entry, RecordsStub, RatesStub
 
 
@@ -65,8 +65,8 @@ def q_function():
     return QDummy()
 
 
-def make_policy(env, inner_policy, chance, distance=None):
-    return RiggedPolicy(env, inner_policy, chance, distance)
+def make_policy(env, inner_policy, chance, threshold=None, distance=None):
+    return RiggedPolicy(env, inner_policy, chance, threshold, distance)
 
 
 def test_zero_chance_of_rigging_just_invokes_inner_policy(policy_spy, q_function):
@@ -100,7 +100,7 @@ def test_rigging_looks_ahead_only_specified_distance(q_function):
         add_record(entry("BTC_ETH", "6")). \
         add_record(entry("BTC_ETH", "1")). \
         add_record(entry("BTC_ETH", "2")).finish()
-    policy = make_policy(env, PolicyDummy(), 1.0, 3)
+    policy = make_policy(env, PolicyDummy(), 1.0, distance=3)
     assert policy.select(A_STATE, q_function) == 0
     assert policy.select(A_STATE, q_function) == 2
     assert policy.select(A_STATE, q_function) == 1
@@ -171,20 +171,48 @@ def test_count_number_of_riggings(q_function):
 
 def test_return_maximum_difference_exchange_actions(q_function):
     env = CryptoEnvironmentStub(action_to_coin={1: "BTC", 2: "ETH"}, active_coin="BTC")
-    env.add_record(entry("BTC_ETH", "3")). \
-        add_record(entry("BTC_ETH", "1")). \
-        add_record(entry("BTC_ETH", "5")). \
+    env.add_record(entry("BTC_ETH", "5")). \
         add_record(entry("BTC_ETH", "2")). \
+        add_record(entry("BTC_ETH", "3")). \
+        add_record(entry("BTC_ETH", "1")). \
         add_record(entry("BTC_ETH", "6")). \
         add_record(entry("BTC_ETH", "4")).finish()
     policy = make_policy(env, PolicyDummy(), 1.0)
+    assert policy.select(A_STATE, q_function) == 2
     assert policy.select(A_STATE, q_function) == 0
     assert policy.select(A_STATE, q_function) == 0
+    assert policy.select(A_STATE, q_function) == 1
+
+
+def test_ignore_differences_below_threshold(q_function, policy_spy):
+    env = CryptoEnvironmentStub(action_to_coin={1: "BTC", 2: "ETH"}, active_coin="BTC")
+    env.add_record(entry("BTC_ETH", "1")). \
+        add_record(entry("BTC_ETH", "0.81")).finish()
+    policy = make_policy(env, policy_spy, 1.0, threshold=0.2)
+    policy.select(A_STATE, q_function)
+    assert policy_spy.received_select_args == (A_STATE, q_function)
+
+
+def test_calculated_differences_are_normalized(q_function, policy_spy):
+    env = CryptoEnvironmentStub(action_to_coin={1: "BTC", 2: "ETH"}, active_coin="BTC")
+    env.add_record(entry("BTC_ETH", "10")). \
+        add_record(entry("BTC_ETH", "8.1")).finish()
+    policy = make_policy(env, policy_spy, 1.0, threshold=0.2)
+    policy.select(A_STATE, q_function)
+    assert policy_spy.received_select_args == (A_STATE, q_function)
+
+
+def test_stop_at_threshold(q_function):
+    env = CryptoEnvironmentStub(action_to_coin={1: "BTC", 2: "ETH"}, active_coin="BTC")
+    env.add_record(entry("BTC_ETH", "10")). \
+        add_record(entry("BTC_ETH", "8")). \
+        add_record(entry("BTC_ETH", "12")). \
+        add_record(entry("BTC_ETH", "6")).finish()
+    policy = make_policy(env, PolicyDummy(), 1.0, distance=STOP_AT_THRESHOLD, threshold=0.2)
     assert policy.select(A_STATE, q_function) == 2
     assert policy.select(A_STATE, q_function) == 1
 
 
-@pytest.mark.skip
 def test_return_good_exchange_in_complex_environment(q_function):
     env = CryptoEnvironmentStub(action_to_coin={1: "BTC", 2: "ETH"}, active_coin="BTC")
     env.add_record(entry("BTC_ETH", "2")). \
@@ -200,4 +228,14 @@ def test_return_good_exchange_in_complex_environment(q_function):
         add_record(entry("BTC_ETH", "2")). \
         add_record(entry("BTC_ETH", "7")). \
         add_record(entry("BTC_ETH", "3")).finish()
-
+    policy = make_policy(env, PolicyDummy(), 1.0)
+    assert policy.select(A_STATE, q_function) == 0
+    assert policy.select(A_STATE, q_function) == 0
+    assert policy.select(A_STATE, q_function) == 0
+    assert policy.select(A_STATE, q_function) == 0
+    assert policy.select(A_STATE, q_function) == 0
+    assert policy.select(A_STATE, q_function) == 2
+    assert policy.select(A_STATE, q_function) == 0
+    assert policy.select(A_STATE, q_function) == 0
+    assert policy.select(A_STATE, q_function) == 0
+    assert policy.select(A_STATE, q_function) == 1

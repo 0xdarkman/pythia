@@ -5,7 +5,8 @@ import tensorflow as tf
 from pythia.core.agents.td_agent import TDAgent
 from pythia.core.environment.crypto_ai_environment import CryptoAiEnvironment, ActionFilter
 from pythia.core.environment.crypto_rewards import TotalBalanceReward
-from pythia.core.reinforcement.e_greedy_policies import NormalEpsilonGreedyPolicy, EpsilonGreedyPolicy, RiggedPolicy
+from pythia.core.reinforcement.e_greedy_policies import NormalEpsilonGreedyPolicy, EpsilonGreedyPolicy, RiggedPolicy, \
+    STOP_AT_THRESHOLD
 from pythia.core.reinforcement.q_neuronal import QNeuronal
 from pythia.core.reinforcement.q_regression_model import QRegressionModel
 from pythia.core.sessions.crypto_exchange_session import CryptoExchangeSession
@@ -38,7 +39,7 @@ if __name__ == '__main__':
             episode = 0
             policy = RiggedPolicy(env,
                                   NormalEpsilonGreedyPolicy(lambda: START_EPS / (episode + 1), ActionFilter(env)),
-                                  0.5, 10)
+                                  0.5, rigging_distance=STOP_AT_THRESHOLD, threshold=0.1)
             agent = TDAgent(policy, Q, n, GAMMA, ALPHA)
             sess = CryptoExchangeSession(env, agent)
 

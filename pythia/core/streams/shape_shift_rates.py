@@ -272,15 +272,21 @@ class PairRange:
 
 
 class PairMaxDifference(PairRange):
-    def __init__(self, index, named_pair):
+    def __init__(self, index, named_pair, target_diff):
         super().__init__(index, named_pair)
+        self.target_diff = target_diff
         self.max_difference = 0
         self.start_position = 0
         self.end_position = 0
 
+    def extend(self, other):
+        if self.target_diff is not None and self.max_difference >= self.target_diff:
+            return
+        super().extend(other)
+
     def _set_minimum(self, other):
         super()._set_minimum(other)
-        d = self.max - self.min
+        d = (self.max - self.min) / self.max
         if d > self.max_difference:
             self.max_difference = d
             self.end_position = self.min_position
@@ -292,17 +298,25 @@ class PairMaxDifference(PairRange):
         self.min_position = self.max_position
 
 
+class PairMaxDiffFactory:
+    def __init__(self, target_diff):
+        self.target_diff = target_diff
+
+    def __call__(self, index, named_pair):
+        return PairMaxDifference(index, named_pair, self.target_diff)
+
+
 def _pair_to_accumulator(idx_pairs, accumulator):
     idx, pairs = idx_pairs
     return map(lambda pair: accumulator(idx, pair), pairs.items())
 
 
 def _reduce_to_pairs_to_accumulator(rates, accumulator):
-    def fold_to_extreme_values(ranges, pair):
-        return ranges.extend(pair)
+    def fold_to_accumulator(acc, pair):
+        return acc.extend(pair)
 
     def extend_exchange_ranges(ranges, idx_pairs):
-        return reduce(fold_to_extreme_values, _pair_to_accumulator(idx_pairs, accumulator), ranges)
+        return reduce(fold_to_accumulator, _pair_to_accumulator(idx_pairs, accumulator), ranges)
 
     return reduce(extend_exchange_ranges, enumerate(rates), ExchangeRanges())
 
@@ -311,5 +325,6 @@ def calculate_exchange_ranges(rates):
     return _reduce_to_pairs_to_accumulator(rates, PairRange)
 
 
-def calculate_exchange_max_differences(rates):
-    return _reduce_to_pairs_to_accumulator(rates, PairMaxDifference)
+def calculate_exchange_max_differences(rates, target_diff=None):
+    maxDiff = PairMaxDiffFactory(target_diff)
+    return _reduce_to_pairs_to_accumulator(rates, maxDiff)

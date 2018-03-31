@@ -1,6 +1,7 @@
 import itertools
 import random
 from collections import deque
+from functools import reduce
 
 import numpy as np
 
@@ -65,8 +66,11 @@ class NormalEpsilonGreedyPolicy(Policy):
         return action_space[np.argmax(vs + np.random.randn(1, len(action_space)) * e)]
 
 
+STOP_AT_THRESHOLD = "stop_at_threshold"
+
+
 class RiggedPolicy:
-    def __init__(self, env, inner_policy, rigging_chance, rigging_distance=None):
+    def __init__(self, env, inner_policy, rigging_chance, threshold=None, rigging_distance=None):
         """
         The rigged policy forces lucrative coin exchanges instead of completely random action selection dependent
         on finding valid lucrative exchanges and the rigging chance rate
@@ -79,6 +83,7 @@ class RiggedPolicy:
         self.env = env
         self.inner_policy = inner_policy
         self.rigging_chance = rigging_chance
+        self.threshold = threshold
         self.rigging_distance = rigging_distance
         self.rigged_actions = deque()
         self.rigging_count = 0
@@ -95,7 +100,9 @@ class RiggedPolicy:
 
     def _make_rigged_actions(self):
         with interim_lookahead(self.env.rates_stream):
-            exchange_ranges = calculate_exchange_max_differences(self._take_up_to_distance(self.env.rates_stream))
+            target_diff = self.threshold if self.rigging_distance == STOP_AT_THRESHOLD else None
+            exchange_ranges = calculate_exchange_max_differences(
+                self._take_up_to_distance(self.env.rates_stream), target_diff)
         if len(exchange_ranges) == 0:
             return deque()
 
@@ -103,11 +110,13 @@ class RiggedPolicy:
         best_exchange = self._find_best_exchange(exchange_ranges, exchanges)
         if best_exchange is None:
             return deque()
+        if self.threshold is not None and best_exchange.max_difference < self.threshold:
+            return deque()
 
-        return deque(self._make_rigged_actions_sequence(best_exchange, exchange_ranges))
+        return deque(self._make_rigged_actions_sequence(best_exchange))
 
     def _take_up_to_distance(self, rates_stream):
-        if self.rigging_distance is None:
+        if self.rigging_distance is None or self.rigging_distance == STOP_AT_THRESHOLD:
             return rates_stream
         return itertools.islice(rates_stream, self.rigging_distance)
 
@@ -120,23 +129,26 @@ class RiggedPolicy:
 
         return list(map(make_exchange_pair, filter(is_not_active, self.env.action_to_coin.values())))
 
-    def _find_best_exchange(self, ranges, exchanges):
-        best_target = None
-        biggest_diff = float("-inf")
-        positive_exchanges = lambda e: ranges[e].max_difference > 0
-        for target in filter(positive_exchanges, exchanges):
-            diff = ranges[target].max_difference
-            if diff > biggest_diff:
-                biggest_diff = diff
-                best_target = target
+    @staticmethod
+    def _find_best_exchange(exchanges, targets):
+        def positive_exchanges(t):
+            return exchanges[t].max_difference > 0
 
-        return best_target
+        def to_biggest_difference(max_e, t):
+            e = exchanges[t]
+            if max_e is None:
+                return e
+            if e.max_difference > max_e.max_difference:
+                return e
+            return max_e
 
-    def _make_rigged_actions_sequence(self, best_target, ranges):
-        exchange_to = self._coin_to_action(best_target.split('_')[1])
+        return reduce(to_biggest_difference, filter(positive_exchanges, targets), None)
+
+    def _make_rigged_actions_sequence(self, exchange):
+        exchange_to = self._coin_to_action(exchange.name.split('_')[1])
         exchange_back = self._coin_to_action(self.env.coin)
-        start_pos = ranges[best_target].start_position
-        diff_pos = ranges[best_target].end_position - start_pos
+        start_pos = exchange.start_position
+        diff_pos = exchange.end_position - start_pos
         return [0] * start_pos + [exchange_to] + [0] * (diff_pos - 1) + [exchange_back]
 
     def _coin_to_action(self, coin):

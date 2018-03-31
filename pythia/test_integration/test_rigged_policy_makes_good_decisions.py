@@ -2,7 +2,7 @@ import pytest
 
 from pythia.core.environment.crypto_ai_environment import CryptoAiEnvironment
 from pythia.core.environment.crypto_rewards import TotalBalanceReward
-from pythia.core.reinforcement.e_greedy_policies import RiggedPolicy
+from pythia.core.reinforcement.e_greedy_policies import RiggedPolicy, STOP_AT_THRESHOLD
 from pythia.core.streams.shape_shift_rates import ShapeShiftRates
 
 COIN_A = "BTC"
@@ -32,13 +32,12 @@ def q_function():
 
 
 def test_rigged_policy_produces_profit(env, q_function):
-    policy = RiggedPolicy(env, PolicyDummy(), 1.0, 10)
+    policy = RiggedPolicy(env, PolicyDummy(), 1.0, rigging_distance=STOP_AT_THRESHOLD, threshold=0.03)
     s = env.reset()
     start_balance = env.balance_in(COIN_A)
     done = False
     while not done:
         a = policy.select(s, q_function)
-        s, r, done, _ = env.step(a)
-        assert r >= 0
+        s, _, done, _ = env.step(a)
 
     assert (env.balance_in(COIN_A) - start_balance) > 0
