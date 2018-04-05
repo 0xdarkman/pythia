@@ -139,6 +139,22 @@ def test_two_symbols_multiple_entry(symbol_a, symbol_b):
         next(rates)
 
 
+def test_reset(symbol_a, symbol_b):
+    with symbol_a as sa:
+        sa.add_record(entry(1.1, 1.4, 1.0, 1.2, 2100))
+        sa.add_record(entry(1.2, 1.5, 1.1, 1.3, 2200))
+        sa.add_record(entry(1.3, 1.6, 1.2, 1.4, 2300))
+    with symbol_b as sb:
+        sb.add_record(entry(2.1, 2.4, 2.0, 2.2, 4100))
+        sb.add_record(entry(2.2, 2.5, 2.1, 2.3, 4200))
+    rates = make_rates(symbol_a, symbol_b)
+    next(rates)
+    rates.reset()
+    e = next(rates)
+    assert e["SYMA_SYMB"] == entry(1.1 / 2.1, 1.4 / 2.4, 1.0 / 2.0, 1.2 / 2.2, 2100)
+    assert e["SYMB_SYMA"] == entry(2.1 / 1.1, 2.4 / 1.4, 2.0 / 1.0, 2.2 / 1.2, 4100)
+
+
 def test_interim_look_ahead(symbol_a, symbol_b):
     with symbol_a as sa:
         sa.add_record(entry(1.1, 1.4, 1.0, 1.2, 2100))

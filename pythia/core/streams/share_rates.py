@@ -73,6 +73,11 @@ class ShareRates:
         else:
             return (1, 1, 1, 1, volume_a), self.FIAT_TAG
 
+    def reset(self):
+        self.symbol_stream.seek(0)
+        if self.second_symbol_stream is not None:
+            self.second_symbol_stream.seek(0)
+
 
 class InterimLookahead:
     def __init__(self, rates):
