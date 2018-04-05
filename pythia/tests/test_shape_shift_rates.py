@@ -33,8 +33,8 @@ def entry(pair, rate, limit, maxLimit, min, minerFee):
 
 
 def test_empty(empty):
-    with pytest.raises(StopIteration) as e:
-        unused = next(iter(empty))
+    with pytest.raises(StopIteration):
+        next(iter(empty))
 
 
 def test_one_pair_entry(stream):
