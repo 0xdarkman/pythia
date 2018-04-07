@@ -2,7 +2,7 @@ import random
 
 import pytest
 
-from pythia.core.reinforcement.e_greedy_policies import RiggedPolicy, STOP_AT_THRESHOLD
+from pythia.core.environment.rigged_policy import STOP_AT_THRESHOLD, RiggedPolicy
 from pythia.tests.crypto_doubles import entry, RecordsStub, RatesStub
 
 

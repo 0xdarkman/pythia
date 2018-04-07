@@ -1,12 +1,16 @@
+import inspect
+import os
+
 import pytest
 
 from pythia.core.environment.stocks import StockData
-from pythia.core.reinforcement.stock_markov_process import StockMarkovProcess
+from pythia.core.environment.stock_markov_process import StockMarkovProcess
+from .common_fixtures import model_path
 
 
 @pytest.fixture
 def process():
-    return StockMarkovProcess(StockData("pythia/test_integration/test_model_data.csv"))
+    return StockMarkovProcess(StockData(model_path()))
 
 
 def test_first_step_states(process):

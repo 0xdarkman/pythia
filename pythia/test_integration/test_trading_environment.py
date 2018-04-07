@@ -1,11 +1,15 @@
+import inspect
+import os
+
 from pytest import approx, fixture
 
 from pythia.core.environment.environment_wrappers import TradingEnvironment, MINIMUM_ACTION
+from .common_fixtures import stock_path
 
 
 @fixture
 def environment():
-    return TradingEnvironment(1000.0, "pythia/test_integration/test_stock_data.csv")
+    return TradingEnvironment(1000.0, stock_path())
 
 
 def test_first_step_holding_action(environment):

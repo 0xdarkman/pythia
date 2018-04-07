@@ -1,11 +1,12 @@
 from pytest import fixture
 
 from pythia.core.environment.environment_wrappers import TradingEnvironmentTableWrapper
+from .common_fixtures import model_path
 
 
 @fixture
 def env():
-    return TradingEnvironmentTableWrapper(1000.0, "pythia/test_integration/test_model_data.csv", 0)
+    return TradingEnvironmentTableWrapper(1000.0, model_path(), 0)
 
 
 def make_state(price, step, buying_price):
@@ -95,7 +96,7 @@ def test_trading_episode(env):
 
 
 def test_penalize_invalid_actions():
-    e = TradingEnvironmentTableWrapper(1000.0, "pythia/test_integration/test_model_data.csv", 10)
+    e = TradingEnvironmentTableWrapper(1000.0, model_path(), 10)
     _, r, _, _ = e.step(1)
     assert r == 0.0
     _, r, _, _ = e.step(1)

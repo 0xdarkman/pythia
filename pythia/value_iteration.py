@@ -2,7 +2,7 @@ import numpy as np
 
 from pythia.core.environment.environment_wrappers import TradingEnvironment
 from pythia.core.environment.stocks import StockData
-from pythia.core.reinforcement.stock_markov_process import StockMarkovProcess
+from pythia.core.environment.stock_markov_process import StockMarkovProcess
 from pythia.core.reinforcement.value_table import ValueTable
 
 stock_data = StockData("tests/test_model_data.csv")

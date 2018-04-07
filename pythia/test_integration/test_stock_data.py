@@ -2,11 +2,11 @@ import numpy as np
 import pytest
 
 from pythia.core.environment.stocks import StockData, ExceededStockData
-
+from .common_fixtures import stock_path
 
 @pytest.fixture
 def stocks():
-    return StockData("pythia/test_integration/test_stock_data.csv")
+    return StockData(stock_path())
 
 
 def test_get_period_returns_sequence_of_stock_data(stocks):

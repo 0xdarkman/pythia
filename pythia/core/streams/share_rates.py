@@ -42,6 +42,11 @@ class Symbol:
         return self.stream.seek(*args, **kwargs)
 
 
+class IdentitySymbol:
+    def __iter__(self):
+        return self
+
+
 class ShareRates:
     FIAT_TAG = "CURRENCY"
 
