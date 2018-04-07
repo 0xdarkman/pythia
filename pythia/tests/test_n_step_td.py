@@ -2,9 +2,9 @@ from collections import deque
 
 import pytest
 
-from pythia.core.reinforcement.e_greedy_policies import EpsilonGreedyPolicy
-from pythia.core.reinforcement.n_step_sarsa import NStepSarsa
-from pythia.core.reinforcement.q_table import QTable
+from pythia.core.reinforcement.policies.e_greedy_policies import EpsilonGreedyPolicy
+from pythia.core.n_step_sarsa import NStepSarsa
+from pythia.core.reinforcement.reward_functions.q_table import QTable
 
 
 class EnvironmentSim(object):

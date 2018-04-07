@@ -1,6 +1,6 @@
 from collections import deque
 
-from pythia.core.reinforcement.q_function import QFunction
+from pythia.core.reinforcement.reward_functions.q_function import QFunction
 
 
 class Memory:

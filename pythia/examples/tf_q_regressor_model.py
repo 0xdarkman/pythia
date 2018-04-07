@@ -1,6 +1,6 @@
 import numpy as np
 
-from pythia.core.reinforcement.q_regression_model import QRegressionModel
+from pythia.core.reinforcement.models.q_regression_model import QRegressionModel
 
 model = QRegressionModel(1, [], 0.01)
 

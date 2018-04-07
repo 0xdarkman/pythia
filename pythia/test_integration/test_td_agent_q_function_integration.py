@@ -4,10 +4,10 @@ import tensorflow as tf
 from pythia.core.reinforcement.td_agent import TDAgent
 from pythia.core.environment.crypto_ai_environment import CryptoAiEnvironment, ActionFilter
 from pythia.core.environment.crypto_rewards import TotalBalanceReward
-from pythia.core.reinforcement.e_greedy_policies import EpsilonGreedyPolicy, NormalEpsilonGreedyPolicy
-from pythia.core.reinforcement.q_neuronal import QNeuronal
-from pythia.core.reinforcement.q_regression_model import QRegressionModel
-from pythia.core.reinforcement.q_table import QTable
+from pythia.core.reinforcement.policies.e_greedy_policies import EpsilonGreedyPolicy, NormalEpsilonGreedyPolicy
+from pythia.core.reinforcement.reward_functions.q_neuronal import QNeuronal
+from pythia.core.reinforcement.models.q_regression_model import QRegressionModel
+from pythia.core.reinforcement.reward_functions.q_table import QTable
 from pythia.core.sessions.crypto_exchange_session import CryptoExchangeSession
 from pythia.tests.crypto_doubles import RecordsStub, RatesStub, entry
 

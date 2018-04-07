@@ -1,6 +1,6 @@
 import tensorflow as tf
 
-from pythia.core.reinforcement.neural_network import NeuralNetwork, NotCompiledError, InvalidOperationError
+from pythia.core.reinforcement.models.neural_network import NeuralNetwork, NotCompiledError, InvalidOperationError
 
 
 class AnnBuilder:

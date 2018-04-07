@@ -1,8 +1,8 @@
 import pytest
 from pytest import approx
 
-from pythia.core.reinforcement.q_model import InvalidDataSize
-from pythia.core.reinforcement.q_regression_model import QRegressionModel
+from pythia.core.reinforcement.models.q_model import InvalidDataSize
+from pythia.core.reinforcement.models.q_regression_model import QRegressionModel
 
 import tensorflow as tf
 

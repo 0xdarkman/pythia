@@ -1,6 +1,4 @@
-from collections import deque
-
-from pythia.core.reinforcement.q_neuronal import QNeuronal
+from pythia.core.reinforcement.reward_functions.q_neuronal import QNeuronal
 
 
 class MockAnn:

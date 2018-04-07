@@ -1,4 +1,4 @@
-from pythia.core.reinforcement.q_table import QTable
+from pythia.core.reinforcement.reward_functions.q_table import QTable
 
 
 class QFunctionWrapper(QTable):

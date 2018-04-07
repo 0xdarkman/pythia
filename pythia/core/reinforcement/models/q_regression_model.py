@@ -1,6 +1,4 @@
-import tensorflow as tf
-
-from pythia.core.reinforcement.neural_network import NeuralNetwork
+from pythia.core.reinforcement.models.neural_network import NeuralNetwork
 from .q_model import QModel
 
 

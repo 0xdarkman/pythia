@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from pythia.core.reinforcement.e_greedy_policies import NormalEpsilonGreedyPolicy
+from pythia.core.reinforcement.policies.e_greedy_policies import NormalEpsilonGreedyPolicy
 from pythia.core.reinforcement.tests.common_doubles import MockFilter, Call
 from pythia.core.reinforcement.tests.q_doubles import QFunctionWrapper
 

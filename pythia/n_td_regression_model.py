@@ -2,10 +2,10 @@ import os
 import time
 
 from pythia.core.environment.environment_wrappers import TradingEnvironmentTableWrapper
-from pythia.core.reinforcement.e_greedy_policies import EpsilonGreedyPolicy, NormalEpsilonGreedyPolicy
-from pythia.core.reinforcement.n_step_sarsa import NStepSarsa
-from pythia.core.reinforcement.q_neuronal import QNeuronal
-from pythia.core.reinforcement.q_regression_model import QRegressionModel
+from pythia.core.reinforcement.policies.e_greedy_policies import EpsilonGreedyPolicy, NormalEpsilonGreedyPolicy
+from pythia.core.n_step_sarsa import NStepSarsa
+from pythia.core.reinforcement.reward_functions.q_neuronal import QNeuronal
+from pythia.core.reinforcement.models.q_regression_model import QRegressionModel
 
 # env = gym.make('FrozenLake-v0')
 env = TradingEnvironmentTableWrapper(1000.0, "data/sxe.csv", 0)
