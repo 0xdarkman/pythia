@@ -2,7 +2,7 @@ import sys
 
 import tensorflow as tf
 
-from pythia.core.reinforcement.td_agent import TDAgent
+from pythia.core.reinforcement.agents.td_agent import TDAgent
 from pythia.core.environment.crypto_ai_environment import CryptoAiEnvironment, ActionFilter
 from pythia.core.environment.crypto_rewards import TotalBalanceReward
 from pythia.core.reinforcement.policies.e_greedy_policies import NormalEpsilonGreedyPolicy

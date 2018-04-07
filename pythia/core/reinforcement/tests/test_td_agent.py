@@ -1,6 +1,6 @@
 import pytest
 
-from pythia.core.reinforcement.td_agent import TDAgent
+from pythia.core.reinforcement.agents.td_agent import TDAgent
 
 
 class QFake:
