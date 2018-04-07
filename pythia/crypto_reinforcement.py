@@ -2,13 +2,13 @@ import sys
 
 import tensorflow as tf
 
-from pythia.core.reinforcement.agents.td_agent import TDAgent
+from reinforcement.agents.td_agent import TDAgent
 from pythia.core.environment.crypto_ai_environment import CryptoAiEnvironment, ActionFilter
 from pythia.core.environment.crypto_rewards import TotalBalanceReward
-from pythia.core.reinforcement.policies.e_greedy_policies import NormalEpsilonGreedyPolicy
+from reinforcement.policies.e_greedy_policies import NormalEpsilonGreedyPolicy
 from pythia.core.environment.rigged_policy import STOP_AT_THRESHOLD, RiggedPolicy
-from pythia.core.reinforcement.reward_functions.q_neuronal import QNeuronal
-from pythia.core.reinforcement.models.q_regression_model import QRegressionModel
+from reinforcement.reward_functions.q_neuronal import QNeuronal
+from reinforcement.models.q_regression_model import QRegressionModel
 from pythia.core.sessions.crypto_exchange_session import CryptoExchangeSession
 from pythia.core.streams.shape_shift_rates import ShapeShiftRates
 from pythia.core.utils.profiling import clock_block

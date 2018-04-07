@@ -17,6 +17,7 @@ pyparsing==2.2.0
 pytest==3.3.2
 python-dateutil==2.6.1
 pytz==2017.3
+reinforcement
 six==1.11.0
 tensorflow==1.5.0
 tensorflow-tensorboard==1.5.0

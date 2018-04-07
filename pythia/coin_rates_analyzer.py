@@ -1,12 +1,10 @@
 import sys
-
-import os
 from io import StringIO
 
 from pythia.core.environment.crypto_ai_environment import CryptoAiEnvironment
 from pythia.core.environment.crypto_rewards import TotalBalanceReward
 from pythia.core.environment.rigged_policy import STOP_AT_THRESHOLD, RiggedPolicy
-from pythia.core.streams.shape_shift_rates import ShapeShiftRates, analyze, SUPPORTED_COINS, rates_filter
+from pythia.core.streams.shape_shift_rates import ShapeShiftRates, SUPPORTED_COINS, rates_filter
 from pythia.test_integration.test_rigged_policy_makes_good_decisions import PolicyDummy, QDummy
 
 

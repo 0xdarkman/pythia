@@ -1,13 +1,14 @@
 import pytest
 import tensorflow as tf
 
-from pythia.core.reinforcement.agents.td_agent import TDAgent
+from reinforcement.agents.td_agent import TDAgent
+from reinforcement.models.q_regression_model import QRegressionModel
+from reinforcement.policies.e_greedy_policies import EpsilonGreedyPolicy, NormalEpsilonGreedyPolicy
+from reinforcement.reward_functions.q_neuronal import QNeuronal
+from reinforcement.reward_functions.q_table import QTable
+
 from pythia.core.environment.crypto_ai_environment import CryptoAiEnvironment, ActionFilter
 from pythia.core.environment.crypto_rewards import TotalBalanceReward
-from pythia.core.reinforcement.policies.e_greedy_policies import EpsilonGreedyPolicy, NormalEpsilonGreedyPolicy
-from pythia.core.reinforcement.reward_functions.q_neuronal import QNeuronal
-from pythia.core.reinforcement.models.q_regression_model import QRegressionModel
-from pythia.core.reinforcement.reward_functions.q_table import QTable
 from pythia.core.sessions.crypto_exchange_session import CryptoExchangeSession
 from pythia.tests.crypto_doubles import RecordsStub, RatesStub, entry
 
@@ -16,7 +17,7 @@ from pythia.tests.crypto_doubles import RecordsStub, RatesStub, entry
 def config_tensorflow():
     original_v = tf.logging.get_verbosity()
     tf.logging.set_verbosity(3)
-    tf.set_random_seed(42)
+    tf.set_random_seed(7)
     yield
     tf.logging.set_verbosity(original_v)
 

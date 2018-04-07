@@ -1,6 +1,3 @@
-import inspect
-import os
-
 from pytest import approx, fixture
 
 from pythia.core.environment.environment_wrappers import TradingEnvironment, MINIMUM_ACTION

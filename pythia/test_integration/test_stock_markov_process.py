@@ -1,10 +1,7 @@
-import inspect
-import os
-
 import pytest
 
-from pythia.core.environment.stocks import StockData
 from pythia.core.environment.stock_markov_process import StockMarkovProcess
+from pythia.core.environment.stocks import StockData
 from .common_fixtures import model_path
 
 
