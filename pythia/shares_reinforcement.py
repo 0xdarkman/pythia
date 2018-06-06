@@ -37,9 +37,7 @@ if __name__ == '__main__':
             model = QRegressionModel(3 + WINDOW * 2, [100], LEARNING_RATE)
             Q = QNeuronal(model, MEMORY_SIZE)
             episode = 0
-            policy = RiggedPolicy(env,
-                                  NormalEpsilonGreedyPolicy(lambda: START_EPS / (episode + 1), ActionFilter(env)),
-                                  0.5, rigging_distance=STOP_AT_THRESHOLD, threshold=0.5)
+            policy = NormalEpsilonGreedyPolicy(lambda: START_EPS / (episode + 1), ActionFilter(env))
             agent = TDAgent(policy, Q, n, GAMMA, ALPHA)
             sess = RatesExchangeSession(env, agent)
 
