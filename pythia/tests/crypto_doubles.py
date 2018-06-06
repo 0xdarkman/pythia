@@ -4,20 +4,20 @@ from pythia.core.streams.shape_shift_rates import RatesPair, ShapeShiftRates
 
 
 class PairEntryStub(RatesPair):
-    def __init__(self, pair, rate, limit, maxLimit, min, minerFee):
+    def __init__(self, pair, rate, limit, maxLimit, min, fee):
         super().__init__({"pair": pair,
                           "rate": rate,
                           "limit": limit,
                           "maxLimit": maxLimit,
                           "min": min,
-                          "minerFee": minerFee})
+                          "minerFee": fee})
 
     def __eq__(self, other):
         return self.rate == other.rate and \
                self.limit == other.limit and \
                self.maxLimit == other.maxLimit and \
                self.min == other.min and \
-               self.minerFee == other.minerFee
+               self.fee == other.fee
 
 
 class RecordsStub(io.StringIO):

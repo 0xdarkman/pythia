@@ -2,6 +2,7 @@ import pytest
 
 from pythia.core.environment.crypto_ai_environment import CryptoAiEnvironment, WindowError, ActionFilter
 from pythia.core.environment.crypto_rewards import TotalBalanceReward, RatesChangeReward
+from pythia.tests.ai_environment_doubles import RewardCalculatorStub, RewardCalculatorSpy
 from pythia.tests.crypto_doubles import RecordsStub, RatesStub, entry
 
 
@@ -11,22 +12,6 @@ class AiRatesStub(RatesStub):
             self.add_record(*(entry(str(i), str(rate)) for i, rate in enumerate(line)))
         self.finish()
         return self
-
-
-class RewardCalculatorStub:
-    def __init__(self, reward):
-        self.reward = reward
-
-    def __call__(self, env):
-        return self.reward
-
-
-class RewardCalculatorSpy:
-    def __init__(self):
-        self.received_arg = None
-
-    def __call__(self, env):
-        self.received_arg = env
 
 
 @pytest.fixture

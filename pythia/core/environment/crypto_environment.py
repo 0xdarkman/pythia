@@ -57,7 +57,7 @@ class CryptoEnvironment:
     def _exchange_coin(self, action):
         exchange = self._get_exchange_to(action)
         self._coin = action
-        self._amount = (self._amount * exchange.rate) - exchange.minerFee
+        self._amount = (self._amount * exchange.rate) - exchange.fee
         for listener in self._listeners:
             listener(self.time, action)
 

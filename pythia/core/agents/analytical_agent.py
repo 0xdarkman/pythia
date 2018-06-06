@@ -48,7 +48,7 @@ class AnalyticalAgent:
     def _should_exchange(self, rates_info, target):
         rec = self._rate_recordings[target]
         if len(rec.differentials) == self.differential_window:
-            distance = ((rates_info.rate - rates_info.minerFee) - rec.initial_rate) / rec.initial_rate
+            distance = ((rates_info.rate - rates_info.fee) - rec.initial_rate) / rec.initial_rate
             differential = self._calc_differential(target)
             return distance >= self.min_distance and differential >= self.differential_threshold
 

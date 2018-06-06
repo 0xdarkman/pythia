@@ -71,11 +71,11 @@ class RatesPair:
         self.limit = float(info["limit"])
         self.maxLimit = float(info["maxLimit"])
         self.min = float(info["min"])
-        self.minerFee = Decimal(str(info["minerFee"]))
+        self.fee = Decimal(str(info["minerFee"]))
 
     def __str__(self):
         return '{{"rate":"{}","limit":{},"pair":"{}","maxLimit":{},"min":{},"minerFee":{}}}' \
-            .format(self.rate, self.limit, self._pair, self.maxLimit, self.min, self.minerFee)
+            .format(self.rate, self.limit, self._pair, self.maxLimit, self.min, self.fee)
 
     def __repr__(self):
         return 'RatesPair: {}'.format(str(self))
@@ -126,6 +126,9 @@ class ShapeShiftRates:
         self.stream.seek(0)
         self.cache_idx = 0
 
+    def lookahead(self):
+        return InterimLookahead(self)
+
 
 def rates_filter(in_stream, exchanges):
     def concat_rates(rates_str, pairs):
@@ -160,7 +163,7 @@ class InterimLookahead:
 
 
 def interim_lookahead(rates):
-    return InterimLookahead(rates)
+    return rates.lookahead()
 
 
 ANALYSIS_STR_HEADER = " EXCHANGE |   MEAN   |    SD    |  MEDIAN  |   MIN   |   MAX   |   DIF   \n" \

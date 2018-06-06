@@ -15,14 +15,14 @@ def agent():
     return make_agent("0.4", "0.001", 2)
 
 
-def exchange(pair, rate, minerFee):
-    return {pair: PairEntryStub(pair, rate, 0.1, 0.9, 0.01, minerFee)}
+def exchange(pair, rate, fee):
+    return {pair: PairEntryStub(pair, rate, 0.1, 0.9, 0.01, fee)}
 
 
 def exchanges(*rates):
     rates_dict = dict()
-    for pair, rate, minerFee in rates:
-        r = exchange(pair, rate, minerFee)
+    for pair, rate, fee in rates:
+        r = exchange(pair, rate, fee)
         rates_dict.update(r)
 
     return rates_dict

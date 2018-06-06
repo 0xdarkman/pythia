@@ -1,36 +1,8 @@
 import pytest
 from io import StringIO
 
-from pythia.core.streams.share_rates import RatesPair, Symbol, ShareRates, interim_lookahead
-
-
-class RatesPairStub(RatesPair):
-    def __eq__(self, other):
-        return self.open == pytest.approx(other.open) and \
-               self.high == pytest.approx(other.high) and \
-               self.low == pytest.approx(other.low) and \
-               self.close == pytest.approx(other.close) and \
-               self.volume == other.volume
-
-
-class SymbolStub(Symbol):
-    HEADER = "timestamp,open,high,low,close,volume\n"
-
-    def __init__(self, name, stream):
-        self.stream = stream
-        super().__init__(name, self.stream)
-
-    def __enter__(self):
-        self.stream.write(self.HEADER)
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self.stream.seek(0)
-
-    def add_record(self, entry):
-        self.stream.write("2000-01-01 00:00:00,{},{},{},{},{}\n".format(
-            entry.open, entry.high, entry.low, entry.close, entry.volume
-        ))
+from pythia.core.streams.share_rates import Symbol, ShareRates
+from pythia.tests.shares_doubles import SymbolStub, entry
 
 
 @pytest.fixture
@@ -43,10 +15,6 @@ def symbol_a():
 def symbol_b():
     with StringIO() as s:
         yield SymbolStub("SYMB", s)
-
-
-def entry(*shares_data):
-    return RatesPairStub(*shares_data)
 
 
 def make_symbol(name, stream):
@@ -166,7 +134,7 @@ def test_interim_look_ahead(symbol_a, symbol_b):
         sb.add_record(entry(2.3, 2.6, 2.2, 2.4, 4300))
     rates = make_rates(symbol_a, symbol_b)
     next(rates)
-    with interim_lookahead(rates):
+    with rates.lookahead():
         assert next(rates)["SYMA_SYMB"] == entry(1.2 / 2.2, 1.5 / 2.5, 1.1 / 2.1, 1.3 / 2.3, 2200)
         assert next(rates)["SYMA_SYMB"] == entry(1.3 / 2.3, 1.6 / 2.6, 1.2 / 2.2, 1.4 / 2.4, 2300)
     assert next(rates)["SYMA_SYMB"] == entry(1.2 / 2.2, 1.5 / 2.5, 1.1 / 2.1, 1.3 / 2.3, 2200)
@@ -179,7 +147,7 @@ def test_look_ahead_skips_header_again(symbol_a, symbol_b):
     with symbol_b as sb:
         sb.add_record(entry(2.1, 2.4, 2.0, 2.2, 4100))
     rates = make_rates(symbol_a, symbol_b)
-    with interim_lookahead(rates):
+    with rates.lookahead():
         assert next(rates)["SYMA_SYMB"] == entry(1.1 / 2.1, 1.4 / 2.4, 1.0 / 2.0, 1.2 / 2.2, 2100)
     assert next(rates)["SYMA_SYMB"] == entry(1.1 / 2.1, 1.4 / 2.4, 1.0 / 2.0, 1.2 / 2.2, 2100)
 
@@ -188,6 +156,6 @@ def test_look_ahead_only_one_symbol(symbol_a):
     with symbol_a as s:
         s.add_record(entry(1.1, 1.4, 1.0, 1.2, 2100))
     rates = make_rates(symbol_a)
-    with interim_lookahead(rates):
+    with rates.lookahead():
         assert next(rates)["SYMA_CURRENCY"] == entry(1.1, 1.4, 1.0, 1.2, 2100)
     assert next(rates)["SYMA_CURRENCY"] == entry(1.1, 1.4, 1.0, 1.2, 2100)

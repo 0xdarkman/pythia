@@ -27,8 +27,8 @@ def out_stream():
     s.close()
 
 
-def entry(pair, rate, limit, maxLimit, min, minerFee):
-    return PairEntryStub(pair, rate, limit, maxLimit, min, minerFee)
+def entry(pair, rate, limit, maxLimit, min, fee):
+    return PairEntryStub(pair, rate, limit, maxLimit, min, fee)
 
 
 def test_empty(empty):

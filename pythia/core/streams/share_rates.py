@@ -1,4 +1,5 @@
 import csv
+from decimal import Decimal
 from io import SEEK_CUR
 
 
@@ -17,22 +18,34 @@ class RatesPair:
     def __repr__(self):
         return "RatesPair: {}".format(str(self))
 
+    @property
+    def rate(self):
+        return Decimal(self.open)
+
+    @property
+    def fee(self):
+        return 0
+
 
 class Symbol:
     def __init__(self, name, stream):
         self.name = name
         self.stream = stream
         self.csv_reader = csv.reader(self.stream)
+        self.rows = [tuple(map(float, c[1:5])) + tuple([int(c[5])]) for c in self.csv_reader if not self._is_header(c)]
+        self.idx = 0
+        self.size = len(self.rows)
 
     def __iter__(self):
         return self
 
     def __next__(self):
-        columns = next(self.csv_reader)
-        if self._is_header(columns):
-            columns = next(self.csv_reader)
+        if self.idx == self.size:
+            raise StopIteration
 
-        return tuple(map(float, columns[1:5])) + tuple([int(columns[5])])
+        r = self.rows[self.idx]
+        self.idx += 1
+        return r
 
     @staticmethod
     def _is_header(columns):
@@ -40,6 +53,9 @@ class Symbol:
 
     def seek(self, *args, **kwargs):
         return self.stream.seek(*args, **kwargs)
+
+    def reset(self):
+        self.idx = 0
 
 
 class IdentitySymbol:
@@ -79,9 +95,12 @@ class ShareRates:
             return (1, 1, 1, 1, volume_a), self.FIAT_TAG
 
     def reset(self):
-        self.symbol_stream.seek(0)
+        self.symbol_stream.reset()
         if self.second_symbol_stream is not None:
-            self.second_symbol_stream.seek(0)
+            self.second_symbol_stream.reset()
+
+    def lookahead(self):
+        return InterimLookahead(self)
 
 
 class InterimLookahead:
@@ -91,16 +110,12 @@ class InterimLookahead:
         self.offset_b = None
 
     def __enter__(self):
-        self.offset_a = self.rates.symbol_stream.seek(0, SEEK_CUR)
+        self.offset_a = self.rates.symbol_stream.idx
         if self.rates.second_symbol_stream is not None:
-            self.offset_b = self.rates.second_symbol_stream.seek(0, SEEK_CUR)
+            self.offset_b = self.rates.second_symbol_stream.idx
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        self.rates.symbol_stream.seek(self.offset_a)
+        self.rates.symbol_stream.idx = self.offset_a
         if self.offset_b is not None:
-            self.rates.second_symbol_stream.seek(self.offset_b)
-
-
-def interim_lookahead(rates):
-    return InterimLookahead(rates)
+            self.rates.second_symbol_stream.idx = self.offset_b

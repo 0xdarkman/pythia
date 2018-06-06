@@ -1,8 +1,7 @@
 import itertools
 import random
+from collections import deque
 from functools import reduce
-
-from collections.__init__ import deque
 
 from pythia.core.streams.shape_shift_rates import interim_lookahead, calculate_exchange_max_differences
 
