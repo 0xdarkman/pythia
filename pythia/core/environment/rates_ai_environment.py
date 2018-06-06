@@ -2,7 +2,7 @@ from decimal import Decimal
 from collections import deque
 
 from pythia.core.environment.rates_environment import RatesEnvironment, EnvironmentFinished
-from pythia.core.streams.shape_shift_rates import calculate_exchange_ranges
+from pythia.core.streams.rates_calculators import calculate_exchange_ranges
 
 
 def _make_token_to_index(action_mapping, start_token):

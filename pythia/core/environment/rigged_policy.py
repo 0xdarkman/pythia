@@ -3,7 +3,8 @@ import random
 from collections import deque
 from functools import reduce
 
-from pythia.core.streams.shape_shift_rates import interim_lookahead, calculate_exchange_max_differences
+from pythia.core.streams.shape_shift_rates import interim_lookahead
+from pythia.core.streams.rates_calculators import calculate_exchange_max_differences
 
 STOP_AT_THRESHOLD = "stop_at_threshold"
 

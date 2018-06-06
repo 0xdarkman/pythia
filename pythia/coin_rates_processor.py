@@ -2,7 +2,8 @@ import sys
 
 import os
 
-from pythia.core.streams.shape_shift_rates import ShapeShiftRates, rates_filter
+from pythia.core.streams.shape_shift_rates import ShapeShiftRates
+from pythia.core.streams.rates_calculators import rates_filter
 
 if __name__ == "__main__":
     in_path = "../data/recordings/2018-02-28-shapeshift-exchange-records.json" if len(sys.argv) == 1 else sys.argv[1]

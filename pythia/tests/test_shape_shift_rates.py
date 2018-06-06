@@ -2,7 +2,8 @@ import io
 
 import pytest
 
-from pythia.core.streams.shape_shift_rates import ShapeShiftRates, rates_filter, interim_lookahead
+from pythia.core.streams.shape_shift_rates import ShapeShiftRates, interim_lookahead
+from pythia.core.streams.rates_calculators import rates_filter
 from pythia.tests.crypto_doubles import PairEntryStub, RecordsStub
 
 

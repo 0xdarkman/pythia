@@ -1,7 +1,7 @@
 import pytest
 from decimal import Decimal
 
-from pythia.core.streams.shape_shift_rates import analyze, CoinExchangeReport
+from pythia.core.streams.rates_analytics import RatesExchangeReport, analyze
 from pythia.tests.crypto_doubles import RecordsStub, RatesStub, entry
 
 
@@ -64,7 +64,7 @@ def test_calculate_correct_statistics_of_multiple_entries(rates):
 
 
 def test_report_csv_export():
-    report = CoinExchangeReport()
+    report = RatesExchangeReport()
     report.append("BTC_ETH", Decimal("1.267"), Decimal("0.23"), Decimal("1.5"), Decimal("0.3"), Decimal("1.998"), Decimal("-0.2"))
     report.append("LIC_GAME", Decimal("11.2"), Decimal("12.3456789"), Decimal("12.2"), Decimal("10"), Decimal("20.12"), Decimal("0.3"))
     assert report.to_csv() == "EXCHANGE,MEAN,SD,MEDIAN,MIN,MAX,DIF\n" \
