@@ -1,8 +1,8 @@
 import sys
 
 from pythia.core.agents.analytical_agent import AnalyticalAgent
-from pythia.core.environment.crypto_environment import RatesEnvironment
-from pythia.core.sessions.crypto_exchange_session import RatesExchangeSession
+from pythia.core.environment.rates_environment import RatesEnvironment
+from pythia.core.sessions.rates_exchange_session import RatesExchangeSession
 from pythia.core.streams.shape_shift_rates import ShapeShiftRates, SUPPORTED_COINS
 from pythia.core.utils.profiling import clock_block
 from pythia.core.visualization.coin_exchange_visualizer import CoinExchangeVisualizer

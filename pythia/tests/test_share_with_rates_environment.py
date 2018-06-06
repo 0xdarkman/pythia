@@ -2,7 +2,7 @@ import pytest
 
 from io import StringIO
 
-from pythia.core.environment.crypto_ai_environment import RatesAiEnvironment
+from pythia.core.environment.rates_ai_environment import RatesAiEnvironment
 from pythia.core.streams.share_rates import ShareRates
 from pythia.tests.ai_environment_doubles import RewardCalculatorStub
 from pythia.tests.shares_doubles import SymbolStub, entry

@@ -7,9 +7,9 @@ from reinforcement.policies.e_greedy_policies import EpsilonGreedyPolicy, Normal
 from reinforcement.reward_functions.q_neuronal import QNeuronal
 from reinforcement.reward_functions.q_table import QTable
 
-from pythia.core.environment.crypto_ai_environment import RatesAiEnvironment, ActionFilter
-from pythia.core.environment.crypto_rewards import TotalBalanceReward
-from pythia.core.sessions.crypto_exchange_session import RatesExchangeSession
+from pythia.core.environment.rates_ai_environment import RatesAiEnvironment, ActionFilter
+from pythia.core.environment.rates_rewards import TotalBalanceReward
+from pythia.core.sessions.rates_exchange_session import RatesExchangeSession
 from pythia.tests.crypto_doubles import RecordsStub, RatesStub, entry
 
 

@@ -2,7 +2,7 @@ import io
 import pytest
 from decimal import Decimal
 
-from pythia.core.environment.crypto_environment import RatesEnvironment, EnvironmentFinished
+from pythia.core.environment.rates_environment import RatesEnvironment, EnvironmentFinished
 from pythia.core.streams.shape_shift_rates import ShapeShiftRates
 from pythia.tests.crypto_doubles import RecordsStub, RatesStub, entry
 

@@ -6,10 +6,10 @@ from reinforcement.models.q_regression_model import QRegressionModel
 from reinforcement.policies.e_greedy_policies import NormalEpsilonGreedyPolicy
 from reinforcement.reward_functions.q_neuronal import QNeuronal
 
-from pythia.core.environment.crypto_ai_environment import RatesAiEnvironment, ActionFilter
-from pythia.core.environment.crypto_rewards import TotalBalanceReward
+from pythia.core.environment.rates_ai_environment import RatesAiEnvironment, ActionFilter
+from pythia.core.environment.rates_rewards import TotalBalanceReward
 from pythia.core.environment.rigged_policy import STOP_AT_THRESHOLD, RiggedPolicy
-from pythia.core.sessions.crypto_exchange_session import RatesExchangeSession
+from pythia.core.sessions.rates_exchange_session import RatesExchangeSession
 from pythia.core.streams.share_rates import ShareRates, Symbol
 from pythia.core.utils.profiling import clock_block
 from pythia.core.visualization.coin_exchange_visualizer import CoinExchangeVisualizer

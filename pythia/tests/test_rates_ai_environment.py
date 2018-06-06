@@ -1,7 +1,7 @@
 import pytest
 
-from pythia.core.environment.crypto_ai_environment import RatesAiEnvironment, WindowError, ActionFilter
-from pythia.core.environment.crypto_rewards import TotalBalanceReward, RatesChangeReward
+from pythia.core.environment.rates_ai_environment import RatesAiEnvironment, WindowError, ActionFilter
+from pythia.core.environment.rates_rewards import TotalBalanceReward, RatesChangeReward
 from pythia.tests.ai_environment_doubles import RewardCalculatorStub, RewardCalculatorSpy
 from pythia.tests.crypto_doubles import RecordsStub, RatesStub, entry
 

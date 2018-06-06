@@ -3,8 +3,8 @@ from collections import deque
 import pytest
 from decimal import Decimal
 
-from pythia.core.environment.crypto_environment import RatesEnvironment
-from pythia.core.sessions.crypto_exchange_session import RatesExchangeSession
+from pythia.core.environment.rates_environment import RatesEnvironment
+from pythia.core.sessions.rates_exchange_session import RatesExchangeSession
 from pythia.tests.crypto_doubles import RatesStub, entry, RecordsStub
 
 

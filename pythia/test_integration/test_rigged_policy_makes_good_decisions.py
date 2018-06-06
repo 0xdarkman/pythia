@@ -3,8 +3,8 @@ import os
 
 import pytest
 
-from pythia.core.environment.crypto_ai_environment import RatesAiEnvironment
-from pythia.core.environment.crypto_rewards import TotalBalanceReward
+from pythia.core.environment.rates_ai_environment import RatesAiEnvironment
+from pythia.core.environment.rates_rewards import TotalBalanceReward
 from pythia.core.environment.rigged_policy import STOP_AT_THRESHOLD, RiggedPolicy
 from pythia.core.streams.shape_shift_rates import ShapeShiftRates
 
