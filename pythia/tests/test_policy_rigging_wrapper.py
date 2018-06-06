@@ -7,10 +7,10 @@ from pythia.tests.crypto_doubles import entry, RecordsStub, RatesStub
 
 
 class CryptoEnvironmentStub:
-    def __init__(self, action_to_coin, active_coin):
+    def __init__(self, action_to_token, active_token):
         self.rates_stream = RatesStub(RecordsStub())
-        self.action_to_coin = action_to_coin
-        self.coin = active_coin
+        self.action_to_token = action_to_token
+        self.token = active_token
 
     def add_record(self, *entries):
         self.rates_stream.add_record(*entries)
@@ -81,7 +81,7 @@ def test_not_rigged_returns_action_from_inner_policy(q_function):
 
 
 def test_rigging_looks_ahead_for_profitable_exchange_and_selects_actions_accordingly(q_function):
-    env = CryptoEnvironmentStub(action_to_coin={1: "BTC", 2: "ETH"}, active_coin="BTC")
+    env = CryptoEnvironmentStub(action_to_token={1: "BTC", 2: "ETH"}, active_token="BTC")
     env.add_record(entry("BTC_ETH", "2")). \
         add_record(entry("BTC_ETH", "4")). \
         add_record(entry("BTC_ETH", "1")). \
@@ -93,7 +93,7 @@ def test_rigging_looks_ahead_for_profitable_exchange_and_selects_actions_accordi
 
 
 def test_rigging_looks_ahead_only_specified_distance(q_function):
-    env = CryptoEnvironmentStub(action_to_coin={1: "BTC", 2: "ETH"}, active_coin="BTC")
+    env = CryptoEnvironmentStub(action_to_token={1: "BTC", 2: "ETH"}, active_token="BTC")
     env.add_record(entry("BTC_ETH", "3")). \
         add_record(entry("BTC_ETH", "4")). \
         add_record(entry("BTC_ETH", "2")). \
@@ -107,7 +107,7 @@ def test_rigging_looks_ahead_only_specified_distance(q_function):
 
 
 def test_rigging_starts_at_current_rate_position(q_function):
-    env = CryptoEnvironmentStub(action_to_coin={1: "BTC", 2: "ETH"}, active_coin="BTC")
+    env = CryptoEnvironmentStub(action_to_token={1: "BTC", 2: "ETH"}, active_token="BTC")
     env.add_record(entry("BTC_ETH", "1")). \
         add_record(entry("BTC_ETH", "4")). \
         add_record(entry("BTC_ETH", "1")). \
@@ -119,7 +119,7 @@ def test_rigging_starts_at_current_rate_position(q_function):
 
 
 def test_rigging_leaves_rates_unaffected(q_function):
-    env = CryptoEnvironmentStub(action_to_coin={1: "BTC", 2: "ETH"}, active_coin="BTC")
+    env = CryptoEnvironmentStub(action_to_token={1: "BTC", 2: "ETH"}, active_token="BTC")
     env.add_record(entry("BTC_ETH", "2")). \
         add_record(entry("BTC_ETH", "4")). \
         add_record(entry("BTC_ETH", "1")). \
@@ -130,7 +130,7 @@ def test_rigging_leaves_rates_unaffected(q_function):
 
 
 def test_after_rigging_continue_with_inner_policy(policy_spy, q_function):
-    env = CryptoEnvironmentStub(action_to_coin={1: "BTC", 2: "ETH"}, active_coin="BTC")
+    env = CryptoEnvironmentStub(action_to_token={1: "BTC", 2: "ETH"}, active_token="BTC")
     env.add_record(entry("BTC_ETH", "2")). \
         add_record(entry("BTC_ETH", "4")). \
         add_record(entry("BTC_ETH", "1")). \
@@ -145,7 +145,7 @@ def test_after_rigging_continue_with_inner_policy(policy_spy, q_function):
 
 def test_rigging_happens_by_specified_change(q_function):
     random.seed(7)
-    env = CryptoEnvironmentStub(action_to_coin={1: "BTC", 2: "ETH"}, active_coin="BTC")
+    env = CryptoEnvironmentStub(action_to_token={1: "BTC", 2: "ETH"}, active_token="BTC")
     env.add_record(entry("BTC_ETH", "2")). \
         add_record(entry("BTC_ETH", "4")). \
         add_record(entry("BTC_ETH", "1")). \
@@ -156,7 +156,7 @@ def test_rigging_happens_by_specified_change(q_function):
 
 def test_count_number_of_riggings(q_function):
     random.seed(7)
-    env = CryptoEnvironmentStub(action_to_coin={1: "BTC", 2: "ETH"}, active_coin="BTC")
+    env = CryptoEnvironmentStub(action_to_token={1: "BTC", 2: "ETH"}, active_token="BTC")
     env.add_record(entry("BTC_ETH", "2")). \
         add_record(entry("BTC_ETH", "4")). \
         add_record(entry("BTC_ETH", "1")). \
@@ -170,7 +170,7 @@ def test_count_number_of_riggings(q_function):
 
 
 def test_return_maximum_difference_exchange_actions(q_function):
-    env = CryptoEnvironmentStub(action_to_coin={1: "BTC", 2: "ETH"}, active_coin="BTC")
+    env = CryptoEnvironmentStub(action_to_token={1: "BTC", 2: "ETH"}, active_token="BTC")
     env.add_record(entry("BTC_ETH", "5")). \
         add_record(entry("BTC_ETH", "2")). \
         add_record(entry("BTC_ETH", "3")). \
@@ -185,7 +185,7 @@ def test_return_maximum_difference_exchange_actions(q_function):
 
 
 def test_ignore_differences_below_threshold(q_function, policy_spy):
-    env = CryptoEnvironmentStub(action_to_coin={1: "BTC", 2: "ETH"}, active_coin="BTC")
+    env = CryptoEnvironmentStub(action_to_token={1: "BTC", 2: "ETH"}, active_token="BTC")
     env.add_record(entry("BTC_ETH", "1")). \
         add_record(entry("BTC_ETH", "0.81")).finish()
     policy = make_policy(env, policy_spy, 1.0, threshold=0.2)
@@ -194,7 +194,7 @@ def test_ignore_differences_below_threshold(q_function, policy_spy):
 
 
 def test_calculated_differences_are_normalized(q_function, policy_spy):
-    env = CryptoEnvironmentStub(action_to_coin={1: "BTC", 2: "ETH"}, active_coin="BTC")
+    env = CryptoEnvironmentStub(action_to_token={1: "BTC", 2: "ETH"}, active_token="BTC")
     env.add_record(entry("BTC_ETH", "10")). \
         add_record(entry("BTC_ETH", "8.1")).finish()
     policy = make_policy(env, policy_spy, 1.0, threshold=0.2)
@@ -203,7 +203,7 @@ def test_calculated_differences_are_normalized(q_function, policy_spy):
 
 
 def test_stop_at_threshold(q_function):
-    env = CryptoEnvironmentStub(action_to_coin={1: "BTC", 2: "ETH"}, active_coin="BTC")
+    env = CryptoEnvironmentStub(action_to_token={1: "BTC", 2: "ETH"}, active_token="BTC")
     env.add_record(entry("BTC_ETH", "10")). \
         add_record(entry("BTC_ETH", "8")). \
         add_record(entry("BTC_ETH", "12")). \
@@ -214,7 +214,7 @@ def test_stop_at_threshold(q_function):
 
 
 def test_return_good_exchange_in_complex_environment(q_function):
-    env = CryptoEnvironmentStub(action_to_coin={1: "BTC", 2: "ETH"}, active_coin="BTC")
+    env = CryptoEnvironmentStub(action_to_token={1: "BTC", 2: "ETH"}, active_token="BTC")
     env.add_record(entry("BTC_ETH", "2")). \
         add_record(entry("BTC_ETH", "3")). \
         add_record(entry("BTC_ETH", "1")). \

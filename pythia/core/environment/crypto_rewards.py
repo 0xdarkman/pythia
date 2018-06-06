@@ -13,10 +13,10 @@ class TotalBalanceReward:
 class RatesChangeReward:
     def __call__(self, env):
         """
-        The reward is difference between the current and the last rate of the active coin
+        The reward is difference between the current and the last rate of the active token
 
         :param env: CryptoAiEnvironment
         :return: float representing the reward
         """
-        idx = env.coin_to_index[env.coin]
+        idx = env.token_to_index[env.token]
         return env.state[2 + idx] - env.prev_state[2 + idx]

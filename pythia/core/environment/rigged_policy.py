@@ -11,7 +11,7 @@ STOP_AT_THRESHOLD = "stop_at_threshold"
 class RiggedPolicy:
     def __init__(self, env, inner_policy, rigging_chance, threshold=None, rigging_distance=None):
         """
-        The rigged policy forces lucrative coin exchanges instead of completely random action selection dependent
+        The rigged policy forces lucrative token exchanges instead of completely random action selection dependent
         on finding valid lucrative exchanges and the rigging chance rate
 
         :param env: Agent environment
@@ -61,12 +61,12 @@ class RiggedPolicy:
 
     def _get_possible_exchanges(self):
         def make_exchange_pair(target_coin):
-            return self.env.coin + "_" + target_coin
+            return self.env.token + "_" + target_coin
 
-        def is_not_active(coin):
-            return coin != self.env.coin
+        def is_not_active(token):
+            return token != self.env.token
 
-        return list(map(make_exchange_pair, filter(is_not_active, self.env.action_to_coin.values())))
+        return list(map(make_exchange_pair, filter(is_not_active, self.env.action_to_token.values())))
 
     @staticmethod
     def _find_best_exchange(exchanges, targets):
@@ -84,13 +84,13 @@ class RiggedPolicy:
         return reduce(to_biggest_difference, filter(positive_exchanges, targets), None)
 
     def _make_rigged_actions_sequence(self, exchange):
-        exchange_to = self._coin_to_action(exchange.name.split('_')[1])
-        exchange_back = self._coin_to_action(self.env.coin)
+        exchange_to = self._token_to_action(exchange.name.split('_')[1])
+        exchange_back = self._token_to_action(self.env.token)
         start_pos = exchange.start_position
         diff_pos = exchange.end_position - start_pos
         return [0] * start_pos + [exchange_to] + [0] * (diff_pos - 1) + [exchange_back]
 
-    def _coin_to_action(self, coin):
-        for k, v in self.env.action_to_coin.items():
+    def _token_to_action(self, coin):
+        for k, v in self.env.action_to_token.items():
             if v == coin:
                 return k

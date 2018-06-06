@@ -1,23 +1,23 @@
 from decimal import Decimal
 
 
-class CryptoEnvironment:
-    def __init__(self, rates, start_coin, start_amount):
+class RatesEnvironment:
+    def __init__(self, rates, start_token, start_amount):
         """
-        Environment representing crypto coin exchanges. Provides exchange states containing rates, miner fees and other
-        market data. Implements a mechanism to exchange coins against other coins. Keeps track of currently active coin
-        and a total balance of coins
+        Environment representing exchange rates. Provides exchange states containing rates, fees and other market data.
+        Implements a mechanism to exchange tokens against other tokens. Keeps track of currently active token
+        and a total balance of tokens
 
-        :param rates: source stream containing market information for coin exchanges
-        :param start_coin: crypto coin the starting balance is held in
+        :param rates: source stream containing market information for token exchanges
+        :param start_token: token the starting balance is held in
         :param start_amount: the starting balance
         """
         self.rates_stream = rates
         self.time = 0
         self._start_amount = Decimal(start_amount)
-        self._start_coin = start_coin
+        self._start_token = start_token
         self._amount = self._start_amount
-        self._coin = self._start_coin
+        self._token = self._start_token
         self._current_state = None
         self._next_state = None
         self._listeners = list()
@@ -28,18 +28,18 @@ class CryptoEnvironment:
         return self._amount
 
     @property
-    def coin(self):
-        return self._coin
+    def token(self):
+        return self._token
 
     def reset(self):
         self.time = 0
-        self._coin = self._start_coin
+        self._token = self._start_token
         self._amount = self._start_amount
         self.rates_stream.reset()
         try:
             self._current_state = next(self.rates_stream)
             self._next_state = next(self.rates_stream)
-            return self.coin, self._current_state
+            return self.token, self._current_state
         except StopIteration:
             raise EnvironmentFinished("A Crypto environment needs at least 2 entries to be initialised.")
 
@@ -47,31 +47,31 @@ class CryptoEnvironment:
         if self._next_state is None:
             raise EnvironmentFinished("CryptoEnvironment finished. No further steps possible.")
 
-        if action is not None and action != self.coin:
-            self._exchange_coin(action)
+        if action is not None and action != self.token:
+            self._exchange_token(action)
 
         self._move_to_next_state()
         self.time += 1
-        return (self.coin, self._current_state), None, self._next_state is None, None
+        return (self.token, self._current_state), None, self._next_state is None, None
 
-    def _exchange_coin(self, action):
+    def _exchange_token(self, action):
         exchange = self._get_exchange_to(action)
-        self._coin = action
+        self._token = action
         self._amount = (self._amount * exchange.rate) - exchange.fee
         for listener in self._listeners:
             listener(self.time, action)
 
-    def _get_exchange_to(self, other_coin):
-        return self._current_state[self.coin + "_" + other_coin]
+    def _get_exchange_to(self, other_token):
+        return self._current_state[self.token + "_" + other_token]
 
     def _move_to_next_state(self):
         self._current_state = self._next_state
         self._next_state = next(self.rates_stream, None)
 
-    def balance_in(self, coin):
-        if self.coin == coin:
+    def balance_in(self, token):
+        if self.token == token:
             return self.amount
-        return self.amount if self.coin == coin else self.amount * self._get_exchange_to(coin).rate
+        return self.amount if self.token == token else self.amount * self._get_exchange_to(token).rate
 
     def register_listener(self, listener):
         self._listeners.append(listener)

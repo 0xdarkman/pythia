@@ -1,8 +1,8 @@
 import sys
 
 from pythia.core.agents.analytical_agent import AnalyticalAgent
-from pythia.core.environment.crypto_environment import CryptoEnvironment
-from pythia.core.sessions.crypto_exchange_session import CryptoExchangeSession
+from pythia.core.environment.crypto_environment import RatesEnvironment
+from pythia.core.sessions.crypto_exchange_session import RatesExchangeSession
 from pythia.core.streams.shape_shift_rates import ShapeShiftRates, SUPPORTED_COINS
 from pythia.core.utils.profiling import clock_block
 from pythia.core.visualization.coin_exchange_visualizer import CoinExchangeVisualizer
@@ -17,15 +17,15 @@ if __name__ == '__main__':
         with clock_block("Initialization"):
             rates = ShapeShiftRates(stream, preload=True)
             vis = CoinExchangeVisualizer(rates)
-            env = CryptoEnvironment(rates, "BTC", "0.1")
+            env = RatesEnvironment(rates, "BTC", "0.1")
             env.register_listener(vis.record_exchange)
-            sess = CryptoExchangeSession(env, agent)
+            sess = RatesExchangeSession(env, agent)
 
         with clock_block("Running"):
             sess.run()
 
-        print("The analytical agent crated a coin difference of: {0}".format(sess.difference()))
-        print("Current balance: {0} {1}".format(env.amount, env.coin))
+        print("The analytical agent crated a token difference of: {0}".format(sess.difference()))
+        print("Current balance: {0} {1}".format(env.amount, env.token))
         print("Exchange actions: {0}".format(vis.actions))
 
         rates.reset()

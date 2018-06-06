@@ -7,7 +7,7 @@ class AnalyticalAgent:
         """
         Analytical agent is exchanging coins depending on a normalized minimum distance and a differential threshold
 
-        :param min_distance: (Decimal) the normalized minimum relative distance between two coin exchange rates necessary
+        :param min_distance: (Decimal) the normalized minimum relative distance between two token exchange rates necessary
         :param diff_threshold: (Decimal) the minimum normalized differential for an exchange
         :param diff_window: (Integer) the moving window that is used to calculate the differential of the exchange rate
         """

@@ -2,7 +2,7 @@ import io
 import pytest
 from decimal import Decimal
 
-from pythia.core.environment.crypto_environment import CryptoEnvironment, EnvironmentFinished
+from pythia.core.environment.crypto_environment import RatesEnvironment, EnvironmentFinished
 from pythia.core.streams.shape_shift_rates import ShapeShiftRates
 from pythia.tests.crypto_doubles import RecordsStub, RatesStub, entry
 
@@ -32,7 +32,7 @@ def rates():
 
 
 def make_env(rates, start_coin="BTC", start_amount="1"):
-    return CryptoEnvironment(rates, start_coin, start_amount)
+    return RatesEnvironment(rates, start_coin, start_amount)
 
 
 @pytest.fixture
@@ -131,7 +131,7 @@ def test_exchanging(rates):
     env = make_env(rates, "BTC", "2")
     env.step("ETH")
     assert env.amount == Decimal("23.998")
-    assert env.coin == "ETH"
+    assert env.token == "ETH"
 
 
 def test_exchanging_to_itself(rates):
@@ -140,7 +140,7 @@ def test_exchanging_to_itself(rates):
     env = make_env(rates, "BTC", "2")
     env.step("BTC")
     assert env.amount == Decimal("2")
-    assert env.coin == "BTC"
+    assert env.token == "BTC"
 
 
 def test_exchange_back_and_forth(rates):
@@ -151,7 +151,7 @@ def test_exchange_back_and_forth(rates):
     env.step("ETH")
     env.step("BTC")
     assert env.amount == Decimal("2.39974")
-    assert env.coin == "BTC"
+    assert env.token == "BTC"
 
 
 def test_initial_balance(rates):

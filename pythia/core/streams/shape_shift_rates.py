@@ -84,8 +84,8 @@ class RatesPair:
 class ShapeShiftRates:
     def __init__(self, stream, preload=False):
         """
-        Thin wrapper around a shape shift coin exchange market info json file. Provides simple iterator mechanics to
-        walk efficiently through the coin exchange stream. Random access is not provided and stream has to be reset.
+        Thin wrapper around a shape shift token exchange market info json file. Provides simple iterator mechanics to
+        walk efficiently through the token exchange stream. Random access is not provided and stream has to be reset.
 
         :param stream: Steam of data containing a new line separated list of shapeshift market info json strings
         :param preload: Optionally load the rates data into memory for faster access

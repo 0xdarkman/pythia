@@ -3,12 +3,12 @@ from collections import deque
 import pytest
 from decimal import Decimal
 
-from pythia.core.environment.crypto_environment import CryptoEnvironment
-from pythia.core.sessions.crypto_exchange_session import CryptoExchangeSession
+from pythia.core.environment.crypto_environment import RatesEnvironment
+from pythia.core.sessions.crypto_exchange_session import RatesExchangeSession
 from pythia.tests.crypto_doubles import RatesStub, entry, RecordsStub
 
 
-class EnvironmentStub(CryptoEnvironment):
+class EnvironmentStub(RatesEnvironment):
     def __init__(self):
         self.rates = RatesStub(RecordsStub())
         self.rewards = deque()
@@ -114,7 +114,7 @@ def simple_env(env):
 
 
 def make_session(env, agent):
-    return CryptoExchangeSession(env, agent)
+    return RatesExchangeSession(env, agent)
 
 
 def test_agent_received_initial_state_as_start(env, agent_spy):

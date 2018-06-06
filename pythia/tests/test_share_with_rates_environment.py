@@ -2,7 +2,7 @@ import pytest
 
 from io import StringIO
 
-from pythia.core.environment.crypto_ai_environment import CryptoAiEnvironment
+from pythia.core.environment.crypto_ai_environment import RatesAiEnvironment
 from pythia.core.streams.share_rates import ShareRates
 from pythia.tests.ai_environment_doubles import RewardCalculatorStub
 from pythia.tests.shares_doubles import SymbolStub, entry
@@ -55,7 +55,7 @@ def rate_entry(rate):
 def make_env(rates, start_token='CURRENCY', window=1, index_to_coin=None):
     index_to_coin = {0: 'CURRENCY', 1: 'SYMA'} if index_to_coin is None else index_to_coin
     reward_calc = RewardCalculatorStub(0)
-    return CryptoAiEnvironment(rates, start_token, 100, window, index_to_coin, reward_calc)
+    return RatesAiEnvironment(rates, start_token, 100, window, index_to_coin, reward_calc)
 
 
 def test_create_rates_environment_with_share_rates(symbol_a):

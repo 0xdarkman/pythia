@@ -3,13 +3,13 @@ import sys
 import tensorflow as tf
 
 from reinforcement.agents.td_agent import TDAgent
-from pythia.core.environment.crypto_ai_environment import CryptoAiEnvironment, ActionFilter
+from pythia.core.environment.crypto_ai_environment import RatesAiEnvironment, ActionFilter
 from pythia.core.environment.crypto_rewards import TotalBalanceReward
 from reinforcement.policies.e_greedy_policies import NormalEpsilonGreedyPolicy
 from pythia.core.environment.rigged_policy import STOP_AT_THRESHOLD, RiggedPolicy
 from reinforcement.reward_functions.q_neuronal import QNeuronal
 from reinforcement.models.q_regression_model import QRegressionModel
-from pythia.core.sessions.crypto_exchange_session import CryptoExchangeSession
+from pythia.core.sessions.crypto_exchange_session import RatesExchangeSession
 from pythia.core.streams.shape_shift_rates import ShapeShiftRates
 from pythia.core.utils.profiling import clock_block
 from pythia.core.visualization.coin_exchange_visualizer import CoinExchangeVisualizer
@@ -31,7 +31,7 @@ if __name__ == '__main__':
         with clock_block("Initialization"):
             rates = ShapeShiftRates(stream, preload=True)
             vis = CoinExchangeVisualizer(rates)
-            env = CryptoAiEnvironment(rates, COIN_A, "10", WINDOW, {1: COIN_A, 2: COIN_B}, TotalBalanceReward())
+            env = RatesAiEnvironment(rates, COIN_A, "10", WINDOW, {1: COIN_A, 2: COIN_B}, TotalBalanceReward())
             env.register_listener(vis.record_exchange)
 
             model = QRegressionModel(3 + WINDOW * 2, [100], LEARNING_RATE)
@@ -41,17 +41,17 @@ if __name__ == '__main__':
                                   NormalEpsilonGreedyPolicy(lambda: START_EPS / (episode + 1), ActionFilter(env)),
                                   0.5, rigging_distance=STOP_AT_THRESHOLD, threshold=0.5)
             agent = TDAgent(policy, Q, n, GAMMA, ALPHA)
-            sess = CryptoExchangeSession(env, agent)
+            sess = RatesExchangeSession(env, agent)
 
         for e in range(TOTAL_EPISODES):
             episode = e
             with clock_block("Running"):
                 sess.run()
             print("Episode {} finished.".format(episode))
-            print("The td agent crated a coin difference of: {0}".format(sess.difference()))
+            print("The td agent crated a token difference of: {0}".format(sess.difference()))
 
 
-        print("Current balance: {0} {1}".format(env.amount, env.coin))
+        print("Current balance: {0} {1}".format(env.amount, env.token))
         print("Exchange actions: {0}".format(vis.actions))
         rates.reset()
         vis.render("BTC_ETH")

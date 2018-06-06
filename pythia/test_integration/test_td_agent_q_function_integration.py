@@ -7,9 +7,9 @@ from reinforcement.policies.e_greedy_policies import EpsilonGreedyPolicy, Normal
 from reinforcement.reward_functions.q_neuronal import QNeuronal
 from reinforcement.reward_functions.q_table import QTable
 
-from pythia.core.environment.crypto_ai_environment import CryptoAiEnvironment, ActionFilter
+from pythia.core.environment.crypto_ai_environment import RatesAiEnvironment, ActionFilter
 from pythia.core.environment.crypto_rewards import TotalBalanceReward
-from pythia.core.sessions.crypto_exchange_session import CryptoExchangeSession
+from pythia.core.sessions.crypto_exchange_session import RatesExchangeSession
 from pythia.tests.crypto_doubles import RecordsStub, RatesStub, entry
 
 
@@ -39,14 +39,14 @@ def env():
         .add_record(entry("BTC_ETH", "1.0", miner_fee="0"), entry("ETH_BTC", "1.0", miner_fee="0")) \
         .add_record(entry("BTC_ETH", "2.0", miner_fee="0"), entry("ETH_BTC", "0.5", miner_fee="0")) \
         .add_record(entry("BTC_ETH", "4.0", miner_fee="0"), entry("ETH_BTC", "0.25", miner_fee="0")).finish()
-    yield CryptoAiEnvironment(rate, "BTC", "1", 1, {1: "BTC", 2: "ETH"}, TotalBalanceReward())
+    yield RatesAiEnvironment(rate, "BTC", "1", 1, {1: "BTC", 2: "ETH"}, TotalBalanceReward())
     rate.close()
 
 
 def test_td_agent_produces_sensible_q_values(env):
     q_table = QTable([0, 1, 2])
     agent = TDAgent(EpsilonGreedyPolicy(0.2), q_table, 1, 0.9, 0.1)
-    sess = CryptoExchangeSession(env, agent)
+    sess = RatesExchangeSession(env, agent)
     for _ in range(0, 100):
         sess.run()
 
@@ -59,7 +59,7 @@ def test_td_agent_produces_sensible_regression_model_predictions(env):
     Q = QNeuronal(model, 3, 10)
     episode = 0
     agent = TDAgent(NormalEpsilonGreedyPolicy(lambda: (1 / (episode + 1))), Q, 1, 0.9, 0.1)
-    sess = CryptoExchangeSession(env, agent)
+    sess = RatesExchangeSession(env, agent)
     for e in range(0, 100):
         episode = e
         sess.run()
@@ -71,7 +71,7 @@ def test_td_agent_produces_sensible_regression_model_predictions(env):
 def test_td_agent_does_not_perform_invalid_actions_when_filtered(env):
     q_table = QTable([0, 1, 2], initializer=lambda: 0)
     agent = TDAgent(EpsilonGreedyPolicy(0.2, ActionFilter(env)), q_table, 1, 0.9, 0.1)
-    sess = CryptoExchangeSession(env, agent)
+    sess = RatesExchangeSession(env, agent)
     for _ in range(0, 100):
         sess.run()
 

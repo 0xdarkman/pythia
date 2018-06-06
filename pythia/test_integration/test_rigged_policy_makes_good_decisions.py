@@ -3,7 +3,7 @@ import os
 
 import pytest
 
-from pythia.core.environment.crypto_ai_environment import CryptoAiEnvironment
+from pythia.core.environment.crypto_ai_environment import RatesAiEnvironment
 from pythia.core.environment.crypto_rewards import TotalBalanceReward
 from pythia.core.environment.rigged_policy import STOP_AT_THRESHOLD, RiggedPolicy
 from pythia.core.streams.shape_shift_rates import ShapeShiftRates
@@ -27,7 +27,7 @@ def env():
     path = os.path.join(dir, "test_data/2018-02-28-shapeshift-BTC_ETH.json".format(COIN_A, COIN_B))
     with open(path) as stream:
         rates = ShapeShiftRates(stream, preload=True)
-        yield CryptoAiEnvironment(rates, COIN_A, "10", 1, {1: COIN_A, 2: COIN_B}, TotalBalanceReward())
+        yield RatesAiEnvironment(rates, COIN_A, "10", 1, {1: COIN_A, 2: COIN_B}, TotalBalanceReward())
 
 
 @pytest.fixture
