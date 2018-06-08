@@ -22,7 +22,7 @@ ALPHA = 0.2
 GAMMA = 0.9
 WINDOW = 10
 START_EPS = 1
-TOTAL_EPISODES = 1000
+TOTAL_EPISODES = 300
 n = 10
 
 if __name__ == '__main__':
@@ -50,6 +50,6 @@ if __name__ == '__main__':
 
 
         print("Current balance: {0} {1}".format(env.amount, env.token))
-        print("Exchange actions: {0}".format(vis.actions))
-        rates.reset()
-        vis.render("BTC_ETH")
+        #print("Exchange actions: {0}".format(vis.actions))
+        #rates.reset()
+        #vis.render("SPY_CURRENCY")
