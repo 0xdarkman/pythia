@@ -35,7 +35,7 @@ def run_shares_model(holding_tokens,
             env = RatesAiEnvironment(rates, token_h, starting_balance, window, {1: token_h, 2: token_b},
                                      TotalBalanceReward())
 
-            model = QRegressionModel(3 + window * 2, hidden_layers, learning_rate, 42)
+            model = QRegressionModel(3 + window * 2, hidden_layers, learning_rate)
             saver, ckpt = None, None
             if output_dir is not None:
                 saver, ckpt = tf.train.Saver(), os.path.join(output_dir, "model.ckpt")
