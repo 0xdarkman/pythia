@@ -1,4 +1,4 @@
-import sys
+import os
 
 import tensorflow as tf
 from reinforcement.agents.td_agent import TDAgent
@@ -8,48 +8,60 @@ from reinforcement.reward_functions.q_neuronal import QNeuronal
 
 from pythia.core.environment.rates_ai_environment import RatesAiEnvironment, ActionFilter
 from pythia.core.environment.rates_rewards import TotalBalanceReward
-from pythia.core.environment.rigged_policy import STOP_AT_THRESHOLD, RiggedPolicy
 from pythia.core.sessions.rates_exchange_session import RatesExchangeSession
 from pythia.core.streams.share_rates import ShareRates, Symbol
 from pythia.core.utils.profiling import clock_block
-from pythia.core.visualization.coin_exchange_visualizer import CoinExchangeVisualizer
 
-COIN_A = "CURRENCY"
-COIN_B = "SPY"
-LEARNING_RATE = 0.01
-MEMORY_SIZE = 10
-ALPHA = 0.2
-GAMMA = 0.9
-WINDOW = 10
-START_EPS = 1
-TOTAL_EPISODES = 300
-n = 10
 
-if __name__ == '__main__':
-    path = "../data/recordings/shares/SPY.csv" if len(sys.argv) == 1 else sys.argv[0]
-    with open(path) as stream, tf.Session():
+def run_shares_model(holding_tokens,
+                     buying_tokens,
+                     starting_balance,
+                     window,
+                     hidden_layers,
+                     learning_rate,
+                     memory_size,
+                     epsilon_episode_start,
+                     num_steps,
+                     gamma,
+                     alpha,
+                     episodes):
+    token_h = "CURRENCY" if holding_tokens is None else os.path.basename(holding_tokens)
+    token_b = os.path.basename(buying_tokens)
+    with open(buying_tokens) as stream, tf.Session():
         with clock_block("Initialization"):
-            rates = ShareRates(Symbol("SPY", stream))
-            vis = CoinExchangeVisualizer(rates)
-            env = RatesAiEnvironment(rates, COIN_A, "10", WINDOW, {1: COIN_A, 2: COIN_B}, TotalBalanceReward())
-            env.register_listener(vis.record_exchange)
+            rates = ShareRates(Symbol(token_b, stream))
+            env = RatesAiEnvironment(rates, token_h, starting_balance, window, {1: token_h, 2: token_b},
+                                     TotalBalanceReward())
 
-            model = QRegressionModel(3 + WINDOW * 2, [100], LEARNING_RATE)
-            Q = QNeuronal(model, MEMORY_SIZE)
+            model = QRegressionModel(3 + window * 2, hidden_layers, learning_rate)
+            Q = QNeuronal(model, memory_size)
             episode = 0
-            policy = NormalEpsilonGreedyPolicy(lambda: START_EPS / (episode + 1), ActionFilter(env))
-            agent = TDAgent(policy, Q, n, GAMMA, ALPHA)
+            policy = NormalEpsilonGreedyPolicy(lambda: epsilon_episode_start / (episode + 1), ActionFilter(env))
+            agent = TDAgent(policy, Q, num_steps, gamma, alpha)
             sess = RatesExchangeSession(env, agent)
 
-        for e in range(TOTAL_EPISODES):
+        for e in range(episodes):
             episode = e
             with clock_block("Running"):
                 sess.run()
             print("Episode {} finished.".format(episode))
             print("The td agent crated a token difference of: {0}".format(sess.difference()))
 
-
         print("Current balance: {0} {1}".format(env.amount, env.token))
-        #print("Exchange actions: {0}".format(vis.actions))
-        #rates.reset()
-        #vis.render("SPY_CURRENCY")
+
+
+if __name__ == '__main__':
+    run_shares_model(
+        holding_tokens=None,
+        buying_tokens="../data/recordings/shares/SPY.csv",
+        starting_balance=10,
+        window=10,
+        hidden_layers=[100],
+        learning_rate=0.01,
+        memory_size=10,
+        epsilon_episode_start=1,
+        gamma=0.9,
+        alpha=0.2,
+        num_steps=10,
+        episodes=300
+    )
