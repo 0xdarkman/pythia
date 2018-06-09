@@ -1,6 +1,7 @@
 import os
 
 import tensorflow as tf
+from tensorflow.core.framework.summary_pb2 import Summary
 from reinforcement.agents.td_agent import TDAgent
 from reinforcement.models.q_regression_model import QRegressionModel
 from reinforcement.policies.e_greedy_policies import NormalEpsilonGreedyPolicy
@@ -11,6 +12,8 @@ from pythia.core.environment.rates_rewards import TotalBalanceReward
 from pythia.core.sessions.rates_exchange_session import RatesExchangeSession
 from pythia.core.streams.share_rates import ShareRates, Symbol
 from pythia.core.utils.profiling import clock_block
+
+EVAL_STEPS = 10
 
 
 def run_shares_model(holding_tokens,
@@ -57,7 +60,21 @@ def run_shares_model(holding_tokens,
             if output_dir is not None:
                 saver.save(sess, ckpt)
 
+        with clock_block("Evaluation"):
+            diff = 0.0
+            for _ in range(EVAL_STEPS):
+                rates_sess.run()
+                diff += float(rates_sess.difference())
+            effectiveness = diff / float(EVAL_STEPS)
+            if output_dir is not None:
+                summary = Summary(value=[Summary.Value(tag="effectiveness", simple_value=effectiveness)])
+                eval_path = os.path.join(output_dir, "effectiveness")
+                summary_writer = tf.summary.FileWriter(eval_path)
+                summary_writer.add_summary(summary)
+                summary_writer.flush()
+
         print("Current balance: {0} {1}".format(env.amount, env.token))
+        print("Effectiveness: {0}".format(effectiveness))
 
 
 if __name__ == '__main__':

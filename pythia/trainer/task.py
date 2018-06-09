@@ -76,5 +76,6 @@ if __name__ == "__main__":
         gamma=args.gamma,
         alpha=args.alpha,
         num_steps=args.num_steps,
-        episodes=args.episodes
+        episodes=args.episodes,
+        output_dir=args.job_dir
     )
