@@ -1,6 +1,6 @@
 import argparse
 
-from pythia.trainer.shares_reinforcement import run_shares_model
+from trainer.shares_reinforcement import run_shares_model
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
