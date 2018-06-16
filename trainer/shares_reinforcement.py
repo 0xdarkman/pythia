@@ -49,7 +49,7 @@ def run_shares_model(holding_tokens,
             if ckpt is not None and tf.train.checkpoint_exists(ckpt):
                 saver.restore(sess, ckpt)
 
-            Q = QNeuronal(model, memory_size)
+            Q = QNeuronal(model, n=3, memory_size=memory_size)
             episode = 0
             policy = NormalEpsilonGreedyPolicy(lambda: epsilon_episode_start / (episode + 1), ActionFilter(env))
             agent = TDAgent(policy, Q, num_steps, gamma, alpha)
