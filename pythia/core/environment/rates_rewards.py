@@ -7,7 +7,8 @@ class TotalBalanceReward:
         :param env: CryptoAiEnvironment
         :return: float representing the reward
         """
-        return env.normalized_balance
+        b = env.balance_in(env.start_token)
+        return float((b - env.starting_balance) / env.starting_balance)
 
 
 class RatesChangeReward:

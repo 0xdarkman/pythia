@@ -16,8 +16,30 @@ def _make_token_to_index(action_mapping, start_token):
     return token_index
 
 
+class NormalizeLinearStateTransformer:
+    def __init__(self, rates, token_to_index, exchange_filter, start_token, start_amount):
+        self.exchange_ranges = calculate_exchange_ranges(rates)
+        self.exchange_filter = exchange_filter
+        self.token_to_index = token_to_index
+        self.start_amount = start_amount
+
+    def transform(self, token, balance, window):
+        new_state = [self.token_to_index[token], (balance - self.start_amount) / self.start_amount]
+        for pairs in window:
+            def filter_rates(t):
+                if self.exchange_filter is None:
+                    return True
+                return t[0] in self.exchange_filter
+
+            for n, pair in filter(filter_rates, pairs.items()):
+                new_state.append(self.exchange_ranges.normalize_rate(n, pair.rate))
+
+        return new_state
+
+
 class RatesAiEnvironment(RatesEnvironment):
-    def __init__(self, rates, start_token, start_amount, window_size, action_to_token, reward_calc, exchange_filter=None):
+    def __init__(self, rates, start_token, start_amount, window_size, action_to_token, reward_calc,
+                 exchange_filter=None):
         """
         Environment representing token rates exchanges. Represents rates, current wallet balance, and currently held
         token in an AI friendly format. Implements a mechanism to perform a token exchange by specifying the index of the
@@ -31,14 +53,12 @@ class RatesAiEnvironment(RatesEnvironment):
         :param reward_calc: callable object (RatesAiEnvironment):float that calculates a reward given the environment
         :param exchange_filter: (optional) list that filters the rates in the state showing only the coins specified
         """
-        self.exchange_ranges = calculate_exchange_ranges(rates)
         self.action_to_token = action_to_token
         self.token_to_index = _make_token_to_index(self.action_to_token, start_token)
         self.reward_calc = reward_calc
-        self.exchange_filter = exchange_filter
         self.starting_balance = Decimal(start_amount)
-        num_exchanges = len(self.exchange_ranges) if exchange_filter is None else len(exchange_filter)
-        self.window = deque([], maxlen=(window_size * num_exchanges))
+        self.state_transformer = NormalizeLinearStateTransformer(rates, self.token_to_index, exchange_filter, start_token, self.starting_balance)
+        self.window = deque([], maxlen=(window_size))
         self.prev_state = None
         self.state = None
         rates.reset()
@@ -46,41 +66,27 @@ class RatesAiEnvironment(RatesEnvironment):
 
     def reset(self):
         self.window.clear()
-        self._append_normalized_pairs(super().reset()[1])
+        self.window.append(super().reset()["rates"])
         self._fill_window()
         return self._next_ai_state()
 
     def _next_ai_state(self):
         self.prev_state = self.state
-        self.state = [self.token_to_index[self.token], self.normalized_balance] + list(self.window)
+        self.state = self.state_transformer.transform(self.token, self.balance_in(self.start_token), self.window)
         return self.state
-
-    @property
-    def normalized_balance(self):
-        b = self.balance_in(self._start_token)
-        return float((b - self.starting_balance) / self.starting_balance)
 
     def _fill_window(self):
         while not len(self.window) == self.window.maxlen:
             try:
                 s, _, _, _ = super().step(None)
-                self._append_normalized_pairs(s[1])
+                self.window.append(s["rates"])
             except EnvironmentFinished:
                 raise WindowError("There is not enough data to fill the window of size {}".format(self.window.maxlen))
-
-    def _append_normalized_pairs(self, pairs):
-        def filter_rates(t):
-            if self.exchange_filter is None:
-                return True
-            return t[0] in self.exchange_filter
-
-        for n, pair in filter(filter_rates, pairs.items()):
-            self.window.append(self.exchange_ranges.normalize_rate(n, pair.rate))
 
     def step(self, action):
         a = self.action_to_token[action] if action in self.action_to_token else None
         s, _, done, _ = super().step(a)
-        self._append_normalized_pairs(s[1])
+        self.window.append(s["rates"])
         return self._next_ai_state(), self.reward_calc(self), done, _
 
 

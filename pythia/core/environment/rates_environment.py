@@ -15,9 +15,9 @@ class RatesEnvironment:
         self.rates_stream = rates
         self.time = 0
         self._start_amount = Decimal(start_amount)
-        self._start_token = start_token
+        self.start_token = start_token
         self._amount = self._start_amount
-        self._token = self._start_token
+        self._token = self.start_token
         self._current_state = None
         self._next_state = None
         self._listeners = list()
@@ -33,13 +33,13 @@ class RatesEnvironment:
 
     def reset(self):
         self.time = 0
-        self._token = self._start_token
+        self._token = self.start_token
         self._amount = self._start_amount
         self.rates_stream.reset()
         try:
             self._current_state = next(self.rates_stream)
             self._next_state = next(self.rates_stream)
-            return self.token, self._current_state
+            return { "token": self.token, "balance": self.amount, "rates": self._current_state }
         except StopIteration:
             raise EnvironmentFinished("A Crypto environment needs at least 2 entries to be initialised.")
 
@@ -52,7 +52,7 @@ class RatesEnvironment:
 
         self._move_to_next_state()
         self.time += 1
-        return (self.token, self._current_state), None, self._next_state is None, None
+        return { "token": self.token, "balance": self.balance_in(self.start_token), "rates": self._current_state}, None, self._next_state is None, None
 
     def _exchange_token(self, action):
         exchange = self._get_exchange_to(action)

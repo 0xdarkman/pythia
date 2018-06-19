@@ -37,17 +37,17 @@ def make_env(rates, start_coin="BTC", start_amount="1"):
 
 @pytest.fixture
 def two_steps(rates):
-    rates.add_record(entry("BTC_ETH", "1")) \
-        .add_record(entry("BTC_ETH", "2")).finish()
+    rates.add_record(entry("BTC_ETH", "1"), entry("ETH_BTC", "1")) \
+        .add_record(entry("BTC_ETH", "2"), entry("ETH_BTC", "0.5")).finish()
     yield make_env(rates)
     rates.close()
 
 
 @pytest.fixture
 def three_steps(rates):
-    rates.add_record(entry("BTC_ETH", "1")) \
-        .add_record(entry("BTC_ETH", "2")) \
-        .add_record(entry("BTC_ETH", "3")).finish()
+    rates.add_record(entry("BTC_ETH", "1"), entry("ETH_BTC", "1")) \
+        .add_record(entry("BTC_ETH", "2"), entry("ETH_BTC", "0.5")) \
+        .add_record(entry("BTC_ETH", "3"), entry("ETH_BTC", "0.333333")).finish()
     yield make_env(rates)
     rates.close()
 
@@ -69,8 +69,9 @@ def test_step_yields_next_state(rates):
 
     env = make_env(rates)
     s, _, _, _ = env.step(None)
-    assert s[0] == "BTC"
-    assert s[1]["BTC_ETH"] == entry("BTC_ETH", "1.2")
+    assert s["token"] == "BTC"
+    assert s["balance"] == 1
+    assert s["rates"]["BTC_ETH"] == entry("BTC_ETH", "1.2")
 
 
 def test_reset_returns_environment_to_start(rates):
@@ -81,15 +82,16 @@ def test_reset_returns_environment_to_start(rates):
 
     env.reset()
     s, _, _, _ = env.step(None)
-    assert s[0] == "BTC"
-    assert s[1]["BTC_ETH"] == entry("BTC_ETH", "1.2")
+    assert s["token"] == "BTC"
+    assert s["balance"] == 1
+    assert s["rates"]["BTC_ETH"] == entry("BTC_ETH", "1.2")
 
 
 def test_reset_returns_first_state(rates):
     rates.add_record(entry("BTC_ETH", "1.1")) \
         .add_record(entry("BTC_ETH", "1.2")).finish()
     env = make_env(rates)
-    assert env.reset()[1]["BTC_ETH"] == entry("BTC_ETH", "1.1")
+    assert env.reset()["rates"]["BTC_ETH"] == entry("BTC_ETH", "1.1")
 
 
 def test_reset_sets_coin_to_start_coin(three_steps):
@@ -99,8 +101,8 @@ def test_reset_sets_coin_to_start_coin(three_steps):
 
 
 def test_reset_sets_amount_to_start_amount(rates):
-    rates.add_record(entry("BTC_ETH", "2")) \
-        .add_record(entry("BTC_ETH", "3")).finish()
+    rates.add_record(entry("BTC_ETH", "2"), entry("ETH_BTC", "0.5")) \
+        .add_record(entry("BTC_ETH", "3"), entry("ETH_BTC", "0.33")).finish()
     env = make_env(rates, start_amount="2")
     env.step("ETH")
     env.reset()
@@ -126,8 +128,8 @@ def test_stepping_past_done_state(two_steps):
 
 
 def test_exchanging(rates):
-    rates.add_record(entry("BTC_ETH", "12", "0.002")) \
-        .add_record(entry("BTC_ETH", "14")).finish()
+    rates.add_record(entry("BTC_ETH", "12", "0.002"), entry("ETH_BTC", "0.12")) \
+        .add_record(entry("BTC_ETH", "14"), entry("ETH_BTC", "0.14")).finish()
     env = make_env(rates, "BTC", "2")
     env.step("ETH")
     assert env.amount == Decimal("23.998")
