@@ -8,7 +8,7 @@ setup(
     name='trainer',
     version='0.1',
     install_requires=REQUIRED_PACKAGES,
-    packages=find_packages(),
+    packages=find_packages(exclude=["tests", "test_integration"]),
     include_package_data=True,
     description='Pythia training application'
 )

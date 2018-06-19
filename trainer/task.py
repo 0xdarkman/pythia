@@ -1,6 +1,6 @@
 import argparse
 
-from trainer.shares_reinforcement import run_shares_model
+from trainer.shares_dqn_regression_model import run_shares_dqn_regression_model
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -64,7 +64,7 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    run_shares_model(
+    run_shares_dqn_regression_model(
         holding_tokens=args.holding_tokens,
         buying_tokens=args.buying_tokens,
         starting_balance=args.balance,
