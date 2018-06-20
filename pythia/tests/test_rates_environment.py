@@ -31,8 +31,8 @@ def rates():
     s.close()
 
 
-def make_env(rates, start_coin="BTC", start_amount="1"):
-    return RatesEnvironment(rates, start_coin, start_amount)
+def make_env(rates, start_coin="BTC", start_amount="1", window=1):
+    return RatesEnvironment(rates, start_coin, start_amount, window)
 
 
 @pytest.fixture
@@ -60,7 +60,7 @@ def listener():
 def test_empty(empty):
     with pytest.raises(EnvironmentFinished) as e_info:
         make_env(empty)
-    assert str(e_info.value) == "A Crypto environment needs at least 2 entries to be initialised."
+    assert str(e_info.value) == "A rates environment needs at least 2 entries to be initialised."
 
 
 def test_step_yields_next_state(rates):
@@ -71,7 +71,7 @@ def test_step_yields_next_state(rates):
     s, _, _, _ = env.step(None)
     assert s["token"] == "BTC"
     assert s["balance"] == 1
-    assert s["rates"]["BTC_ETH"] == entry("BTC_ETH", "1.2")
+    assert s["rates"][0]["BTC_ETH"] == entry("BTC_ETH", "1.2")
 
 
 def test_reset_returns_environment_to_start(rates):
@@ -84,14 +84,14 @@ def test_reset_returns_environment_to_start(rates):
     s, _, _, _ = env.step(None)
     assert s["token"] == "BTC"
     assert s["balance"] == 1
-    assert s["rates"]["BTC_ETH"] == entry("BTC_ETH", "1.2")
+    assert s["rates"][0]["BTC_ETH"] == entry("BTC_ETH", "1.2")
 
 
 def test_reset_returns_first_state(rates):
     rates.add_record(entry("BTC_ETH", "1.1")) \
         .add_record(entry("BTC_ETH", "1.2")).finish()
     env = make_env(rates)
-    assert env.reset()["rates"]["BTC_ETH"] == entry("BTC_ETH", "1.1")
+    assert env.reset()["rates"][0]["BTC_ETH"] == entry("BTC_ETH", "1.1")
 
 
 def test_reset_sets_coin_to_start_coin(three_steps):
@@ -109,7 +109,6 @@ def test_reset_sets_amount_to_start_amount(rates):
     assert env.amount == 2
 
 
-
 def test_last_step_yields_done_true(two_steps):
     _, _, done, _ = two_steps.step(None)
     assert done
@@ -124,7 +123,7 @@ def test_stepping_past_done_state(two_steps):
     two_steps.step(None)
     with pytest.raises(EnvironmentFinished) as e:
         two_steps.step(None)
-    assert str(e.value) == "CryptoEnvironment finished. No further steps possible."
+    assert str(e.value) == "Rates environment finished. No further steps possible."
 
 
 def test_exchanging(rates):
@@ -200,3 +199,22 @@ def test_time_resets(three_steps, listener):
     three_steps.step("ETH")
 
     assert listener.received_time == 0
+
+
+def test_environment_with_window(rates):
+    rates.add_record(entry("BTC_ETH", "1.1")) \
+        .add_record(entry("BTC_ETH", "1.2")) \
+        .add_record(entry("BTC_ETH", "1.3")).finish()
+    s = make_env(rates, window=2).reset()
+    assert s["rates"] == [{"BTC_ETH": entry("BTC_ETH", "1.1")}, {"BTC_ETH": entry("BTC_ETH", "1.2")}]
+
+
+def test_window_moves_when_stepping(rates):
+    rates.add_record(entry("BTC_ETH", "1.1")) \
+        .add_record(entry("BTC_ETH", "1.2")) \
+        .add_record(entry("BTC_ETH", "1.3")).finish()
+    e = make_env(rates, window=2)
+    e.reset()
+    s, _, done, _ = e.step(None)
+    assert done
+    assert s["rates"] == [{"BTC_ETH": entry("BTC_ETH", "1.2")}, {"BTC_ETH": entry("BTC_ETH", "1.3")}]

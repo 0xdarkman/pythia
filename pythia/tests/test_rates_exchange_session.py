@@ -28,7 +28,7 @@ class EnvironmentStub(RatesEnvironment):
     def finish(self):
         self.rewards.popleft()  # starting state has no reward
         self.rates.finish()
-        super().__init__(self.rates, "BTC", 2)
+        super().__init__(self.rates, "BTC", 2, 1)
 
     def close(self):
         self.rates.close()
@@ -123,7 +123,8 @@ def make_session(env, agent):
 def test_agent_received_initial_state_as_start(env, agent_spy):
     env.add_record(entry("BTC_ETH", 1)).add_record(entry("BTC_ETH", 2)).finish()
     make_session(env, agent_spy).run()
-    assert agent_spy.received_start_state == {"token": "BTC", "balance": Decimal("2"), "rates": {"BTC_ETH": entry("BTC_ETH", 1)}}
+    assert agent_spy.received_start_state == {"token": "BTC", "balance": Decimal("2"),
+                                              "rates": [{"BTC_ETH": entry("BTC_ETH", 1)}]}
 
 
 def test_agent_step_receives_all_states_but_first_and_last(env, agent_spy):
@@ -132,8 +133,9 @@ def test_agent_step_receives_all_states_but_first_and_last(env, agent_spy):
         .add_record(entry("BTC_ETH", 3)) \
         .add_record(entry("BTC_ETH", 4)).finish()
     make_session(env, agent_spy).run()
-    assert agent_spy.received_states == [{ "token": "BTC", "balance": Decimal("2"), "rates": {"BTC_ETH": entry("BTC_ETH", 2)}},
-                                         {"token": "BTC", "balance": Decimal("2"), "rates": {"BTC_ETH": entry("BTC_ETH", 3)}}]
+    assert agent_spy.received_states == [
+        {"token": "BTC", "balance": Decimal("2"), "rates": [{"BTC_ETH": entry("BTC_ETH", 2)}]},
+        {"token": "BTC", "balance": Decimal("2"), "rates": [{"BTC_ETH": entry("BTC_ETH", 3)}]}]
 
 
 def test_agent_step_received_all_but_last_reward(env, agent_spy):

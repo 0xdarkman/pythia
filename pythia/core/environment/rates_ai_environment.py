@@ -62,11 +62,11 @@ class RatesAiEnvironment(RatesEnvironment):
         self.prev_state = None
         self.state = None
         rates.reset()
-        super().__init__(rates, start_token, start_amount)
+        super().__init__(rates, start_token, start_amount, 1)
 
     def reset(self):
         self.window.clear()
-        self.window.append(super().reset()["rates"])
+        self.window.append(super().reset()["rates"][0])
         self._fill_window()
         return self._next_ai_state()
 
@@ -79,14 +79,14 @@ class RatesAiEnvironment(RatesEnvironment):
         while not len(self.window) == self.window.maxlen:
             try:
                 s, _, _, _ = super().step(None)
-                self.window.append(s["rates"])
+                self.window.append(s["rates"][0])
             except EnvironmentFinished:
                 raise WindowError("There is not enough data to fill the window of size {}".format(self.window.maxlen))
 
     def step(self, action):
         a = self.action_to_token[action] if action in self.action_to_token else None
         s, _, done, _ = super().step(a)
-        self.window.append(s["rates"])
+        self.window.append(s["rates"][0])
         return self._next_ai_state(), self.reward_calc(self), done, _
 
 
