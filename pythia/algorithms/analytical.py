@@ -1,7 +1,7 @@
 import sys
 
 from pythia.core.agents.analytical_agent import AnalyticalAgent
-from pythia.core.environment.rates_environment import RatesEnvironment
+from pythia.core.environment.exchange_trading_environment import ExchangeTradingEnvironment
 from pythia.core.sessions.rates_exchange_session import RatesExchangeSession
 from pythia.core.streams.shape_shift_rates import ShapeShiftRates, SUPPORTED_COINS
 from pythia.core.utils.profiling import clock_block
@@ -17,7 +17,7 @@ if __name__ == '__main__':
         with clock_block("Initialization"):
             rates = ShapeShiftRates(stream, preload=True)
             vis = CoinExchangeVisualizer(rates)
-            env = RatesEnvironment(rates, "BTC", "0.1")
+            env = ExchangeTradingEnvironment(rates, "BTC", "0.1")
             env.register_listener(vis.record_exchange)
             sess = RatesExchangeSession(env, agent)
 

@@ -7,7 +7,7 @@ from reinforcement.policies.e_greedy_policies import EpsilonGreedyPolicy, Normal
 from reinforcement.reward_functions.q_neuronal import QNeuronal
 from reinforcement.reward_functions.q_table import QTable
 
-from pythia.core.environment.rates_ai_environment import RatesAiEnvironment, ActionFilter
+from pythia.core.environment.rates_ai_environment import ExchangeTradingAiEnvironment, ActionFilter
 from pythia.core.environment.rates_rewards import TotalBalanceReward
 from pythia.core.sessions.rates_exchange_session import RatesExchangeSession
 from pythia.tests.crypto_doubles import RecordsStub, RatesStub, entry
@@ -39,7 +39,7 @@ def env():
         .add_record(entry("BTC_ETH", "1.0", miner_fee="0"), entry("ETH_BTC", "1.0", miner_fee="0")) \
         .add_record(entry("BTC_ETH", "2.0", miner_fee="0"), entry("ETH_BTC", "0.5", miner_fee="0")) \
         .add_record(entry("BTC_ETH", "4.0", miner_fee="0"), entry("ETH_BTC", "0.25", miner_fee="0")).finish()
-    yield RatesAiEnvironment(rate, "BTC", "1", 1, {1: "BTC", 2: "ETH"}, TotalBalanceReward())
+    yield ExchangeTradingAiEnvironment(rate, "BTC", 1, 1, {1: "BTC", 2: "ETH"}, TotalBalanceReward())
     rate.close()
 
 

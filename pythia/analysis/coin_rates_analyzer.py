@@ -1,7 +1,7 @@
 import sys
 from io import StringIO
 
-from pythia.core.environment.rates_ai_environment import RatesAiEnvironment
+from pythia.core.environment.rates_ai_environment import ExchangeTradingAiEnvironment
 from pythia.core.environment.rates_rewards import TotalBalanceReward
 from pythia.core.environment.rigged_policy import STOP_AT_THRESHOLD, RiggedPolicy
 from pythia.core.streams.shape_shift_rates import ShapeShiftRates, SUPPORTED_COINS
@@ -35,7 +35,7 @@ if __name__ == "__main__":
             rates = ShapeShiftRates(stream, preload=True)
             coin_a = l_ex.split('_')[0]
             coin_b = l_ex.split('_')[1]
-            env = RatesAiEnvironment(rates, coin_a, "10", 1, {1: coin_a, 2: coin_b}, TotalBalanceReward())
+            env = ExchangeTradingAiEnvironment(rates, coin_a, "10", 1, {1: coin_a, 2: coin_b}, TotalBalanceReward())
             policy = RiggedPolicy(env, PolicyDummy(), 1.0, rigging_distance=STOP_AT_THRESHOLD, threshold=0.1)
             s = env.reset()
             start_balance = env.balance_in(coin_a)

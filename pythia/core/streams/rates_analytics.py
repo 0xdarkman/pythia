@@ -1,4 +1,3 @@
-from decimal import Decimal
 from functools import reduce
 from math import sqrt
 
@@ -54,7 +53,7 @@ def analyze(rates):
         l = len(r)
         mean = s / l
         median = r[(l // 2)]
-        sd = sqrt(reduce(lambda t, x: t + (x - mean) ** 2, r, Decimal(0)) / l)
+        sd = sqrt(reduce(lambda t, x: t + (x - mean) ** 2, r, 0.0) / l)
         report.append(k, mean, sd, median, min(r), max(r), dif)
 
     return report

@@ -88,7 +88,7 @@ def test_switch_back_and_forth(agent):
     agent.step(state("BTC", exchange("BTC_ETH", "15", "0.001")))
     assert agent.step(state("BTC", exchanges(("BTC_ETH", "14.001", "0.001"), ("ETH_BTC", "0.07", "0.001")))) == "ETH"
     agent.step(state("ETH", exchange("ETH_BTC", "0.105", "0.001")))
-    assert agent.step(state("ETH", exchanges(("BTC_ETH", "10", "0.001"), ("ETH_BTC", "0.099", "0.001")))) == "BTC"
+    assert agent.step(state("ETH", exchanges(("BTC_ETH", "10", "0.0"), ("ETH_BTC", "0.099", "0.0")))) == "BTC"
 
 
 def test_differential_is_normalized():
@@ -147,13 +147,13 @@ def test_is_monitoring_multiple_targets():
 
 def test_multiple_targets_back_and_forth():
     agent = make_agent("0.4", "0.001", 2, ["ETH", "SALT"])
-    agent.step(state("BTC", exchanges(("BTC_ETH", "12", "0.001"), ("BTC_SALT", "0.1", "0.001"))))
-    agent.step(state("BTC", exchanges(("BTC_ETH", "11", "0.001"), ("BTC_SALT", "0.15", "0.001"))))
-    assert agent.step(state("BTC", exchanges(("BTC_ETH", "10", "0.001"), ("BTC_SALT", "0.141", "0.001"),
-                                             ("SALT_ETH", "70", "0.001"), ("SALT_BTC", "7", "0.001")))) == "SALT"
-    agent.step(state("SALT", exchanges(("SALT_ETH", "60", "0.001"), ("SALT_BTC", "10.5", "0.001"))))
-    assert agent.step(state("SALT", exchanges(("SALT_ETH", "50", "0.001"), ("SALT_BTC", "9.9", "0.001"),
-                                              ("BTC_ETH", "5", "0.001"), ("BTC_SALT", "0.1", "0.001")))) == "BTC"
+    agent.step(state("BTC", exchanges(("BTC_ETH", "12", "0.0"), ("BTC_SALT", "0.1", "0.0"))))
+    agent.step(state("BTC", exchanges(("BTC_ETH", "11", "0.0"), ("BTC_SALT", "0.15", "0.0"))))
+    assert agent.step(state("BTC", exchanges(("BTC_ETH", "10", "0.0"), ("BTC_SALT", "0.141", "0.0"),
+                                             ("SALT_ETH", "70", "0.0"), ("SALT_BTC", "7", "0.0")))) == "SALT"
+    agent.step(state("SALT", exchanges(("SALT_ETH", "60", "0.001"), ("SALT_BTC", "10.5", "0.0"))))
+    assert agent.step(state("SALT", exchanges(("SALT_ETH", "50", "0.0"), ("SALT_BTC", "9.9", "0.0"),
+                                              ("BTC_ETH", "5", "0.0"), ("BTC_SALT", "0.1", "0.0")))) == "BTC"
 
 
 def test_multiple_targets_switch_between_targets():

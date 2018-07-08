@@ -7,7 +7,7 @@ from reinforcement.policies.e_greedy_policies import NormalEpsilonGreedyPolicy
 from reinforcement.reward_functions.q_neuronal import QNeuronal
 from tensorflow.python.lib.io import file_io
 
-from pythia.core.environment.rates_ai_environment import RatesAiEnvironment, ActionFilter
+from pythia.core.environment.rates_ai_environment import ExchangeTradingAiEnvironment, ActionFilter
 from pythia.core.environment.rates_rewards import TotalBalanceReward
 from pythia.core.sessions.rates_exchange_session import RatesExchangeSession
 from pythia.core.streams.share_rates import ShareRates, Symbol
@@ -39,8 +39,8 @@ def run_shares_dqn_regression_model(holding_tokens,
     with open_fn(buying_tokens) as stream, tf.Session() as sess:
         with clock_block("Initialization"):
             rates = ShareRates(Symbol(token_b, stream))
-            env = RatesAiEnvironment(rates, token_h, starting_balance, window, {1: token_h, 2: token_b},
-                                     TotalBalanceReward())
+            env = ExchangeTradingAiEnvironment(rates, token_h, starting_balance, window, {1: token_h, 2: token_b},
+                                               TotalBalanceReward())
 
             model = QRegressionModel(3 + window * 2, hidden_layers, learning_rate)
             saver, ckpt = None, None

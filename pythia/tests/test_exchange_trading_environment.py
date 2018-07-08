@@ -1,7 +1,7 @@
 import io
 import pytest
 
-from pythia.core.environment.rates_environment import RatesEnvironment, EnvironmentFinished
+from pythia.core.environment.exchange_trading_environment import ExchangeTradingEnvironment, EnvironmentFinished
 from pythia.core.streams.shape_shift_rates import ShapeShiftRates
 from pythia.tests.crypto_doubles import RecordsStub, RatesStub, entry
 
@@ -31,8 +31,8 @@ def rates():
 
 
 def make_env(rates, start_coin="BTC", start_amount=1, window=1, transform=None, reward_calculator=None):
-    return RatesEnvironment(rates, start_coin, start_amount, window, state_transform=transform,
-                            reward_calculator=reward_calculator)
+    return ExchangeTradingEnvironment(rates, start_coin, start_amount, window, state_transform=transform,
+                                      reward_calculator=reward_calculator)
 
 
 @pytest.fixture

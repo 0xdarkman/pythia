@@ -1,6 +1,6 @@
 import pytest
 
-from pythia.core.environment.rates_ai_environment import RatesAiEnvironment, WindowError, ActionFilter
+from pythia.core.environment.rates_ai_environment import ExchangeTradingAiEnvironment, WindowError, ActionFilter
 from pythia.core.environment.rates_rewards import TotalBalanceReward, RatesChangeReward
 from pythia.tests.ai_environment_doubles import RewardCalculatorStub, RewardCalculatorSpy
 from pythia.tests.crypto_doubles import RecordsStub, RatesStub, entry
@@ -26,22 +26,22 @@ def calc_spy():
     return RewardCalculatorSpy()
 
 
-def make_env(rates, start_coin="0", start_amount="1", window=1, exchange_filter=None, index_to_coin=None,
+def make_env(rates, start_coin="0", start_amount=1, window=1, exchange_filter=None, index_to_coin=None,
              reward_calc=None):
     index_to_coin = {0: '0', 1: '1'} if index_to_coin is None else index_to_coin
     reward_calc = RewardCalculatorStub(0) if reward_calc is None else reward_calc
-    return RatesAiEnvironment(rates, start_coin, start_amount, window, index_to_coin, reward_calc, exchange_filter)
+    return ExchangeTradingAiEnvironment(rates, start_coin, start_amount, window, index_to_coin, reward_calc, exchange_filter)
 
 
 def test_data_too_small_for_window(rates):
-    rates.add_record(entry("BTC_ETH", "1")).add_record(entry("BTC_ETH", "2")).finish()
+    rates.add_record(entry("BTC_ETH", 1)).add_record(entry("BTC_ETH", 2)).finish()
     with pytest.raises(WindowError) as e:
         make_env(rates, window=3)
     assert str(e.value) == "There is not enough data to fill the window of size 3"
 
 
 def test_rates_are_normalized(rates):
-    rates.add_record(entry("BTC_ETH", "2")).add_record(entry("BTC_ETH", "3")).add_record(entry("BTC_ETH", "1")).finish()
+    rates.add_record(entry("BTC_ETH", 2)).add_record(entry("BTC_ETH", 3)).add_record(entry("BTC_ETH", 1)).finish()
     assert make_env(rates, window=3).reset() == [0, 0.0, 0.5, 1.0, 0.0]
 
 
@@ -51,7 +51,7 @@ def test_rates_are_normalized(rates):
     (3, [0, 0.0, 0.5, 1.0, 0.0])
 ])
 def test_window_sizes(rates, size, expected_state):
-    rates.add_record(entry("BTC_ETH", "2")).add_record(entry("BTC_ETH", "3")).add_record(entry("BTC_ETH", "1")).finish()
+    rates.add_record(entry("BTC_ETH", 2)).add_record(entry("BTC_ETH", 3)).add_record(entry("BTC_ETH", 1)).finish()
     assert make_env(rates, window=size).reset() == expected_state
 
 
@@ -133,10 +133,10 @@ def test_environment_has_last_state(rates):
 
 
 @pytest.mark.parametrize("coin_rates, expected_reward", [
-    ([(entry("BTC_ETH", "2", "0"), entry("ETH_BTC", "0.5", "0")),
-      (entry("BTC_ETH", "1", "0"), entry("ETH_BTC", "1", "0"))], 1.0),
-    ([(entry("BTC_ETH", "2", "0"), entry("ETH_BTC", "0.5", "0")),
-      (entry("BTC_ETH", "4", "0"), entry("ETH_BTC", "0.25", "0"))], -0.5),
+    ([(entry("BTC_ETH", 2, 0), entry("ETH_BTC", 0.5, 0)),
+      (entry("BTC_ETH", 1, 0), entry("ETH_BTC", 1, 0))], 1.0),
+    ([(entry("BTC_ETH", 2, 0), entry("ETH_BTC", 0.5, 0)),
+      (entry("BTC_ETH", 4, 0), entry("ETH_BTC", 0.25, 0))], -0.5),
 ])
 def test_total_balance_reward(rates, coin_rates, expected_reward):
     rates.add_record(*coin_rates[0]).add_record(*coin_rates[1]).finish()

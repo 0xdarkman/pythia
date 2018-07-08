@@ -63,7 +63,7 @@ class AnalyticalAgent:
         next_rec = rec.differentials[1:]
         cur_rec = rec.differentials[:-1]
         self._rate_recordings[target].differentials = next_rec
-        return reduce(calc_diff, zip(cur_rec, next_rec), Decimal(0)) / len(next_rec)
+        return reduce(calc_diff, zip(cur_rec, next_rec), 0.0) / len(next_rec)
 
     def _do_exchange(self, rates, target):
         self.targets.remove(target)

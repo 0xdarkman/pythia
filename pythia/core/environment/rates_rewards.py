@@ -8,7 +8,7 @@ class TotalBalanceReward:
         :return: float representing the reward
         """
         b = env.balance_in(env.start_token)
-        return float((b - env.starting_balance) / env.starting_balance)
+        return float((b - float(env.starting_balance)) / float(env.starting_balance))
 
 
 class RatesChangeReward:

@@ -3,12 +3,12 @@ from collections import deque
 import pytest
 from decimal import Decimal
 
-from pythia.core.environment.rates_environment import RatesEnvironment
+from pythia.core.environment.exchange_trading_environment import ExchangeTradingEnvironment
 from pythia.core.sessions.rates_exchange_session import RatesExchangeSession
 from pythia.tests.crypto_doubles import RatesStub, entry, RecordsStub
 
 
-class EnvironmentStub(RatesEnvironment):
+class EnvironmentStub(ExchangeTradingEnvironment):
     def __init__(self):
         self.rates = RatesStub(RecordsStub())
         self.rewards = deque()

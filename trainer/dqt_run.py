@@ -2,7 +2,7 @@ import pandas as pd
 import tensorflow as tf
 
 from pythia.core.agents.dqt_agent import DQTAgent, DQTDiffStateTransformer, DQTRewardCalc, DQTRatioStateTransformer
-from pythia.core.environment.rates_environment import RatesEnvironment
+from pythia.core.environment.exchange_trading_environment import ExchangeTradingEnvironment
 from pythia.core.models.dqt_model import DQTModel
 from pythia.core.sessions.rates_exchange_session import RatesExchangeSession
 from pythia.core.streams.data_frame_stream import DataFrameStream, CASH_TOKEN
@@ -26,9 +26,9 @@ with tf.Session():
     exchange = "{}_{}".format(CASH_TOKEN, TOKEN)
     rates = DataFrameStream(train, name=TOKEN)
     vis = CoinExchangeVisualizer(rates)
-    env_train = RatesEnvironment(rates, CASH_TOKEN, start_amount=1000, window=201,
-                                 state_transform=DQTRatioStateTransformer(exchange),
-                                 reward_calculator=DQTRewardCalc(100, exchange))
+    env_train = ExchangeTradingEnvironment(rates, CASH_TOKEN, start_amount=1000, window=201,
+                                           state_transform=DQTRatioStateTransformer(exchange),
+                                           reward_calculator=DQTRewardCalc(100, exchange))
     env_train.register_listener(vis.record_exchange)
     agent = DQTAgent(build_model, [CASH_TOKEN, None, TOKEN], 1, 0.85, 64, 64, tau)
     sess_train = RatesExchangeSession(env_train, agent)
@@ -40,9 +40,9 @@ with tf.Session():
         print("Token difference after training: {0}".format(sess_train.difference()))
         #vis.render(exchange)
 
-    env_test = RatesEnvironment(DataFrameStream(test, name=TOKEN), CASH_TOKEN, start_amount=1000, window=201,
-                                state_transform=DQTRatioStateTransformer(exchange),
-                                reward_calculator=DQTRewardCalc(100, exchange))
+    env_test = ExchangeTradingEnvironment(DataFrameStream(test, name=TOKEN), CASH_TOKEN, start_amount=1000, window=201,
+                                          state_transform=DQTRatioStateTransformer(exchange),
+                                          reward_calculator=DQTRewardCalc(100, exchange))
     sess_test = RatesExchangeSession(env_test, agent)
     with clock_block("Testing"):
         sess_test.run()

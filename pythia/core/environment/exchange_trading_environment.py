@@ -2,7 +2,7 @@ from collections import deque
 from decimal import Decimal
 
 
-class RatesEnvironment:
+class ExchangeTradingEnvironment:
     def __init__(self, rates, start_token, start_amount, window, state_transform=None, reward_calculator=None):
         """
         Environment representing exchange rates. Provides exchange states containing rates, fees and other market data.

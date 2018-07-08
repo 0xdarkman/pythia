@@ -20,7 +20,7 @@ def test_one_record_single_coin_exchange(rates):
     rates.add_record(entry("BTC_ETH", "1.267")).finish()
     assert str(analyze(rates)) == " EXCHANGE |   MEAN   |    SD    |  MEDIAN  |   MIN   |   MAX   |   DIF   \n" \
                                   "-------------------------------------------------------------------------\n" \
-                                  " BTC_ETH  |     1.267|       0.0|     1.267|    1.267|    1.267|    0.000\n"
+                                  " BTC_ETH  |     1.267|       0.0|     1.267|    1.267|    1.267|      0.0\n"
 
 
 def test_different_value_length(rates):
@@ -34,14 +34,14 @@ def test_truncating_to_max_length(rates):
     rates.add_record(entry("BTCD_NTCD", "12.3456789101112")).finish()
     assert str(analyze(rates)) == " EXCHANGE |   MEAN   |    SD    |  MEDIAN  |   MIN   |   MAX   |   DIF   \n" \
                                   "-------------------------------------------------------------------------\n" \
-                                  " BTCD_NTCD|12.3456789|       0.0|12.3456789|12.345678|12.345678|    0E-13\n"
+                                  " BTCD_NTCD|12.3456789|       0.0|12.3456789|12.345678|12.345678|      0.0\n"
 
 
 def test_multiple_exchange_rates(rates):
     rates.add_record(entry("BTC_ETH", "1.267"), entry("LIC_GAME", "10.9")).finish()
     assert str(analyze(rates)) == " EXCHANGE |   MEAN   |    SD    |  MEDIAN  |   MIN   |   MAX   |   DIF   \n" \
                                   "-------------------------------------------------------------------------\n" \
-                                  " BTC_ETH  |     1.267|       0.0|     1.267|    1.267|    1.267|    0.000\n" \
+                                  " BTC_ETH  |     1.267|       0.0|     1.267|    1.267|    1.267|      0.0\n" \
                                   " LIC_GAME |      10.9|       0.0|      10.9|     10.9|     10.9|      0.0\n"
 
 
@@ -51,7 +51,7 @@ def test_calculate_correct_statistics(rates):
         .add_record(entry("BTC_ETH", "12")).finish()
     assert str(analyze(rates)) == " EXCHANGE |   MEAN   |    SD    |  MEDIAN  |   MIN   |   MAX   |   DIF   \n" \
                                   "-------------------------------------------------------------------------\n" \
-                                  " BTC_ETH  |         9|2.94392028|        10|        5|       12|        2\n"
+                                  " BTC_ETH  |       9.0|2.94392028|      10.0|      5.0|     12.0|      2.0\n"
 
 
 def test_calculate_correct_statistics_of_multiple_entries(rates):
@@ -59,8 +59,8 @@ def test_calculate_correct_statistics_of_multiple_entries(rates):
         .add_record(entry("BTC_ETH", "6"), entry("LIC_GAME", "1")).finish()
     assert str(analyze(rates)) == " EXCHANGE |   MEAN   |    SD    |  MEDIAN  |   MIN   |   MAX   |   DIF   \n" \
                                   "-------------------------------------------------------------------------\n" \
-                                  " BTC_ETH  |         8|       2.0|        10|        6|       10|       -4\n" \
-                                  " LIC_GAME |       1.5|       0.5|         2|        1|        2|       -1\n"
+                                  " BTC_ETH  |       8.0|       2.0|      10.0|      6.0|     10.0|     -4.0\n" \
+                                  " LIC_GAME |       1.5|       0.5|       2.0|      1.0|      2.0|     -1.0\n"
 
 
 def test_report_csv_export():

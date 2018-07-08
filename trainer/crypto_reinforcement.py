@@ -3,7 +3,7 @@ import sys
 import tensorflow as tf
 
 from reinforcement.agents.td_agent import TDAgent
-from pythia.core.environment.rates_ai_environment import RatesAiEnvironment, ActionFilter
+from pythia.core.environment.rates_ai_environment import ExchangeTradingAiEnvironment, ActionFilter
 from pythia.core.environment.rates_rewards import TotalBalanceReward
 from reinforcement.policies.e_greedy_policies import NormalEpsilonGreedyPolicy
 from pythia.core.environment.rigged_policy import STOP_AT_THRESHOLD, RiggedPolicy
@@ -31,7 +31,7 @@ if __name__ == '__main__':
         with clock_block("Initialization"):
             rates = ShapeShiftRates(stream, preload=True)
             vis = CoinExchangeVisualizer(rates)
-            env = RatesAiEnvironment(rates, COIN_A, "10", WINDOW, {1: COIN_A, 2: COIN_B}, TotalBalanceReward())
+            env = ExchangeTradingAiEnvironment(rates, COIN_A, "10", WINDOW, {1: COIN_A, 2: COIN_B}, TotalBalanceReward())
             env.register_listener(vis.record_exchange)
 
             model = QRegressionModel(3 + WINDOW * 2, [100], LEARNING_RATE)

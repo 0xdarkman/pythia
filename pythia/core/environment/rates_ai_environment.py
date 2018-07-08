@@ -1,7 +1,7 @@
 from decimal import Decimal
 from collections import deque
 
-from pythia.core.environment.rates_environment import RatesEnvironment, EnvironmentFinished
+from pythia.core.environment.exchange_trading_environment import ExchangeTradingEnvironment, EnvironmentFinished
 from pythia.core.streams.rates_calculators import calculate_exchange_ranges
 
 
@@ -24,7 +24,7 @@ class NormalizeLinearStateTransformer:
         self.start_amount = start_amount
 
     def transform(self, token, balance, window):
-        new_state = [self.token_to_index[token], (balance - self.start_amount) / self.start_amount]
+        new_state = [self.token_to_index[token], (balance - float(self.start_amount)) / float(self.start_amount)]
         for pairs in window:
             def filter_rates(t):
                 if self.exchange_filter is None:
@@ -37,7 +37,7 @@ class NormalizeLinearStateTransformer:
         return new_state
 
 
-class RatesAiEnvironment(RatesEnvironment):
+class ExchangeTradingAiEnvironment(ExchangeTradingEnvironment):
     def __init__(self, rates, start_token, start_amount, window_size, action_to_token, reward_calc,
                  exchange_filter=None):
         """
@@ -50,7 +50,7 @@ class RatesAiEnvironment(RatesEnvironment):
         :param start_amount: the starting balance
         :param window_size: the size of the moving rates window
         :param action_to_token: dictionary that maps action indices to token strings like {0:"BTC", 1:"ETH")
-        :param reward_calc: callable object (RatesAiEnvironment):float that calculates a reward given the environment
+        :param reward_calc: callable object (ExchangeTradingAiEnvironment):float that calculates a reward given the environment
         :param exchange_filter: (optional) list that filters the rates in the state showing only the coins specified
         """
         self.action_to_token = action_to_token
