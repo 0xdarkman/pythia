@@ -9,6 +9,8 @@ class CoinExchangeVisualizer:
         self.actions = deque()
 
     def render(self, exchange):
+        self.stream.reset()
+        plt.figure(figsize=(30, 12))
         vertices = list()
         action = self._get_action()
         for i, market in enumerate(self.stream):
@@ -16,6 +18,8 @@ class CoinExchangeVisualizer:
             vertices.append(rate)
             if action is not None:
                 action = self._mark_action(action, i, rate, exchange)
+
+        self.stream.reset()
 
         if len(vertices) == 0:
             return

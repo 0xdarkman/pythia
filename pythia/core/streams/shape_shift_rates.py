@@ -65,11 +65,11 @@ SUPPORTED_COINS = [
 class RatesPair:
     def __init__(self, info):
         self._pair = info["pair"]
-        self.rate = Decimal(info["rate"])
+        self.rate = float(info["rate"])
         self.limit = float(info["limit"])
         self.maxLimit = float(info["maxLimit"])
         self.min = float(info["min"])
-        self.fee = Decimal(str(info["minerFee"]))
+        self.fee = float(info["minerFee"])
 
     def __str__(self):
         return '{{"rate":"{}","limit":{},"pair":"{}","maxLimit":{},"min":{},"minerFee":{}}}' \

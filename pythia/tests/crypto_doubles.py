@@ -46,5 +46,5 @@ class RatesStub(ShapeShiftRates):
         self.stream.close()
 
 
-def entry(pair, rate, miner_fee="0.5"):
-    return PairEntryStub(pair, rate, "0.7", "6.2", "0.1", miner_fee)
+def entry(pair, rate, miner_fee=0.5):
+    return PairEntryStub(pair, rate, 0.7, 6.2, 0.1, miner_fee)

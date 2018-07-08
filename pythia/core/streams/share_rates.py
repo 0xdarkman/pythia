@@ -10,7 +10,7 @@ class RatesPair:
         self.low = low
         self.close = close
         self.volume = volume
-        self.rate = Decimal(self.open)
+        self.rate = self.open
         self.fee = 0
 
     def __str__(self):
