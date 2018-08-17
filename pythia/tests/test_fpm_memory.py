@@ -1,3 +1,4 @@
+import time
 from collections import OrderedDict
 
 import numpy as np
@@ -32,6 +33,9 @@ class MemoryTestBuilder:
     def get_random_batch(self, size):
         return self.memory.get_random_batch(size)
 
+    def update(self, batch):
+        return self.memory.update(batch)
+
     @property
     def memory(self):
         if self._memory is None:
@@ -45,11 +49,13 @@ def memory():
 
 
 def environment_input(identifier):
-    return Prices({"SYM": {"high": identifier, "low": 1.0, "close": 1.0}}), [1.0, 0.0]
+    w0 = 1.0 / identifier
+    return Prices({"SYM": {"high": identifier, "low": 1.0, "close": 1.0}}), [w0, 1 - w0]
 
 
 def state(identifier):
-    return [[[identifier]], [[1.0]], [[1.0]]], [1.0, 0.0]
+    w0 = 1.0 / identifier
+    return [[[identifier]], [[1.0]], [[1.0]]], [w0, 1 - w0]
 
 
 def identify_state(state):
@@ -57,9 +63,23 @@ def identify_state(state):
     return int(prices[0][0][0])
 
 
-def assert_states(expected_prices, expected_portfolio, actual_prices, actual_portofilio):
+def record(memory, size):
+    for i in range(1, size + 1):
+        memory.record(*environment_input(i))
+
+
+def get_stable_batch(memory, size, seed):
+    np.random.seed(seed)
+    return memory.get_random_batch(size)
+
+
+def assert_states(expected_prices, expected_portfolio, actual_prices, actual_portfolio):
     assert (np.array(expected_prices) == actual_prices).all()
-    assert (np.array(expected_portfolio) == actual_portofilio).all()
+    assert (np.array(expected_portfolio) == actual_portfolio).all()
+
+
+def assert_weights(expected, actual):
+    assert (np.array(expected) == actual).all()
 
 
 def test_nothing_recorded_latest_is_none(memory):
@@ -161,12 +181,24 @@ def test_batch_selection_follows_a_geometrically_decaying_distribution(memory):
     np.random.seed(7)
     memory.beta = 0.5
     records = 5
-    for i in range(records):
-        memory.record(*environment_input(i))
+    record(memory, 5)
+
     distribution = [0] * (records - 1)
     n = 1000
     for _ in range(0, n):
-        distribution[identify_state(memory.get_random_batch(2)[0])] += 1
+        distribution[identify_state(memory.get_random_batch(2)[0]) - 1] += 1
 
     distribution[:] = [p / n for p in distribution]
     assert pytest.approx([0.125, 0.125, 0.25, 0.5], 0.1) == distribution
+
+
+def test_portfolio_weights_of_a_batch_can_be_updated(memory):
+    seed = int(time.time())  # should be stable in a random environment so select a random seed
+    record(memory, 100)
+
+    batch = get_stable_batch(memory, 3, seed)
+    batch.weights = [[0.0, 0.0]] * 3
+    memory.update(batch)
+
+    batch = get_stable_batch(memory, 3, seed)
+    assert_weights([[0.0, 0.0]] * 3, batch.weights)

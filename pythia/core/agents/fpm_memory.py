@@ -5,18 +5,39 @@ import numpy as np
 
 
 class FPMMemory:
+    class Batch:
+        def __init__(self, prices, weights, index, size):
+            self.prices = prices
+            self.weights = weights
+            self._index = index
+            self._size = size
+
+        @property
+        def index(self):
+            return self._index
+
+        @property
+        def size(self):
+            return self._size
+
+        def __getitem__(self, idx):
+            return self.prices[idx], self.weights[idx]
+
+        def __len__(self):
+            return len(self.prices)
+
     def __init__(self, window, size, beta):
         self._window = window
         self.beta = beta
 
         self._prices = deque(maxlen=size)
-        self._portfolio = None
+        self._portfolios = deque(maxlen=size)
         self._num_assets = None
 
     def record(self, prices, portfolio):
         self._validate_input(len(prices), portfolio)
         self._prices.append(prices)
-        self._portfolio = np.array(portfolio)
+        self._portfolios.append(np.array(portfolio))
 
     def _validate_input(self, m, portfolio):
         if m + 1 != len(portfolio):
@@ -43,8 +64,9 @@ class FPMMemory:
         if n_prc < self._window:
             return None, None
 
-        p = self._make_price_tensor(n_prc - self._window)
-        return p, self._portfolio
+        idx = n_prc - self._window
+        p = self._make_price_tensor(idx)
+        return p, self._portfolios[n_prc - 1]
 
     def get_random_batch(self, size):
         num_prices = len(self._prices)
@@ -53,9 +75,23 @@ class FPMMemory:
 
         first_possible = num_prices - self._window - size + 1
         roll = np.random.geometric(self.beta) - 1
-        sel = max(first_possible - roll, 0)
-        return np.array([(self._make_price_tensor(sel + i), self._portfolio)
-                         for i in range(0, min(size, len(self._prices)))])
+        selection = max(first_possible - roll, 0)
+        return self._make_batch(selection, size)
+
+    def _make_batch(self, from_idx, size):
+        size = min(size, len(self._prices))
+        prices = np.empty([size, 3, self._num_assets, self._window])
+        weights = np.empty([size, self._num_assets + 1])
+        for i in range(0, size):
+            prices[i] = self._make_price_tensor(from_idx + i)
+            weights[i] = self._portfolios[from_idx + i]
+        return self.Batch(prices, weights, from_idx, size)
+
+    def update(self, batch):
+        w_idx = 0
+        for i in range(batch.index, batch.index + batch.size):
+            self._portfolios[i] = batch.weights[w_idx]
+            w_idx += 1
 
     class DataMismatchError(ValueError):
         pass
