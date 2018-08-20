@@ -59,8 +59,20 @@ def state(identifier):
 
 
 def identify_state(state):
-    prices, _ = state
+    prices, _, _ = state
     return int(prices[0][0][0])
+
+
+def batch(*identifiers):
+    prices, weights, future = [], [], []
+    for i in range(0, len(identifiers) - 1):
+        ident = identifiers[i]
+        p, w = state(ident)
+        prices.append(p)
+        weights.append(w)
+        future.append(identifiers[i + 1] / ident)
+
+    return FPMMemory.Batch(np.array(prices), np.array(weights), np.array(future), 0, len(identifiers))
 
 
 def record(memory, size):
@@ -80,6 +92,16 @@ def assert_states(expected_prices, expected_portfolio, actual_prices, actual_por
 
 def assert_weights(expected, actual):
     assert (np.array(expected) == actual).all()
+
+
+def assert_batch(expected, actual):
+    assert len(expected) == len(actual)
+    for e, a in zip(expected, actual):
+        ep, ew, ef = e
+        ap, aw, af = a
+        assert (ep == ap).all()
+        assert (ew == aw).all()
+        assert (ef == af).all()
 
 
 def test_nothing_recorded_latest_is_none(memory):
@@ -141,12 +163,18 @@ def test_drop_price_information_after_window(memory):
 
 
 def test_return_empty_batch_when_nothing_is_recorded(memory):
-    assert (memory.get_random_batch(1) == np.array([])).all()
+    assert memory.get_random_batch(1).empty
+
+
+def test_return_empty_batch_when_it_is_not_possible_to_provide_future_prices(memory):
+    memory.record(*environment_input(1))
+    assert memory.get_random_batch(1).empty
 
 
 def test_return_trivial_random_batch(memory):
-    memory.record(*environment_input(3.0))
-    assert_states(*state(3.0), *memory.get_random_batch(1)[0])
+    memory.record(*environment_input(1.0))
+    memory.record(*environment_input(2.0))
+    assert_batch(batch(1.0, 2.0), memory.get_random_batch(1))
 
 
 def test_select_randomly_from_history(memory):
@@ -154,7 +182,7 @@ def test_select_randomly_from_history(memory):
     memory.record(*environment_input(1.0))
     memory.record(*environment_input(2.0))
     memory.record(*environment_input(3.0))
-    assert_states(*state(2.0), *memory.get_random_batch(1)[0])
+    assert_batch(batch(1.0, 2.0), memory.get_random_batch(1))
 
 
 def test_random_batches_preserve_time_series(memory):
@@ -162,28 +190,24 @@ def test_random_batches_preserve_time_series(memory):
     memory.record(*environment_input(1.0))
     memory.record(*environment_input(2.0))
     memory.record(*environment_input(3.0))
-    batch = memory.get_random_batch(2)
-    assert_states(*state(2.0), *batch[0])
-    assert_states(*state(3.0), *batch[1])
+    memory.record(*environment_input(4.0))
+    assert_batch(batch(2.0, 3.0, 4.0), memory.get_random_batch(2))
 
 
 def test_not_enough_data_to_fill_batch_size_truncates_the_batch(memory):
     np.random.seed(7)
     memory.record(*environment_input(1.0))
     memory.record(*environment_input(2.0))
-    batch = memory.get_random_batch(2)
-    assert len(batch) == 2
-    assert_states(*state(1.0), *batch[0])
-    assert_states(*state(2.0), *batch[1])
+    assert_batch(batch(1.0, 2.0), memory.get_random_batch(2))
 
 
 def test_batch_selection_follows_a_geometrically_decaying_distribution(memory):
     np.random.seed(7)
     memory.beta = 0.5
-    records = 5
-    record(memory, 5)
+    records = 6
+    record(memory, records)
 
-    distribution = [0] * (records - 1)
+    distribution = [0] * (records - 2)
     n = 1000
     for _ in range(0, n):
         distribution[identify_state(memory.get_random_batch(2)[0]) - 1] += 1
@@ -196,9 +220,9 @@ def test_portfolio_weights_of_a_batch_can_be_updated(memory):
     seed = int(time.time())  # should be stable in a random environment so select a random seed
     record(memory, 100)
 
-    batch = get_stable_batch(memory, 3, seed)
-    batch.weights = [[0.0, 0.0]] * 3
-    memory.update(batch)
+    b = get_stable_batch(memory, 3, seed)
+    b.weights = [[0.0, 0.0]] * 3
+    memory.update(b)
 
-    batch = get_stable_batch(memory, 3, seed)
-    assert_weights([[0.0, 0.0]] * 3, batch.weights)
+    b = get_stable_batch(memory, 3, seed)
+    assert_weights([[0.0, 0.0]] * 3, b.weights)

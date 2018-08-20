@@ -6,9 +6,10 @@ import numpy as np
 
 class FPMMemory:
     class Batch:
-        def __init__(self, prices, weights, index, size):
+        def __init__(self, prices, weights, future, index, size):
             self.prices = prices
             self.weights = weights
+            self.future = future
             self._index = index
             self._size = size
 
@@ -20,11 +21,17 @@ class FPMMemory:
         def size(self):
             return self._size
 
+        @property
+        def empty(self):
+            return self.size == 0
+
         def __getitem__(self, idx):
-            return self.prices[idx], self.weights[idx]
+            return self.prices[idx], self.weights[idx], self.future[idx]
 
         def __len__(self):
             return len(self.prices)
+
+    EMPTY_BATCH = Batch(np.empty(0), np.empty(0), np.empty(0), -1, 0)
 
     def __init__(self, window, size, beta):
         self._window = window
@@ -70,22 +77,29 @@ class FPMMemory:
 
     def get_random_batch(self, size):
         num_prices = len(self._prices)
-        if num_prices < self._window:
-            return []
+        if num_prices < self._window + 1:
+            return self.EMPTY_BATCH
 
-        first_possible = num_prices - self._window - size + 1
+        first_possible = num_prices - self._window - size
         roll = np.random.geometric(self.beta) - 1
         selection = max(first_possible - roll, 0)
         return self._make_batch(selection, size)
 
     def _make_batch(self, from_idx, size):
-        size = min(size, len(self._prices))
+        size = min(size, len(self._prices) - 1)
         prices = np.empty([size, 3, self._num_assets, self._window])
         weights = np.empty([size, self._num_assets + 1])
+        futures = np.empty([size, self._num_assets])
         for i in range(0, size):
             prices[i] = self._make_price_tensor(from_idx + i)
             weights[i] = self._portfolios[from_idx + i]
-        return self.Batch(prices, weights, from_idx, size)
+            futures[i] = self._make_future_prices(from_idx + i)
+        return self.Batch(prices, weights, futures, from_idx, size)
+
+    def _make_future_prices(self, batch_idx):
+        future = np.array(self._prices[batch_idx + self._window])[:, 0]
+        previous = np.array(self._prices[batch_idx + self._window - 1])[:, 0]
+        return future / previous
 
     def update(self, batch):
         w_idx = 0
