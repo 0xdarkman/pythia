@@ -216,13 +216,33 @@ def test_batch_selection_follows_a_geometrically_decaying_distribution(memory):
     assert pytest.approx([0.125, 0.125, 0.25, 0.5], 0.1) == distribution
 
 
-def test_portfolio_weights_of_a_batch_can_be_updated(memory):
+def test_portfolio_weights_of_a_batch_can_be_updated_with_predictions(memory):
     seed = int(time.time())  # should be stable in a random environment so select a random seed
     record(memory, 100)
 
     b = get_stable_batch(memory, 3, seed)
-    b.weights = [[0.0, 0.0]] * 3
+    old_w = list(b.weights)
+    b.predictions = [[0.0, 0.0]] * 3
     memory.update(b)
 
     b = get_stable_batch(memory, 3, seed)
-    assert_weights([[0.0, 0.0]] * 3, b.weights)
+    assert_weights([old_w[0]] + [[0.0, 0.0]] * 2, b.weights)
+
+
+def test_portfolio_weights_get_updated_by_predictions_up_to_one_after_the_batch(memory):
+    record(memory, 4)
+    b = get_stable_batch(memory, 2, 1)
+    b.predictions = [[0.0, 0.0]] * 2
+    memory.update(b)
+
+    b = get_stable_batch(memory, 2, 7)
+    assert_weights([[0.0, 0.0]] * 2, b.weights)
+
+
+def test_portfolio_weight_update_is_clamped_to_record_size(memory):
+    record(memory, 2)
+    b = get_stable_batch(memory, 2, 1)
+    b.predictions = [[0.0, 0.0]] * 2
+    memory.update(b)
+
+

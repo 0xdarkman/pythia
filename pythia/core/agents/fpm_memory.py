@@ -10,6 +10,7 @@ class FPMMemory:
             self.prices = prices
             self.weights = weights
             self.future = future
+            self.predictions = None
             self._index = index
             self._size = size
 
@@ -103,8 +104,8 @@ class FPMMemory:
 
     def update(self, batch):
         w_idx = 0
-        for i in range(batch.index, batch.index + batch.size):
-            self._portfolios[i] = batch.weights[w_idx]
+        for i in range(batch.index + 1, batch.index + batch.size + 1):
+            self._portfolios[i] = batch.predictions[w_idx]
             w_idx += 1
 
     class DataMismatchError(ValueError):
