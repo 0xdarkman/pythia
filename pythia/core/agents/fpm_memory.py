@@ -54,27 +54,30 @@ class FPMMemory:
         if self._num_assets is None:
             self._num_assets = m
 
+    def get_latest(self):
+        if not self.ready():
+            return None, None
+
+        n_prc = len(self._prices)
+        idx = n_prc - self._window
+        p = self._make_price_tensor(idx)
+        return p, self._portfolios[n_prc - 1]
+
+    def ready(self):
+        return len(self._prices) >= self._window
+
     def _make_price_tensor(self, start):
         p = np.array(list(itertools.islice(self._prices, start, start + self._window))).T
         return self._calc_price_quotient(p)
 
     def _calc_price_quotient(self, p):
         for i in range(0, self._num_assets):
-            lc = p[2][i][-1]
+            lc = p[0][i][-1]
             p[0][i] /= lc
             p[1][i] /= lc
             p[2][i] /= lc
 
         return p
-
-    def get_latest(self):
-        n_prc = len(self._prices)
-        if n_prc < self._window:
-            return None, None
-
-        idx = n_prc - self._window
-        p = self._make_price_tensor(idx)
-        return p, self._portfolios[n_prc - 1]
 
     def get_random_batch(self, size):
         num_prices = len(self._prices)

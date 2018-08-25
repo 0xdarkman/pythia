@@ -6,6 +6,8 @@ from pythia.core.agents.fpm_agent import FpmAgent
 class MemorySpy:
     def __init__(self):
         self.batch = BatchStub((None, None), None)
+        self.last_record = (PriceStub(), PortfolioStub())
+        self.is_ready = True
         self.received_state = None
         self.received_weights_to_update = None
         self.queried_batch_size = None
@@ -13,8 +15,20 @@ class MemorySpy:
     def set_batch(self, batch):
         self.batch = batch
 
+    def set_last_record(self, prices, portfolio):
+        self.last_record = (prices, portfolio)
+
+    def set_ready(self, is_ready):
+        self.is_ready = is_ready
+
     def record(self, prices, portfolio):
         self.received_state = (prices, portfolio)
+
+    def ready(self):
+        return self.is_ready
+
+    def get_latest(self):
+        return self.last_record
 
     def get_random_batch(self, size):
         self.queried_batch_size = size
@@ -74,6 +88,14 @@ class BatchStub:
         self.future = future
 
 
+class RandomPortfolio:
+    def __repr__(self):
+        return "RandomPortfolio"
+
+    def __eq__(self, other):
+        return isinstance(other, RandomPortfolio)
+
+
 @pytest.fixture
 def ann():
     return AnnSpy()
@@ -101,7 +123,7 @@ def config(initial_portfolio, batch_size):
 
 @pytest.fixture
 def agent(ann, memory, config):
-    return FpmAgent(ann, memory, config)
+    return FpmAgent(ann, memory, lambda: RandomPortfolio(), config)
 
 
 def make_prices(index=0):
@@ -126,10 +148,10 @@ def test_memory_records_first_prices_and_initial_portfolio(agent, memory, initia
     assert memory.received_state == (price, initial_portfolio)
 
 
-def test_ann_predicts_first_prices_and_initial_portfolio(agent, ann, initial_portfolio):
-    price = make_prices()
-    agent.step(price)
-    assert ann.predicted == (price, initial_portfolio)
+def test_ann_predicts_last_recorded_memory(agent, ann, memory):
+    memory.set_last_record(make_prices(1), make_portfolio(1))
+    agent.step(make_prices())
+    assert ann.predicted == (make_prices(1), make_portfolio(1))
 
 
 def test_ann_prediction_is_the_returned_action(agent, ann):
@@ -163,9 +185,14 @@ def test_record_previously_predicted_portfolio_on_next_step(agent, ann, memory):
     assert memory.received_state == (make_prices(2), make_portfolio(1))
 
 
-def test_use_previously_predicted_portfolio_in_prediction_on_next_step(agent, ann, memory):
-    ann.set_predictions(make_portfolio(1))
+def test_agent_returns_random_actions_when_memory_is_not_ready(agent, memory):
+    memory.set_ready(False)
+    a = agent.step(make_prices())
+    assert a == RandomPortfolio()
+
+
+def test_agent_records_random_portfolio_when_memory_is_not_read(agent, memory):
+    memory.set_ready(False)
     agent.step(make_prices(1))
-    ann.set_predictions(make_portfolio(2))
     agent.step(make_prices(2))
-    assert ann.predicted == (make_prices(2), make_portfolio(1))
+    assert memory.received_state == (make_prices(2), RandomPortfolio())

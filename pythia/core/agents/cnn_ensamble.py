@@ -1,5 +1,6 @@
 import tensorflow as tf
 import tflearn
+import numpy as np
 
 DEFAULT_PADDING = "valid"
 DEFAULT_ACTIVATION = "relu"
@@ -87,6 +88,11 @@ class CNNEnsemble:
     def _calc_future_omega(future_prices, omega):
         # w' = y * w / |y . w|
         return (future_prices * omega) / (tf.reduce_sum(future_prices * omega, axis=1)[:, None])
+
+    def predict(self, prices, previous_omega):
+        res = self.session.run(self.out_nn, feed_dict={self.input_prices: np.expand_dims(prices, axis=0),
+                                                       self.input_prev_omega: np.expand_dims(previous_omega, axis=0)})
+        return res[0]
 
     def train(self, states, future_prices):
         prices, omegas = states

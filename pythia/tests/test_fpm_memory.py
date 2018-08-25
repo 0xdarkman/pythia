@@ -14,7 +14,7 @@ class Prices:
     def to_array(self):
         t = []
         for v in self.rates.values():
-            t.append([v['high'], v['low'], v['close']])
+            t.append([v['close'], v['high'], v['low']])
         return t
 
 
@@ -36,6 +36,9 @@ class MemoryTestBuilder:
     def update(self, batch):
         return self.memory.update(batch)
 
+    def ready(self):
+        return self.memory.ready()
+
     @property
     def memory(self):
         if self._memory is None:
@@ -50,17 +53,17 @@ def memory():
 
 def environment_input(identifier):
     w0 = 1.0 / identifier
-    return Prices({"SYM": {"high": identifier, "low": 1.0, "close": 1.0}}), [w0, 1 - w0]
+    return Prices({"SYM": {"high": 1.0, "low": 1.0, "close": identifier}}), [w0, 1 - w0]
 
 
 def state(identifier):
     w0 = 1.0 / identifier
-    return [[[identifier]], [[1.0]], [[1.0]]], [w0, 1 - w0]
+    return [[[1.0]], [[1.0 / identifier]], [[1.0 / identifier]]], [w0, 1 - w0]
 
 
 def identify_state(state):
     prices, _, _ = state
-    return int(prices[0][0][0])
+    return int(1.0 / prices[1][0][0])
 
 
 def batch(*identifiers):
@@ -110,8 +113,8 @@ def test_nothing_recorded_latest_is_none(memory):
 
 
 @pytest.mark.parametrize("price, portfolio, price_tensor", [
-    (Prices({"SYM1": {"high": 4.0, "low": 1.0, "close": 2.0}}), [1.0, 0.0], [[[2.0]], [[0.5]], [[1.0]]]),
-    (Prices({"SYM2": {"high": 2.0, "low": 0.1, "close": 0.5}}), [0.5, 0.5], [[[4.0]], [[0.2]], [[1.0]]]),
+    (Prices({"SYM1": {"high": 4.0, "low": 1.0, "close": 2.0}}), [1.0, 0.0], [[[1.0]], [[2.0]], [[0.5]]]),
+    (Prices({"SYM2": {"high": 2.0, "low": 0.1, "close": 0.5}}), [0.5, 0.5], [[[1.0]], [[4.0]], [[0.2]]]),
 ])
 def test_enough_records_latest_returns_last_price_tensor_and_portfolio(memory, price, portfolio, price_tensor):
     memory.record(price, portfolio)
@@ -121,7 +124,7 @@ def test_enough_records_latest_returns_last_price_tensor_and_portfolio(memory, p
 def test_multiple_assets(memory):
     p = Prices({"SYM1": {"high": 4.0, "low": 1.0, "close": 2.0}, "SYM2": {"high": 2.0, "low": 0.1, "close": 0.5}})
     memory.record(p, [1.0, 0.0, 0.0])
-    assert_states([[[2.0], [4.0]], [[0.5], [0.2]], [[1.0], [1.0]]], [1.0, 0.0, 0.0], *memory.get_latest())
+    assert_states([[[1.0], [1.0]], [[2.0], [4.0]], [[0.5], [0.2]]], [1.0, 0.0, 0.0], *memory.get_latest())
 
 
 def test_raise_data_mismatch_error_when_amount_of_symbols_does_not_fit_portfolio_vector(memory):
@@ -136,11 +139,20 @@ def test_latest_returns_none_if_there_are_not_enough_records_to_fill_price_windo
     assert_states(None, None, *memory.get_latest())
 
 
+def test_is_ready_when_enough_prices_are_recorded_to_fill_the_window(memory):
+    memory.window = 2
+    assert not memory.ready()
+    memory.record(*environment_input(1))
+    assert not memory.ready()
+    memory.record(*environment_input(2))
+    assert memory.ready()
+
+
 def test_price_vector_contains_price_history_quotient_of_most_recent_price_in_window(memory):
     memory.window = 2
     memory.record(Prices({"SYM1": {"high": 4.0, "low": 1.0, "close": 1.5}}), [1.0, 0.0])
     memory.record(Prices({"SYM1": {"high": 2.5, "low": 1.2, "close": 3.0}}), [1.0, 0.0])
-    assert_states([[[4.0 / 3.0, 2.5 / 3.0]], [[1.0 / 3.0, 1.2 / 3.0]], [[1.5 / 3.0, 3.0 / 3.0]]], [1.0, 0.0],
+    assert_states([[[1.5 / 3.0, 3.0 / 3.0]], [[4.0 / 3.0, 2.5 / 3.0]], [[1.0 / 3.0, 1.2 / 3.0]]], [1.0, 0.0],
                   *memory.get_latest())
 
 
@@ -150,7 +162,7 @@ def test_window_with_multiple_assets(memory):
     p2 = Prices({"SYM1": {"high": 2.0, "low": 0.5, "close": 2.0}, "SYM2": {"high": 3.0, "low": 0.2, "close": 0.5}})
     memory.record(p1, [1.0, 0.0, 0.0])
     memory.record(p2, [1.0, 0.0, 0.0])
-    assert_states([[[2.0, 1.0], [4.0, 6.0]], [[0.5, 0.25], [0.2, 0.4]], [[0.5, 1.0], [2.0, 1.0]]], [1.0, 0.0, 0.0],
+    assert_states([[[0.5, 1.0], [2.0, 1.0]], [[2.0, 1.0], [4.0, 6.0]], [[0.5, 0.25], [0.2, 0.4]]], [1.0, 0.0, 0.0],
                   *memory.get_latest())
 
 
@@ -159,7 +171,7 @@ def test_drop_price_information_after_window(memory):
     memory.record(Prices({"SYM1": {"high": 4.0, "low": 1.0, "close": 1.5}}), [1.0, 0.0])
     memory.record(Prices({"SYM1": {"high": 2.5, "low": 1.2, "close": 2.0}}), [1.0, 0.0])
     memory.record(Prices({"SYM1": {"high": 2.0, "low": 0.5, "close": 1.0}}), [1.0, 0.0])
-    assert_states([[[2.5, 2.0]], [[1.2, 0.5]], [[2.0, 1.0]]], [1.0, 0.0], *memory.get_latest())
+    assert_states([[[2.0, 1.0]], [[2.5, 2.0]], [[1.2, 0.5]]], [1.0, 0.0], *memory.get_latest())
 
 
 def test_return_empty_batch_when_nothing_is_recorded(memory):

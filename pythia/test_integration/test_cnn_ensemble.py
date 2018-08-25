@@ -146,12 +146,16 @@ class CNNEnsembleTests(tf.test.TestCase):
 
     def _do_test_input_output_shapes(self, f, m, n):
         with self.test_session() as sess:
-            nn = CNNEnsemble(sess, m, n, config([layer_config(2, [1, 2]),
-                                                 layer_config(10, [1, n - 1], regularizer="L2", weight_decay=5e-9),
-                                                 layer_config(1, [1, 1], regularizer="L2", weight_decay=5e-8)]))
+            nn = self._make_ensemble_for_setup(sess, m, n)
             sess.run(tf.global_variables_initializer())
             out = nn.train((np.ones([5, f, m, n]), np.ones([5, m])), np.ones([5, m]))
             assert (5, m + 1) == out.shape
+
+    @staticmethod
+    def _make_ensemble_for_setup(sess, m, n):
+        return CNNEnsemble(sess, m, n, config([layer_config(2, [1, 2]),
+                                               layer_config(10, [1, n - 1], regularizer="L2", weight_decay=5e-9),
+                                               layer_config(1, [1, 1], regularizer="L2", weight_decay=5e-8)]))
 
     def test_cnn_ensemble_can_perform_a_trivial_training_circle_with_no_error(self):
         with self.test_session() as sess:
@@ -171,3 +175,16 @@ class CNNEnsembleTests(tf.test.TestCase):
                     out = nn.train(s, f)
                     series.update(out)
                 series.reset()
+
+    def test_cnn_predict_produces_action_with_correct_shape(self):
+        self._do_test_predict_shape(3, 11, 50)
+
+    def test_edge_case_for_input_and_output_prediction_shapes(self):
+        self._do_test_predict_shape(3, 1, 2)
+
+    def _do_test_predict_shape(self, f, m, n):
+        with self.test_session() as sess:
+            nn = self._make_ensemble_for_setup(sess, m, n)
+            sess.run(tf.global_variables_initializer())
+            a = nn.predict(np.ones([f, m, n]), np.ones([m]))
+            assert (m + 1,) == a.shape
