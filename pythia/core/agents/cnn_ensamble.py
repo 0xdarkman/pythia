@@ -82,7 +82,7 @@ class CNNEnsemble:
         future_omega = self._calc_future_omega(future_prices, omega)
         w_prime = future_omega[:-1]
         w = omega[1:]
-        return 1 - tf.reduce_sum(tf.abs(w_prime[:, 1:] - w[:, 1:]), axis=1) * self.config["commission"]
+        return 1 - tf.reduce_sum(tf.abs(w_prime[:, 1:] - w[:, 1:]), axis=1) * self.config["trading"]["commission"]
 
     @staticmethod
     def _calc_future_omega(future_prices, omega):

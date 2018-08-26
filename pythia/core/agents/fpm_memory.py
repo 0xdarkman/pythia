@@ -34,10 +34,10 @@ class FPMMemory:
 
     EMPTY_BATCH = Batch(np.empty(0), np.empty(0), np.empty(0), -1, 0)
 
-    def __init__(self, window, size, beta):
-        self._window = window
-        self.beta = beta
-
+    def __init__(self, config):
+        self._window = config["training"]["window"]
+        self.beta = config["training"]["beta"]
+        size = config["training"]["size"]
         self._prices = deque(maxlen=size)
         self._portfolios = deque(maxlen=size)
         self._num_assets = None

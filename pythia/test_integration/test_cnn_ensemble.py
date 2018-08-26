@@ -15,8 +15,6 @@ def layer_config(out_channels, kernel, strides=None, activation=None, padding=No
         cnf["strides"] = strides
     if padding:
         cnf["padding"] = padding
-    if padding:
-        cnf["padding"] = padding
     if regularizer:
         cnf["regularizer"] = regularizer
     if weight_decay:
@@ -26,7 +24,7 @@ def layer_config(out_channels, kernel, strides=None, activation=None, padding=No
 
 
 def config(layers, commission=0.0, lr=0.001, decay_steps=0, decay_rate=0.0):
-    return {"layers": layers, "commission": commission,
+    return {"layers": layers, "trading": {"commission": commission},
             "training": {"learning_rate": lr, "decay_steps": decay_steps, "decay_rate": decay_rate}}
 
 
@@ -153,7 +151,7 @@ class CNNEnsembleTests(tf.test.TestCase):
 
     @staticmethod
     def _make_ensemble_for_setup(sess, m, n):
-        return CNNEnsemble(sess, m, n, config([layer_config(2, [1, 2]),
+        return CNNEnsemble(sess, m, n, config([layer_config(3, [1, 2]),
                                                layer_config(10, [1, n - 1], regularizer="L2", weight_decay=5e-9),
                                                layer_config(1, [1, 1], regularizer="L2", weight_decay=5e-8)]))
 

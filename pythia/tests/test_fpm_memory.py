@@ -42,7 +42,8 @@ class MemoryTestBuilder:
     @property
     def memory(self):
         if self._memory is None:
-            self._memory = FPMMemory(self.window, 1000, self.beta)
+            cfg = {"training": {"window": self.window, "size": 1000, "beta": self.beta}}
+            self._memory = FPMMemory(cfg)
         return self._memory
 
 
