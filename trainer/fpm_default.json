@@ -27,6 +27,7 @@
     "commission": 0.0025,
     "api": "https://poloniex.com/public",
     "cash": "BTC",
+    "cash_amount": 1.0,
     "coins": ["ETH", "LTC", "XRP", "STR", "ETC", "DASH", "XMR", "XEM", "FCT", "GNT", "ZEC"],
     "period": 1800,
     "start": "2015/07/01"

@@ -1,21 +1,10 @@
 import time
-from collections import OrderedDict
 
 import numpy as np
 import pytest
 
 from pythia.core.agents.fpm_memory import FPMMemory
-
-
-class Prices:
-    def __init__(self, rates):
-        self.rates = OrderedDict(rates)
-
-    def to_array(self):
-        t = []
-        for v in self.rates.values():
-            t.append([v['close'], v['high'], v['low']])
-        return t
+from pythia.tests.fpm_doubles import Prices
 
 
 class MemoryTestBuilder:
