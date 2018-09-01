@@ -3,43 +3,8 @@ import numpy as np
 
 from collections import deque
 
+from pythia.core.environment.fpm_environment import FpmEnvironment
 from pythia.tests.fpm_doubles import Prices
-
-
-class FpmEnvironment:
-    def __init__(self, time_series, config):
-        self.time_series = time_series
-        self.cash = config["trading"]["cash_amount"]
-        self.next_prices = None
-
-    def reset(self):
-        self.time_series.reset()
-        try:
-            s = next(self.time_series)
-            self.next_prices = next(self.time_series)
-            return s
-        except StopIteration:
-            raise self.TimeSeriesError("The time series provided is empty.")
-
-    def step(self, action):
-        r = self._calc_reward_from(action)
-        return self._make_next_state(self.next_prices, r)
-
-    def _calc_reward_from(self, action):
-        y = np.array(self.next_prices)
-        y = self._add_cash_prices(y)
-        return np.dot(action, y[:, 0]) * self.cash
-
-    @staticmethod
-    def _add_cash_prices(y):
-        return np.insert(y, 0, np.ones(y.shape[1]), axis=0)
-
-    def _make_next_state(self, current, reward):
-        self.next_prices = next(self.time_series, None)
-        return current, reward, self.next_prices is None, None
-
-    class TimeSeriesError(AttributeError):
-        pass
 
 
 class PricesTimeSeriesStub:
@@ -69,7 +34,7 @@ def series():
 
 @pytest.fixture
 def config():
-    return {"trading": {"cash_amount": 100}}
+    return {"trading": {"cash_amount": 100, "commission": 0, "coins": ["SYM1"]}}
 
 
 @pytest.fixture
@@ -83,17 +48,29 @@ def env(series, config):
     return FpmEnvironment(series, config)
 
 
-def prices(closing):
-    return Prices({"SYM1": {"high": 0.0, "low": 0.0, "close": closing}}).to_array()
+def prices(*closings):
+    entries = dict()
+    for i, c in enumerate(closings):
+        entries[f"SYM{i}"] = {"high": 0.0, "low": 0.0, "close": c}
+    return Prices(entries).to_array()
 
 
 def action(portfolio=None):
     return np.array(portfolio if portfolio is not None else [1.0, 0.0])
 
 
-def prep_env_series(env, series, *closings):
-    series.set_prices(*(prices(i) for i in closings))
+def get_reward(s):
+    _, r, _, _ = s
+    return r
+
+
+def prev_env_with_prices(env, series, *p):
+    series.set_prices(*p)
     env.reset()
+
+
+def prep_env_series(env, series, *closings):
+    prev_env_with_prices(env, series, *(prices(i) for i in closings))
 
 
 def test_that_environment_raises_an_error_when_time_series_is_empty(env, series):
@@ -146,11 +123,71 @@ def test_reset_resets_the_time_series_again(env, series):
 
 def test_trivial_reward_when_action_keeps_cash(env, starting_cash):
     env.reset()
-    _, r, _, _ = env.step(action([1.0, 0.0]))
-    assert r == starting_cash
+    assert get_reward(env.step(action([1.0, 0.0]))) == starting_cash
 
 
 def test_reward_increases_when_price_of_invested_asset_rises(env, series, starting_cash):
     prep_env_series(env, series, 1, 2)
-    _, r, _, _ = env.step(action([0.0, 1.0]))
-    assert r == starting_cash * 2
+    assert get_reward(env.step(action([0.0, 1.0]))) == starting_cash * 2
+
+
+def test_reward_decreases_when_price_of_invested_asset_sinks(env, series, starting_cash):
+    prep_env_series(env, series, 1, 0.5)
+    assert get_reward(env.step(action([0.0, 1.0]))) == starting_cash * 0.5
+
+
+def test_reward_is_high_when_buying_low_and_selling_high(env, series, starting_cash):
+    prep_env_series(env, series, 0.5, 2, 0.1)
+    assert get_reward(env.step(action([0.0, 1.0]))) == starting_cash * 4
+    assert get_reward(env.step(action([1.0, 0.0]))) == starting_cash * 4
+
+
+def test_reward_is_low_when_buying_high_and_selling_low(env, series, starting_cash):
+    prep_env_series(env, series, 2, 0.5, 4)
+    assert get_reward(env.step(action([0.0, 1.0]))) == starting_cash * 0.25
+    assert get_reward(env.step(action([1.0, 0.0]))) == starting_cash * 0.25
+
+
+def test_reward_increases_when_holding_assets_and_their_prices_rises(env, series, starting_cash):
+    prep_env_series(env, series, 1, 0.5, 2)
+    assert get_reward(env.step(action([0.0, 1.0]))) == starting_cash * 0.5
+    assert get_reward(env.step(action([0.0, 1.0]))) == starting_cash * 2
+
+
+def test_rewards_of_investment_policy(env, series, starting_cash):
+    prep_env_series(env, series, 1, 0.5, 2, 1, 0.5, 0.5, 2, 1)
+    assert get_reward(env.step(action([0.0, 1.0]))) == starting_cash * 0.5
+    assert get_reward(env.step(action([0.0, 1.0]))) == starting_cash * 2
+    assert get_reward(env.step(action([1.0, 0.0]))) == starting_cash * 2
+    assert get_reward(env.step(action([0.0, 1.0]))) == starting_cash * 1
+    assert get_reward(env.step(action([1.0, 0.0]))) == starting_cash * 1
+    assert get_reward(env.step(action([1.0, 0.0]))) == starting_cash * 1
+    assert get_reward(env.step(action([0.0, 1.0]))) == starting_cash * 0.5
+
+
+def test_reward_deducts_commission_fee(env, series, starting_cash):
+    env.commission = 0.1
+    prep_env_series(env, series, 0.5, 2, 0.1)
+    assert get_reward(env.step(action([0.0, 1.0]))) == (1 - env.commission) * starting_cash * 4
+    assert get_reward(env.step(action([1.0, 0.0]))) == (1 - env.commission) * (1 - env.commission) * starting_cash * 4
+
+
+def test_reward_is_correctly_calculated_with_multiple_assets(config, series, starting_cash):
+    config["trading"]["coins"] = ["SYM1", "SYM2"]
+    env = FpmEnvironment(series, config)
+    prev_env_with_prices(env, series, prices(0.5, 2.0), prices(2.0, 0.5), prices(0.5, 0.5), prices(1, 2),
+                         prices(0.5, 1), prices(0.6, 1.2), prices(1.2, 0.8))
+    assert get_reward(env.step(action([0.0, 1.0, 0.0]))) == starting_cash * 4
+    assert get_reward(env.step(action([0.0, 0.5, 0.5]))) == starting_cash * 2.5
+    assert get_reward(env.step(action([0.5, 0.0, 0.5]))) == starting_cash * 8.5
+    assert get_reward(env.step(action([0.5, 0.25, 0.25]))) == starting_cash * 4.5
+    assert get_reward(env.step(action([0.6, 0.1, 0.3]))) == starting_cash * 5.14
+    assert get_reward(env.step(action([0.3, 0.5, 0.1]))) == starting_cash * 8.35
+
+
+def test_reward_handles_commission_correctly_with_multiple_assets(config, series, starting_cash):
+    config["trading"]["coins"] = ["SYM1", "SYM2"]
+    config["trading"]["commission"] = 0.1
+    env = FpmEnvironment(series, config)
+    prev_env_with_prices(env, series, prices(0.5, 0.5), prices(2.0, 2.0), prices(0.1, 0.1))
+    assert get_reward(env.step(action([0.0, 1.0, 0.0]))) == starting_cash * 3.6
