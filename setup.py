@@ -2,7 +2,7 @@ from setuptools import find_packages
 from setuptools import setup
 
 
-REQUIRED_PACKAGES = ['reinforcement', 'tensorflow', 'tflearn']
+REQUIRED_PACKAGES = ['reinforcement', 'tensorflow', 'tflearn', 'pandas']
 
 setup(
     name='trainer',
