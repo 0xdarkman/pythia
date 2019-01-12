@@ -83,9 +83,10 @@ class PortfolioStub:
 
 
 class BatchStub:
-    def __init__(self, states, future):
+    def __init__(self, states, future, is_empty=False):
         self.prices, self.weights = states
         self.future = future
+        self.empty = is_empty
 
 
 class RandomPortfolio:
@@ -142,6 +143,10 @@ def make_batch(states, future):
     return BatchStub(states, future)
 
 
+def make_empty_batch():
+    return BatchStub((None, None), None, True)
+
+
 def test_memory_records_first_prices_and_initial_portfolio(agent, memory, initial_portfolio):
     price = make_prices()
     agent.step(price)
@@ -191,8 +196,14 @@ def test_agent_returns_random_actions_when_memory_is_not_ready(agent, memory):
     assert a == RandomPortfolio()
 
 
-def test_agent_records_random_portfolio_when_memory_is_not_read(agent, memory):
+def test_agent_records_random_portfolio_when_memory_is_not_ready(agent, memory):
     memory.set_ready(False)
     agent.step(make_prices(1))
     agent.step(make_prices(2))
     assert memory.received_state == (make_prices(2), RandomPortfolio())
+
+
+def test_agent_does_not_train_on_empty_batches(agent, ann, memory):
+    memory.set_batch(make_empty_batch())
+    agent.step(make_prices(1))
+    assert ann.received_batch is None

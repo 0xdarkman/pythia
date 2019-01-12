@@ -13,6 +13,9 @@ class FpmAgent:
 
     def _train(self):
         b = self._memory.get_random_batch(self._batch_size)
+        if b.empty:
+            return
+
         p = self._ann.train((b.prices, b.weights), b.future)
         b.predictions = p
         self._memory.update(b)

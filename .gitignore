@@ -1,6 +1,13 @@
 **/.cache
 **/__pycache__
 **/model_data
+.pytest_cache/
+**/.pytest_cache
+**/.ipynb_checkpoints
+dist/
 output/
+data/
 .idea
-start_remote_ml_job.bat
+*.egg-info/
+start_local_ml_job.ps1
+start_remote_ml_job.ps1

@@ -126,6 +126,12 @@ def test_trivial_reward_when_action_keeps_cash(env, starting_cash):
     assert get_reward(env.step(action([1.0, 0.0]))) == starting_cash
 
 
+def test_no_actions_do_not_change_reward(env, series, starting_cash):
+    prep_env_series(env, series, 1, 1, 1)
+    assert get_reward(env.step(action([1.0, 0.0]))) == starting_cash
+    assert get_reward(env.step(action([1.0, 0.0]))) == starting_cash
+
+
 def test_reward_increases_when_price_of_invested_asset_rises(env, series, starting_cash):
     prep_env_series(env, series, 1, 2)
     assert get_reward(env.step(action([0.0, 1.0]))) == starting_cash * 2

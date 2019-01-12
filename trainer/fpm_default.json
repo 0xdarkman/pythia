@@ -14,13 +14,19 @@
     "weight_decay": 5e-8
   }],
 
+  "setup": {
+    "initial_portfolio": [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+  },
+
   "training": {
     "learning_rate": 0.00028,
     "decay_steps": 50000,
     "decay_rate": 1.0,
     "window": 31,
     "size": 1e5,
-    "beta": 5e-5
+    "beta": 5e-5,
+    "batch_size": 109,
+    "episodes": 2
   },
 
   "trading": {
@@ -30,6 +36,7 @@
     "cash_amount": 1.0,
     "coins": ["ETH", "LTC", "XRP", "STR", "ETC", "DASH", "XMR", "XEM", "FCT", "GNT", "ZEC"],
     "period": 1800,
-    "start": "2015/07/01"
+    "start": "2015/07/01",
+    "update_to_latest": false
   }
 }

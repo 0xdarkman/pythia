@@ -48,7 +48,7 @@ def environment_input(identifier):
 
 def state(identifier):
     w0 = 1.0 / identifier
-    return [[[1.0]], [[1.0 / identifier]], [[1.0 / identifier]]], [w0, 1 - w0]
+    return [[[1.0]], [[1.0 / identifier]], [[1.0 / identifier]]], [1 - w0]
 
 
 def identify_state(state):
@@ -84,7 +84,9 @@ def assert_states(expected_prices, expected_portfolio, actual_prices, actual_por
 
 
 def assert_weights(expected, actual):
-    assert (np.array(expected) == actual).all()
+    expected = np.array(expected)
+    assert expected.shape == actual.shape
+    assert (expected == actual).all()
 
 
 def assert_batch(expected, actual):
@@ -92,6 +94,8 @@ def assert_batch(expected, actual):
     for e, a in zip(expected, actual):
         ep, ew, ef = e
         ap, aw, af = a
+        assert ep.shape == ap.shape
+        assert ew.shape == aw.shape
         assert (ep == ap).all()
         assert (ew == aw).all()
         assert (ef == af).all()
@@ -104,17 +108,17 @@ def test_nothing_recorded_latest_is_none(memory):
 
 @pytest.mark.parametrize("price, portfolio, price_tensor", [
     (Prices({"SYM1": {"high": 4.0, "low": 1.0, "close": 2.0}}), [1.0, 0.0], [[[1.0]], [[2.0]], [[0.5]]]),
-    (Prices({"SYM2": {"high": 2.0, "low": 0.1, "close": 0.5}}), [0.5, 0.5], [[[1.0]], [[4.0]], [[0.2]]]),
+    (Prices({"SYM2": {"high": 2.0, "low": 0.1, "close": 0.5}}), [1.0, 0.5], [[[1.0]], [[4.0]], [[0.2]]]),
 ])
 def test_enough_records_latest_returns_last_price_tensor_and_portfolio(memory, price, portfolio, price_tensor):
     memory.record(price, portfolio)
-    assert_states(price_tensor, portfolio, *memory.get_latest())
+    assert_states(price_tensor, portfolio[1:], *memory.get_latest())
 
 
 def test_multiple_assets(memory):
     p = Prices({"SYM1": {"high": 4.0, "low": 1.0, "close": 2.0}, "SYM2": {"high": 2.0, "low": 0.1, "close": 0.5}})
     memory.record(p, [1.0, 0.0, 0.0])
-    assert_states([[[1.0], [1.0]], [[2.0], [4.0]], [[0.5], [0.2]]], [1.0, 0.0, 0.0], *memory.get_latest())
+    assert_states([[[1.0], [1.0]], [[2.0], [4.0]], [[0.5], [0.2]]], [0.0, 0.0], *memory.get_latest())
 
 
 def test_raise_data_mismatch_error_when_amount_of_symbols_does_not_fit_portfolio_vector(memory):
@@ -142,7 +146,7 @@ def test_price_vector_contains_price_history_quotient_of_most_recent_price_in_wi
     memory.window = 2
     memory.record(Prices({"SYM1": {"high": 4.0, "low": 1.0, "close": 1.5}}), [1.0, 0.0])
     memory.record(Prices({"SYM1": {"high": 2.5, "low": 1.2, "close": 3.0}}), [1.0, 0.0])
-    assert_states([[[1.5 / 3.0, 3.0 / 3.0]], [[4.0 / 3.0, 2.5 / 3.0]], [[1.0 / 3.0, 1.2 / 3.0]]], [1.0, 0.0],
+    assert_states([[[1.5 / 3.0, 3.0 / 3.0]], [[4.0 / 3.0, 2.5 / 3.0]], [[1.0 / 3.0, 1.2 / 3.0]]], [0.0],
                   *memory.get_latest())
 
 
@@ -152,7 +156,7 @@ def test_window_with_multiple_assets(memory):
     p2 = Prices({"SYM1": {"high": 2.0, "low": 0.5, "close": 2.0}, "SYM2": {"high": 3.0, "low": 0.2, "close": 0.5}})
     memory.record(p1, [1.0, 0.0, 0.0])
     memory.record(p2, [1.0, 0.0, 0.0])
-    assert_states([[[0.5, 1.0], [2.0, 1.0]], [[2.0, 1.0], [4.0, 6.0]], [[0.5, 0.25], [0.2, 0.4]]], [1.0, 0.0, 0.0],
+    assert_states([[[0.5, 1.0], [2.0, 1.0]], [[2.0, 1.0], [4.0, 6.0]], [[0.5, 0.25], [0.2, 0.4]]], [0.0, 0.0],
                   *memory.get_latest())
 
 
@@ -161,7 +165,7 @@ def test_drop_price_information_after_window(memory):
     memory.record(Prices({"SYM1": {"high": 4.0, "low": 1.0, "close": 1.5}}), [1.0, 0.0])
     memory.record(Prices({"SYM1": {"high": 2.5, "low": 1.2, "close": 2.0}}), [1.0, 0.0])
     memory.record(Prices({"SYM1": {"high": 2.0, "low": 0.5, "close": 1.0}}), [1.0, 0.0])
-    assert_states([[[2.0, 1.0]], [[2.5, 2.0]], [[1.2, 0.5]]], [1.0, 0.0], *memory.get_latest())
+    assert_states([[[2.0, 1.0]], [[2.5, 2.0]], [[1.2, 0.5]]], [0.0], *memory.get_latest())
 
 
 def test_return_empty_batch_when_nothing_is_recorded(memory):
@@ -200,7 +204,16 @@ def test_not_enough_data_to_fill_batch_size_truncates_the_batch(memory):
     np.random.seed(7)
     memory.record(*environment_input(1.0))
     memory.record(*environment_input(2.0))
-    assert_batch(batch(1.0, 2.0), memory.get_random_batch(2))
+    assert_batch(batch(1.0, 2.0), memory.get_random_batch(3))
+
+
+def test_not_enough_data_to_fill_batch_size_and_window_truncates_the_batch(memory):
+    np.random.seed(7)
+    memory.window = 2
+    memory.record(*environment_input(1.0))
+    memory.record(*environment_input(2.0))
+    memory.record(*environment_input(3.0))
+    assert len(memory.get_random_batch(3)) == 1
 
 
 def test_batch_selection_follows_a_geometrically_decaying_distribution(memory):
@@ -228,7 +241,7 @@ def test_portfolio_weights_of_a_batch_can_be_updated_with_predictions(memory):
     memory.update(b)
 
     b = get_stable_batch(memory, 3, seed)
-    assert_weights([old_w[0]] + [[0.0, 0.0]] * 2, b.weights)
+    assert_weights([old_w[0]] + [[0.0]] * 2, b.weights)
 
 
 def test_portfolio_weights_get_updated_by_predictions_up_to_one_after_the_batch(memory):
@@ -238,7 +251,7 @@ def test_portfolio_weights_get_updated_by_predictions_up_to_one_after_the_batch(
     memory.update(b)
 
     b = get_stable_batch(memory, 2, 7)
-    assert_weights([[0.0, 0.0]] * 2, b.weights)
+    assert_weights([[0.0]] * 2, b.weights)
 
 
 def test_portfolio_weight_update_is_clamped_to_record_size(memory):
@@ -246,5 +259,3 @@ def test_portfolio_weight_update_is_clamped_to_record_size(memory):
     b = get_stable_batch(memory, 2, 1)
     b.predictions = [[0.0, 0.0]] * 2
     memory.update(b)
-
-

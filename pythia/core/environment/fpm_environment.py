@@ -41,12 +41,12 @@ class FpmEnvironment:
         return signal
 
     def _calc_asset_shift(self, signal):
-        sell = np.where(signal > 0.001, 0, signal)
+        sell = np.where(signal > 0, 0, signal)
         sell_cash = ((sell / np.where(self.last_action <= 0, 1, self.last_action)) * self.assets) * self.last_y
         available_cash = abs(np.sum(sell_cash))
         if available_cash < 0.001:
             return np.zeros(self.assets.shape)
-        buy = np.where(signal < -0.001, 0, signal)
+        buy = np.where(signal < 0, 0, signal)
         buy_cash = abs(np.sum(sell_cash)) * buy / np.sum(buy)
         return (sell_cash + buy_cash) / self.last_y
 

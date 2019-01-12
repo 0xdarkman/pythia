@@ -37,7 +37,7 @@ class FPMMemory:
     def __init__(self, config):
         self._window = config["training"]["window"]
         self.beta = config["training"]["beta"]
-        size = config["training"]["size"]
+        size = int(config["training"]["size"])
         self._prices = deque(maxlen=size)
         self._portfolios = deque(maxlen=size)
         self._num_assets = None
@@ -45,7 +45,7 @@ class FPMMemory:
     def record(self, prices, portfolio):
         self._validate_input(len(prices), portfolio)
         self._prices.append(prices)
-        self._portfolios.append(np.array(portfolio))
+        self._portfolios.append(np.array(portfolio[1:]))
 
     def _validate_input(self, m, portfolio):
         if m + 1 != len(portfolio):
@@ -90,9 +90,9 @@ class FPMMemory:
         return self._make_batch(selection, size)
 
     def _make_batch(self, from_idx, size):
-        size = min(size, len(self._prices) - 1)
+        size = min(size, len(self._prices) - self._window)
         prices = np.empty([size, 3, self._num_assets, self._window])
-        weights = np.empty([size, self._num_assets + 1])
+        weights = np.empty([size, self._num_assets])
         futures = np.empty([size, self._num_assets])
         for i in range(0, size):
             prices[i] = self._make_price_tensor(from_idx + i)
@@ -108,7 +108,7 @@ class FPMMemory:
     def update(self, batch):
         w_idx = 0
         for i in range(batch.index + 1, batch.index + batch.size + 1):
-            self._portfolios[i] = batch.predictions[w_idx]
+            self._portfolios[i] = batch.predictions[w_idx][1:]
             w_idx += 1
 
     class DataMismatchError(ValueError):
