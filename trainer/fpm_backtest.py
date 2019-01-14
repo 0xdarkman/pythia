@@ -1,10 +1,11 @@
 import json
 import os
-import tensorflow as tf
-import pandas as pd
-import numpy as np
 
+import numpy as np
+import pandas as pd
+import tensorflow as tf
 from tensorflow import Summary
+
 from pythia.core.agents.cnn_ensamble import CNNEnsemble
 from pythia.core.agents.fpm_agent import FpmAgent
 from pythia.core.agents.fpm_memory import FPMMemory
@@ -115,5 +116,5 @@ if __name__ == '__main__':
     with open(os.path.join(os.path.dirname(os.path.realpath(__file__)), "fpm_default.json"), "r") as f:
         cfg = json.load(f)
 
-    backTest = FpmBackTest(cfg, R"D:\Research\AI\MyProjects\Pythia\data\recordings\poloniex")
-    backTest.run(R"D:\Research\AI\MyProjects\Pythia\data\models\fpm")
+    backTest = FpmBackTest(cfg, R"/home/bernhard/repos/pythia/data/recordings/poloniex")
+    backTest.run(R"/home/bernhard/repos/pythia/data/models/fpm")

@@ -26,7 +26,7 @@
     "size": 1e5,
     "beta": 5e-5,
     "batch_size": 109,
-    "episodes": 2
+    "episodes": 10
   },
 
   "trading": {

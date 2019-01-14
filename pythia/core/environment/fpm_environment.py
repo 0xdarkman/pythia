@@ -3,17 +3,28 @@ import numpy as np
 
 class FpmEnvironment:
     def __init__(self, time_series, config):
+        self._start_cash = config["trading"]["cash_amount"]
+        self._total_assets = len(config["trading"]["coins"]) + 1
         self.time_series = time_series
         self.commission = config["trading"]["commission"]
-        total_assets = len(config["trading"]["coins"]) + 1
-        self.assets = np.zeros(total_assets)
-        self.assets[0] = config["trading"]["cash_amount"]
-        self.last_action = np.zeros(total_assets)
-        self.last_action[0] = 1
+        self.assets = self._make_assets()
+        self.last_action = self._make_initial_action()
         self.last_y = None
         self.next_prices = None
 
+    def _make_assets(self):
+        assets = np.zeros(self._total_assets)
+        assets[0] = self._start_cash
+        return assets
+
+    def _make_initial_action(self):
+        a = np.zeros(self._total_assets)
+        a[0] = 1
+        return a
+
     def reset(self):
+        self.assets = self._make_assets()
+        self.last_action = self._make_initial_action()
         self.time_series.reset()
         try:
             s = next(self.time_series)

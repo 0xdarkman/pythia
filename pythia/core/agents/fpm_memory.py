@@ -39,6 +39,7 @@ class FPMMemory:
         self.beta = config["training"]["beta"]
         size = int(config["training"]["size"])
         self._prices = deque(maxlen=size)
+        self._price_tensors_cache = dict()
         self._portfolios = deque(maxlen=size)
         self._num_assets = None
 
@@ -60,15 +61,18 @@ class FPMMemory:
 
         n_prc = len(self._prices)
         idx = n_prc - self._window
-        p = self._make_price_tensor(idx)
+        p = self._get_price_tensor(idx)
         return p, self._portfolios[n_prc - 1]
 
     def ready(self):
         return len(self._prices) >= self._window
 
-    def _make_price_tensor(self, start):
-        p = np.array(list(itertools.islice(self._prices, start, start + self._window))).T
-        return self._calc_price_quotient(p)
+    def _get_price_tensor(self, start):
+        if start not in self._price_tensors_cache:
+            p = np.array(list(itertools.islice(self._prices, start, start + self._window))).T
+            self._price_tensors_cache[start] = self._calc_price_quotient(p)
+
+        return self._price_tensors_cache[start]
 
     def _calc_price_quotient(self, p):
         for i in range(0, self._num_assets):
@@ -95,7 +99,7 @@ class FPMMemory:
         weights = np.empty([size, self._num_assets])
         futures = np.empty([size, self._num_assets])
         for i in range(0, size):
-            prices[i] = self._make_price_tensor(from_idx + i)
+            prices[i] = self._get_price_tensor(from_idx + i)
             weights[i] = self._portfolios[from_idx + i]
             futures[i] = self._make_future_prices(from_idx + i)
         return self.Batch(prices, weights, futures, from_idx, size)

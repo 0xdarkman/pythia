@@ -1,7 +1,7 @@
-import pytest
-import numpy as np
-
 from collections import deque
+
+import numpy as np
+import pytest
 
 from pythia.core.environment.fpm_environment import FpmEnvironment
 from pythia.tests.fpm_doubles import Prices
@@ -134,6 +134,20 @@ def test_no_actions_do_not_change_reward(env, series, starting_cash):
 
 def test_reward_increases_when_price_of_invested_asset_rises(env, series, starting_cash):
     prep_env_series(env, series, 1, 2)
+    assert get_reward(env.step(action([0.0, 1.0]))) == starting_cash * 2
+
+
+def test_reset_resets_the_portfolio(env, series, starting_cash):
+    prep_env_series(env, series, 1, 2)
+    env.step(action([0.0, 1.0]))
+    env.reset()
+    assert (env.assets == [starting_cash, 0]).all()
+
+
+def test_trading_signals_propagate_correctly_after_reset(env, series, starting_cash):
+    prep_env_series(env, series, 1, 2)
+    env.step(action([0.0, 1.0]))
+    env.reset()
     assert get_reward(env.step(action([0.0, 1.0]))) == starting_cash * 2
 
 

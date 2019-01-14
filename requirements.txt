@@ -1,8 +1,8 @@
 matplotlib
 numpy
-pytest==3.3.2
+pytest
 reinforcement
-tensorflow==1.10.0
-tensorboard==1.10.0
-keras==2.2.0
-tflearn==0.3.2
+tensorflow
+tensorboard
+tflearn
+pandas
