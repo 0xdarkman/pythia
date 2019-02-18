@@ -15,7 +15,21 @@
   }],
 
   "setup": {
-    "initial_portfolio": [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    "initial_portfolio": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "fix_seed": true
   },
 
   "training": {
@@ -26,7 +40,7 @@
     "size": 1e5,
     "beta": 5e-5,
     "batch_size": 109,
-    "episodes": 10
+    "episodes": 1
   },
 
   "trading": {
@@ -38,5 +52,8 @@
     "period": 1800,
     "start": "2015/07/01",
     "update_to_latest": false
+  },
+  "log": {
+    "profiling": true
   }
 }

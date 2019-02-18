@@ -4,6 +4,10 @@ from collections.__init__ import deque
 import numpy as np
 
 
+# TODO: write prices object containing a pre allocated np tensor of fixed size.
+# Use ring buffer to simulate deque behaviour
+
+
 class FPMMemory:
     class Batch:
         def __init__(self, prices, weights, future, index, size):
@@ -39,14 +43,15 @@ class FPMMemory:
         self.beta = config["training"]["beta"]
         size = int(config["training"]["size"])
         self._prices = deque(maxlen=size)
-        self._price_tensors_cache = dict()
-        self._portfolios = deque(maxlen=size)
+        self._portfolios = deque(
+            maxlen=size)  # TODO: They are of known size anyways use np.array and extract price logic into object
         self._num_assets = None
 
     def record(self, prices, portfolio):
         self._validate_input(len(prices), portfolio)
         self._prices.append(prices)
         self._portfolios.append(np.array(portfolio[1:]))
+        # TODO: Make the price tensors here and its futures, store them in a big numpy array or the likes
 
     def _validate_input(self, m, portfolio):
         if m + 1 != len(portfolio):
@@ -61,19 +66,18 @@ class FPMMemory:
 
         n_prc = len(self._prices)
         idx = n_prc - self._window
-        p = self._get_price_tensor(idx)
+        p = self._make_price_tensor(idx)
         return p, self._portfolios[n_prc - 1]
 
     def ready(self):
         return len(self._prices) >= self._window
 
-    def _get_price_tensor(self, start):
-        if start not in self._price_tensors_cache:
-            p = np.array(list(itertools.islice(self._prices, start, start + self._window))).T
-            self._price_tensors_cache[start] = self._calc_price_quotient(p)
+    # TODO: extract into np based price object
+    def _make_price_tensor(self, start):
+        p = np.array(list(itertools.islice(self._prices, start, start + self._window))).T
+        return self._calc_price_quotient(p)
 
-        return self._price_tensors_cache[start]
-
+    # TODO: extract into np based price object
     def _calc_price_quotient(self, p):
         for i in range(0, self._num_assets):
             lc = p[0][i][-1]
@@ -99,11 +103,12 @@ class FPMMemory:
         weights = np.empty([size, self._num_assets])
         futures = np.empty([size, self._num_assets])
         for i in range(0, size):
-            prices[i] = self._get_price_tensor(from_idx + i)
+            prices[i] = self._make_price_tensor(from_idx + i)
             weights[i] = self._portfolios[from_idx + i]
             futures[i] = self._make_future_prices(from_idx + i)
         return self.Batch(prices, weights, futures, from_idx, size)
 
+    # TODO: extract into np based price object
     def _make_future_prices(self, batch_idx):
         future = np.array(self._prices[batch_idx + self._window])[:, 0]
         previous = np.array(self._prices[batch_idx + self._window - 1])[:, 0]

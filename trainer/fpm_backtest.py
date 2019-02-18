@@ -1,5 +1,7 @@
 import json
 import os
+import random
+import time
 
 import numpy as np
 import pandas as pd
@@ -15,15 +17,25 @@ from pythia.core.streams.fpm_time_series import FpmTimeSeries
 from pythia.core.streams.poloniex_history import PoloniexHistory
 
 
+def _fix_seed():
+    tf.set_random_seed(42)
+    np.random.seed(42)
+    random.seed(42)
+
+
 class FpmBackTest:
     def __init__(self, config, data_directory):
         self.config = config
         self.data_directory = data_directory
         self.tf_saver = tf.train.Saver()
         self.log = print
+        self.show_profiling = self.config["log"].get("profiling", False)
+        if self.config["setup"].get("fix_seed", False):
+            _fix_seed()
 
         self._time_series = None
         self._tf_board_writer = None
+        self._last_intermediate = None
 
     @property
     def episodes(self):
@@ -107,9 +119,18 @@ class FpmBackTest:
         return s
 
     def _log_reward(self, reward):
+        if self.show_profiling:
+            self._log_performance()
         self.log("[PERFORMANCE] Intermediate reward {}".format(reward))
         stat_reward = Summary(value=[Summary.Value(tag="reward", simple_value=reward)])
         self._tf_board_writer.add_summary(stat_reward)
+
+    def _log_performance(self):
+        now = time.perf_counter()
+        if self._last_intermediate is not None:
+            delta = now - self._last_intermediate
+            self.log("[PROFILE] Intermediate calculations took {}".format(delta))
+        self._last_intermediate = now
 
 
 if __name__ == '__main__':
