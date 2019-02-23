@@ -1,34 +1,49 @@
 import numpy as np
 
 
+def _offset_index(index, offset):
+    if isinstance(index, slice):
+        return slice(index.start + offset, index.stop + offset, index.step)
+    return index + offset
+
+
+def _modulo_index(index, modulo):
+    if isinstance(index, slice):
+        index = slice(index.start % modulo, index.stop % modulo, index.step)
+        if index.stop < index.start:
+            return [i for i in range(index.start, modulo)] + [i for i in range(0, index.stop)]
+        return index
+    return index % modulo
+
+
 class Storage:
     class Proxy:
-        def __init__(self, storage, key):
+        def __init__(self, storage, index):
             self._storage = storage
-            self._state_key = self._wrap_index(key)
-            self._symbs_key = self._wrap_index(self._offset_to_symbols(key))
+            self._state_index = self._wrap_index(index)
+            self._symbs_index = self._wrap_index(self._offset_to_symbols(index))
 
         def _wrap_index(self, index):
-            return (index + self._storage.offset) % self._storage.capacity
+            return _modulo_index(_offset_index(index, self._storage.offset), self._storage.capacity)
 
-        def _offset_to_symbols(self, key):
-            return key + self._storage.window - 1
+        def _offset_to_symbols(self, index):
+            return _offset_index(index, self._storage.window - 1)
 
         @property
         def state(self):
-            return self._storage.state_matrix[self._state_key]
+            return self._storage.state_matrix[self._state_index]
 
         @property
         def portfolio(self):
-            return self._storage.symbs_matrix[self._symbs_key, :, 1]
+            return self._storage.symbs_matrix[self._symbs_index, :, 1]
 
         @portfolio.setter
         def portfolio(self, value):
-            self._storage.symbs_matrix[self._symbs_key, :, 1] = value
+            self._storage.symbs_matrix[self._symbs_index, :, 1] = value
 
         @property
         def future(self):
-            return self._storage.symbs_matrix[self._symbs_key, :, 0]
+            return self._storage.symbs_matrix[self._symbs_index, :, 0]
 
         def __iter__(self):
             yield self.state
@@ -153,15 +168,8 @@ class FPMMemory:
 
     def _make_batch(self, from_idx, size):
         size = min(size, len(self._storage) - 1)
-        prices = np.empty([size, 3, self._num_assets, self._window])
-        weights = np.empty([size, self._num_assets])
-        futures = np.empty([size, self._num_assets])
-        for i in range(0, size):
-            s, w, f = self._storage[from_idx + i]
-            prices[i] = s
-            weights[i] = w
-            futures[i] = f
-        return self.Batch(prices, weights, futures, from_idx, size)
+        state, weight, future = self._storage[from_idx:from_idx + size]
+        return self.Batch(state, weight, future, from_idx, size)
 
     def update(self, batch):
         w_idx = 0
