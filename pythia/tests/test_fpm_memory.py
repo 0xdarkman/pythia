@@ -9,9 +9,41 @@ from pythia.tests.fpm_doubles import Prices
 
 class MemoryTestBuilder:
     def __init__(self):
-        self.window = 1
-        self.beta = 0.1
+        self.cfg = {"training": {"window": 1, "size": 1000, "beta": 0.1},
+                    "trading": {"coins": ["SYM1"]}}
         self._memory = None
+
+    @property
+    def window(self):
+        return self.cfg["training"]["window"]
+
+    @window.setter
+    def window(self, value):
+        self.cfg["training"]["window"] = value
+
+    @property
+    def beta(self):
+        return self.cfg["training"]["beta"]
+
+    @beta.setter
+    def beta(self, value):
+        self.cfg["training"]["beta"] = value
+
+    @property
+    def coins(self):
+        return self.cfg["trading"]["coins"]
+
+    @coins.setter
+    def coins(self, value):
+        self.cfg["trading"]["coins"] = value
+
+    @property
+    def capacity(self):
+        return self.cfg["training"]["size"]
+
+    @capacity.setter
+    def capacity(self, value):
+        self.cfg["training"]["size"] = value
 
     def record(self, prices, portfolio):
         self.memory.record(prices.to_array(), portfolio)
@@ -31,8 +63,7 @@ class MemoryTestBuilder:
     @property
     def memory(self):
         if self._memory is None:
-            cfg = {"training": {"window": self.window, "size": 1000, "beta": self.beta}}
-            self._memory = FPMMemory(cfg)
+            self._memory = FPMMemory(self.cfg)
         return self._memory
 
 
@@ -48,7 +79,7 @@ def environment_input(identifier):
 
 def state(identifier):
     w0 = 1.0 / identifier
-    return [[[1.0]], [[1.0 / identifier]], [[1.0 / identifier]]], [1 - w0]
+    return [[[1.0]], [[w0]], [[w0]]], [1 - w0]
 
 
 def identify_state(state):
@@ -116,6 +147,7 @@ def test_enough_records_latest_returns_last_price_tensor_and_portfolio(memory, p
 
 
 def test_multiple_assets(memory):
+    memory.coins = ["SYM1", "SYM2"]
     p = Prices({"SYM1": {"high": 4.0, "low": 1.0, "close": 2.0}, "SYM2": {"high": 2.0, "low": 0.1, "close": 0.5}})
     memory.record(p, [1.0, 0.0, 0.0])
     assert_states([[[1.0], [1.0]], [[2.0], [4.0]], [[0.5], [0.2]]], [0.0, 0.0], *memory.get_latest())
@@ -151,12 +183,13 @@ def test_price_vector_contains_price_history_quotient_of_most_recent_price_in_wi
 
 
 def test_window_with_multiple_assets(memory):
+    memory.coins = ["SYM1", "SYM2"]
     memory.window = 2
     p1 = Prices({"SYM1": {"high": 4.0, "low": 1.0, "close": 1.0}, "SYM2": {"high": 2.0, "low": 0.1, "close": 1.0}})
     p2 = Prices({"SYM1": {"high": 2.0, "low": 0.5, "close": 2.0}, "SYM2": {"high": 3.0, "low": 0.2, "close": 0.5}})
     memory.record(p1, [1.0, 0.0, 0.0])
-    memory.record(p2, [1.0, 0.0, 0.0])
-    assert_states([[[0.5, 1.0], [2.0, 1.0]], [[2.0, 1.0], [4.0, 6.0]], [[0.5, 0.25], [0.2, 0.4]]], [0.0, 0.0],
+    memory.record(p2, [0.0, 1.0, 0.0])
+    assert_states([[[0.5, 1.0], [2.0, 1.0]], [[2.0, 1.0], [4.0, 6.0]], [[0.5, 0.25], [0.2, 0.4]]], [1.0, 0.0],
                   *memory.get_latest())
 
 
@@ -259,3 +292,41 @@ def test_portfolio_weight_update_is_clamped_to_record_size(memory):
     b = get_stable_batch(memory, 2, 1)
     b.predictions = [[0.0, 0.0]] * 2
     memory.update(b)
+
+
+def test_drop_history_when_memory_capacity_is_reached(memory):
+    memory.capacity = 2
+    record(memory, 3)
+    assert_batch(batch(2.0, 3.0), get_stable_batch(memory, 1, 11))
+
+
+def test_futures_are_calculated_correctly_for_multiple_assets(memory):
+    memory.coins = ["SYM1", "SYM2"]
+    memory.window = 2
+    p1 = Prices({"SYM1": {"high": 4.0, "low": 1.0, "close": 1.0}, "SYM2": {"high": 2.0, "low": 0.1, "close": 1.0}})
+    p2 = Prices({"SYM1": {"high": 2.0, "low": 0.5, "close": 2.0}, "SYM2": {"high": 3.0, "low": 0.2, "close": 0.5}})
+    p3 = Prices({"SYM1": {"high": 5.0, "low": 1.5, "close": 3.0}, "SYM2": {"high": 4.0, "low": 0.2, "close": 0.5}})
+    p4 = Prices({"SYM1": {"high": 6.0, "low": 2.0, "close": 4.0}, "SYM2": {"high": 2.0, "low": 0.4, "close": 0.8}})
+    memory.record(p1, [1.0, 0.0, 0.0])
+    memory.record(p2, [0.0, 1.0, 0.0])
+    memory.record(p3, [0.0, 0.0, 1.0])
+    memory.record(p4, [1.0, 0.0, 0.0])
+    b = get_stable_batch(memory, 2, 1)
+    assert (b.future == [[3 / 2, 0.5 / 0.5], [4 / 3, 0.8 / 0.5]]).all()
+
+
+def test_the_correct_portfolios_are_returned_for_multiple_assets_in_a_batch(memory):
+    memory.coins = ["SYM1", "SYM2"]
+    memory.window = 3
+    p1 = Prices({"SYM1": {"high": 4.0, "low": 1.0, "close": 1.0}, "SYM2": {"high": 2.0, "low": 0.1, "close": 1.0}})
+    p2 = Prices({"SYM1": {"high": 2.0, "low": 0.5, "close": 2.0}, "SYM2": {"high": 3.0, "low": 0.2, "close": 0.5}})
+    p3 = Prices({"SYM1": {"high": 5.0, "low": 1.5, "close": 3.0}, "SYM2": {"high": 4.0, "low": 0.2, "close": 0.5}})
+    p4 = Prices({"SYM1": {"high": 6.0, "low": 2.0, "close": 4.0}, "SYM2": {"high": 2.0, "low": 0.4, "close": 0.8}})
+    p5 = Prices({"SYM1": {"high": 7.0, "low": 3.0, "close": 5.0}, "SYM2": {"high": 2.0, "low": 0.4, "close": 0.7}})
+    memory.record(p1, [1.0, 0.0, 0.0])
+    memory.record(p2, [0.0, 1.0, 0.0])
+    memory.record(p3, [0.0, 0.0, 1.0])
+    memory.record(p4, [0.5, 0.5, 0.0])
+    memory.record(p5, [0.0, 0.5, 0.5])
+    b = get_stable_batch(memory, 2, 1)
+    assert (b.weights == np.array([[0.0, 1.0], [0.5, 0.0]])).all()

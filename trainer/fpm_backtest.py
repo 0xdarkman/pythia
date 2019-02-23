@@ -59,20 +59,20 @@ class FpmBackTest:
         self._time_series = self._load_time_series()
 
         self._tf_board_writer = self._make_tf_board_writer(output_directory)
-        ckpt_path = os.path.join(output_directory, "model.ckpt")
+        # ckpt_path = os.path.join(output_directory, "model.ckpt")
         with tf.Session() as sess:
-            if tf.train.checkpoint_exists(ckpt_path):
-                self.log("[INFO] restoring agent from: {}".format(ckpt_path))
-                self.tf_saver.restore(sess, ckpt_path)
+            # if tf.train.checkpoint_exists(ckpt_path):
+            #    self.log("[INFO] restoring agent from: {}".format(ckpt_path))
+            #    self.tf_saver.restore(sess, ckpt_path)
 
             agent = self._make_agent(sess)
             fpm_sess = self._make_session_for_agent(agent)
             sess.run(tf.global_variables_initializer())
             for i in range(self.episodes):
                 r = fpm_sess.run()
-                self.log("[INFO] Episode {}: saving agent to: {}".format(i, ckpt_path))
-                self.tf_saver.save(sess, ckpt_path)
-                self.log("[PERFORMANCE] Last reward of episode {}: {}".format(i, r))
+                # self.log("[INFO] Episode {}: saving agent to: {}".format(i, ckpt_path))
+                # self.tf_saver.save(sess, ckpt_path)
+                self.log("[PERFORMANCE] Last reward of episode {}: {:.4f}".format(i, r))
                 self._log_reward(r)
                 self._tf_board_writer.flush()
 
@@ -121,7 +121,7 @@ class FpmBackTest:
     def _log_reward(self, reward):
         if self.show_profiling:
             self._log_performance()
-        self.log("[PERFORMANCE] Intermediate reward {}".format(reward))
+        self.log("[PERFORMANCE] Intermediate reward {:.4f}".format(reward))
         stat_reward = Summary(value=[Summary.Value(tag="reward", simple_value=reward)])
         self._tf_board_writer.add_summary(stat_reward)
 
@@ -129,7 +129,7 @@ class FpmBackTest:
         now = time.perf_counter()
         if self._last_intermediate is not None:
             delta = now - self._last_intermediate
-            self.log("[PROFILE] Intermediate calculations took {}".format(delta))
+            self.log("[PROFILE] Intermediate calculations took {:.4f}".format(delta))
         self._last_intermediate = now
 
 
