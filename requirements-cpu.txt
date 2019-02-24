@@ -1,0 +1,8 @@
+matplotlib
+numpy
+pytest
+reinforcement
+tensorflow
+tensorboard
+tflearn
+pandas

@@ -1,9 +1,10 @@
 class FpmSession:
-    def __init__(self, env, agent, logger):
+    def __init__(self, env, agent, logger, recorder=None):
         self.env = env
         self.agent = agent
         self.log = logger
         self.log_interval = 1
+        self._recorder = recorder
 
     def run(self):
         num = 0
@@ -11,6 +12,8 @@ class FpmSession:
         s = self.env.reset()
         done = False
         while True:
+            if self._recorder is not None:
+                self._recorder(self.env)
             a = self.agent.step(s)
             if done:
                 break

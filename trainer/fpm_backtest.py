@@ -33,9 +33,9 @@ class FpmBackTest:
         if self.config["setup"].get("fix_seed", False):
             _fix_seed()
 
-        self._time_series = None
         self._tf_board_writer = None
         self._last_intermediate = None
+        self._assets_log = list()
 
     @property
     def episodes(self):
@@ -53,49 +53,38 @@ class FpmBackTest:
     def cash(self):
         return self.config["trading"]["cash"]
 
+    @property
+    def update_to_latest(self):
+        return self.config["setup"]["update_to_latest"]
+
+    @property
+    def restore(self):
+        return self.config["setup"]["restore_last_checkpoint"]
+
     def run(self, output_directory):
-        if self._should_update_to_latest():
+        if self.update_to_latest:
             self._update_to_latest()
-        self._time_series = self._load_time_series()
 
         self._tf_board_writer = self._make_tf_board_writer(output_directory)
-        # ckpt_path = os.path.join(output_directory, "model.ckpt")
+        ckpt_path = os.path.join(output_directory, "model.ckpt")
         with tf.Session() as sess:
-            # if tf.train.checkpoint_exists(ckpt_path):
-            #    self.log("[INFO] restoring agent from: {}".format(ckpt_path))
-            #    self.tf_saver.restore(sess, ckpt_path)
+            if self.restore and tf.train.checkpoint_exists(ckpt_path):
+                self.log("[INFO] restoring agent from: {}".format(ckpt_path))
+                self.tf_saver.restore(sess, ckpt_path)
 
             agent = self._make_agent(sess)
-            fpm_sess = self._make_session_for_agent(agent)
             sess.run(tf.global_variables_initializer())
-            for i in range(self.episodes):
-                r = fpm_sess.run()
-                # self.log("[INFO] Episode {}: saving agent to: {}".format(i, ckpt_path))
-                # self.tf_saver.save(sess, ckpt_path)
-                self.log("[PERFORMANCE] Last reward of episode {}: {:.4f}".format(i, r))
-                self._log_reward(r)
-                self._tf_board_writer.flush()
+            self._run_training(agent, ckpt_path, output_directory, sess)
+            self._run_testing(agent)
 
-    def _should_update_to_latest(self):
-        return self.config["trading"]["update_to_latest"]
+    @staticmethod
+    def _make_tf_board_writer(out_dir):
+        return tf.summary.FileWriter(os.path.join(out_dir, "log"))
 
     def _update_to_latest(self):
         self.log("[INFO] Updating Poloniex Historical data...")
         h = PoloniexHistory(self.config, self.data_directory)
         h.update()
-
-    def _load_time_series(self):
-        rates_dir = os.path.join(self.data_directory, "processed")
-        data_frames = []
-        for coin in self.coins:
-            with open(os.path.join(rates_dir, "{}_{}.csv".format(self.cash, coin))) as r:
-                data_frames.append(pd.read_csv(r))
-
-        return FpmTimeSeries(*data_frames)
-
-    @staticmethod
-    def _make_tf_board_writer(out_dir):
-        return tf.summary.FileWriter(os.path.join(out_dir, "log"))
 
     def _make_agent(self, tf_sess):
         ann = CNNEnsemble(tf_sess, len(self.coins), self.window, self.config)
@@ -112,11 +101,49 @@ class FpmBackTest:
             norm = np.finfo(tensor.dtype).eps
         return tensor / norm
 
-    def _make_session_for_agent(self, agent):
-        env = FpmEnvironment(self._time_series, self.config)
-        s = FpmSession(env, agent, self._log_reward)
+    def _run_training(self, agent, ckpt_path, output_directory, sess):
+        fpm_sess = self._make_session(self.config["training"], agent)
+        reward = 0
+        for i in range(self.episodes):
+            reward = fpm_sess.run()
+            self.log("[INFO] Episode {}: saving agent to: {}".format(i, ckpt_path))
+            self.tf_saver.save(sess, ckpt_path)
+            self.log("[PERFORMANCE] Last reward of episode {}: {:.4f}".format(i, reward))
+            self._log_reward(reward)
+            self._tf_board_writer.flush()
+            if self.config["setup"]["record_assets"]:
+                np.save(os.path.join(output_directory, "assets.gz"))
+
+        self.log("[INFO] Finished training with final reward of {}".format(reward))
+
+    def _make_session(self, series_cfg, agent):
+        series = self._load_time_series(series_cfg)
+        fpm_sess = self._make_session_for_agent(agent, series)
+        return fpm_sess
+
+    def _load_time_series(self, config):
+        rates_dir = os.path.join(self.data_directory, "processed")
+        data_frames = []
+        for coin in self.coins:
+            with open(os.path.join(rates_dir, "{}_{}.csv".format(self.cash, coin))) as r:
+                df = pd.read_csv(r).set_index('timestamp')
+                data_frames.append(df[config["start"]:config["end"]])
+
+        return FpmTimeSeries(*data_frames)
+
+    def _make_session_for_agent(self, agent, series):
+        env = FpmEnvironment(series, self.config)
+        recorder = self._record_assets if self.config["setup"]["record_assets"] else None
+        s = FpmSession(env, agent, self._log_reward, recorder)
         s.log_interval = 1000
         return s
+
+    def _run_testing(self, agent):
+        fpm_sess = self._make_session(self.config["training"], agent)
+        reward = fpm_sess.run()
+        self._log_reward(reward)
+        self._tf_board_writer.flush()
+        self.log("[INFO] Finished testing with final reward of {}".format(reward))
 
     def _log_reward(self, reward):
         if self.show_profiling:
@@ -131,6 +158,9 @@ class FpmBackTest:
             delta = now - self._last_intermediate
             self.log("[PROFILE] Intermediate calculations took {:.4f}".format(delta))
         self._last_intermediate = now
+
+    def _record_assets(self, env):
+        self._assets_log.append(np.array(env.assets))
 
 
 if __name__ == '__main__':

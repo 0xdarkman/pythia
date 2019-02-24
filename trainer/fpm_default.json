@@ -25,11 +25,12 @@
       0,
       0,
       0,
-      0,
-      0,
       0
     ],
-    "fix_seed": true
+    "fix_seed": false,
+    "update_to_latest": false,
+    "restore_last_checkpoint": false,
+    "record_assets": false
   },
 
   "training": {
@@ -40,7 +41,12 @@
     "size": 1e5,
     "beta": 5e-5,
     "batch_size": 109,
-    "episodes": 1
+    "episodes": 1,
+    "start": "2015-07-01",
+    "end": "2018-01-01"
+  },
+  "testing": {
+    "start": "2018-01-01"
   },
 
   "trading": {
@@ -48,10 +54,18 @@
     "api": "https://poloniex.com/public",
     "cash": "BTC",
     "cash_amount": 1.0,
-    "coins": ["ETH", "LTC", "XRP", "STR", "ETC", "DASH", "XMR", "XEM", "FCT", "GNT", "ZEC"],
-    "period": 1800,
-    "start": "2015/07/01",
-    "update_to_latest": false
+    "coins": [
+      "ETH",
+      "LTC",
+      "XRP",
+      "STR",
+      "ETC",
+      "DASH",
+      "XMR",
+      "XEM",
+      "FCT"
+    ],
+    "period": 1800
   },
   "log": {
     "profiling": true
