@@ -92,7 +92,7 @@ def files():
 
 @pytest.fixture
 def history():
-    return make_history("https://poloniex.test/api", "BTC", ["ETH"], 1800, "2015/07/01")
+    return make_history("https://poloniex.test/api", "BTC", ["ETH"], 1800, "2015-07-01")
 
 
 def make_history(api, cash, coins, period, start):
@@ -101,7 +101,7 @@ def make_history(api, cash, coins, period, start):
 
 
 def make_history_for(coins):
-    return make_history("https://poloniex.test/api", "BTC", coins, 1800, "2015/07/01")
+    return make_history("https://poloniex.test/api", "BTC", coins, 1800, "2015-07-01")
 
 
 def url_for(coin):
@@ -143,9 +143,9 @@ def row_of(time):
 
 
 @pytest.mark.parametrize("test_config,expected", [
-    (("https://poloniex.test/api", "BTC", ["ETH"], 1800, "2015/07/01"),
+    (("https://poloniex.test/api", "BTC", ["ETH"], 1800, "2015-07-01"),
      "https://poloniex.test/api?command=returnChartData&currencyPair=BTC_ETH&period=1800&start=1435701600"),
-    (("https://poloniex.test/api/v2", "ETH", ["BTC"], 60, "2016/01/01"),
+    (("https://poloniex.test/api/v2", "ETH", ["BTC"], 60, "2016-01-01"),
      "https://poloniex.test/api/v2?command=returnChartData&currencyPair=ETH_BTC&period=60&start=1451602800"),
 ])
 def test_that_queries_coin_from_start_when_file_does_not_exist(test_config, expected, requests):

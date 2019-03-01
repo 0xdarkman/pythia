@@ -2,10 +2,12 @@ import json
 import os
 import random
 import time
+import sys
 
 import numpy as np
 import pandas as pd
 import tensorflow as tf
+
 from tensorflow import Summary
 
 from pythia.core.agents.cnn_ensamble import CNNEnsemble
@@ -17,10 +19,10 @@ from pythia.core.streams.fpm_time_series import FpmTimeSeries
 from pythia.core.streams.poloniex_history import PoloniexHistory
 
 
-def _fix_seed():
-    tf.set_random_seed(42)
-    np.random.seed(42)
-    random.seed(42)
+def _set_seed(seed):
+    tf.set_random_seed(seed)
+    np.random.seed(seed)
+    random.seed(seed)
 
 
 class FpmBackTest:
@@ -30,8 +32,9 @@ class FpmBackTest:
         self.tf_saver = tf.train.Saver()
         self.log = print
         self.show_profiling = self.config["log"].get("profiling", False)
-        if self.config["setup"].get("fix_seed", False):
-            _fix_seed()
+        self.seed = self.config["setup"].get("fixed_seed", np.random.randint(2**32 - 1))
+        _set_seed(self.seed)
+        self.log("[INFO] seed used is: {}".format(self.seed))
 
         self._tf_board_writer = None
         self._last_intermediate = None
@@ -75,7 +78,7 @@ class FpmBackTest:
             agent = self._make_agent(sess)
             sess.run(tf.global_variables_initializer())
             self._run_training(agent, ckpt_path, output_directory, sess)
-            self._run_testing(agent)
+            return self._run_testing(agent)
 
     @staticmethod
     def _make_tf_board_writer(out_dir):
@@ -122,11 +125,11 @@ class FpmBackTest:
         return fpm_sess
 
     def _load_time_series(self, config):
-        rates_dir = os.path.join(self.data_directory, "processed")
         data_frames = []
         for coin in self.coins:
-            with open(os.path.join(rates_dir, "{}_{}.csv".format(self.cash, coin))) as r:
-                df = pd.read_csv(r).set_index('timestamp')
+            with open(os.path.join(self.data_directory, "{}_{}.csv".format(self.cash, coin))) as r:
+                df = pd.read_csv(r, index_col='timestamp')
+                df.index = pd.to_datetime(df.index, unit='s')
                 data_frames.append(df[config["start"]:config["end"]])
 
         return FpmTimeSeries(*data_frames)
@@ -144,6 +147,7 @@ class FpmBackTest:
         self._log_reward(reward)
         self._tf_board_writer.flush()
         self.log("[INFO] Finished testing with final reward of {}".format(reward))
+        return reward
 
     def _log_reward(self, reward):
         if self.show_profiling:
@@ -167,5 +171,9 @@ if __name__ == '__main__':
     with open(os.path.join(os.path.dirname(os.path.realpath(__file__)), "fpm_default.json"), "r") as f:
         cfg = json.load(f)
 
-    backTest = FpmBackTest(cfg, R"/home/bernhard/repos/pythia/data/recordings/poloniex")
-    backTest.run(R"/home/bernhard/repos/pythia/data/models/fpm")
+    backTest = FpmBackTest(cfg, R"/home/bernhard/repos/pythia/data/recordings/poloniex/processed")
+    r = backTest.run(R"/home/bernhard/repos/pythia/data/models/fpm")
+    print("[FINISH] New reward: {}".format(r))
+    print("[FINISH] Saving seed {}".format(backTest.seed))
+    with open(R"/home/bernhard/repos/pythia/data/seed.txt", 'a+') as f:
+        f.write("{},{}\n".format(backTest.seed, r))

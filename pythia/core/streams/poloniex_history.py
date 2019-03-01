@@ -21,7 +21,7 @@ class PoloniexHistory:
         args = {"command": "returnChartData",
                 "currencyPair": f"{self.trading_cfg['cash']}_{coin}",
                 "period": self.trading_cfg["period"],
-                "start": str(int(time.mktime(datetime.strptime(self.trading_cfg['start'], "%Y/%m/%d").timetuple())))}
+                "start": str(int(time.mktime(datetime.strptime(self.trading_cfg['start'], "%Y-%m-%d").timetuple())))}
         return args
 
     def update(self):

@@ -27,7 +27,6 @@
       0,
       0
     ],
-    "fix_seed": false,
     "update_to_latest": false,
     "restore_last_checkpoint": false,
     "record_assets": false
@@ -43,10 +42,10 @@
     "batch_size": 109,
     "episodes": 1,
     "start": "2015-07-01",
-    "end": "2018-01-01"
+    "end": "2018-06-01"
   },
   "testing": {
-    "start": "2018-01-01"
+    "start": "2018-06-01"
   },
 
   "trading": {
@@ -65,7 +64,8 @@
       "XEM",
       "FCT"
     ],
-    "period": 1800
+    "period": 1800,
+    "start": "2015-07-01"
   },
   "log": {
     "profiling": true

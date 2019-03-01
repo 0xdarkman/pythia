@@ -2,7 +2,7 @@ matplotlib
 numpy
 pytest
 reinforcement
-tensorflow-gpu
-tensorboard
+tensorflow-gpu==1.12
+tensorboard==1.12
 tflearn
 pandas
