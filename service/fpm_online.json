@@ -1,19 +1,31 @@
 {
-  "layers": [{
-    "out_channels": 3,
-    "kernel": [1, 2]
-  }, {
-    "out_channels": 10,
-    "kernel": [1, 30],
-    "regularizer": "L2",
-    "weight_decay": 5e-9
-  }, {
-    "out_channels": 1,
-    "kernel": [1, 1],
-    "regularizer": "L2",
-    "weight_decay": 5e-8
-  }],
-
+  "layers": [
+    {
+      "out_channels": 3,
+      "kernel": [
+        1,
+        2
+      ]
+    },
+    {
+      "out_channels": 10,
+      "kernel": [
+        1,
+        30
+      ],
+      "regularizer": "L2",
+      "weight_decay": 5e-9
+    },
+    {
+      "out_channels": 1,
+      "kernel": [
+        1,
+        1
+      ],
+      "regularizer": "L2",
+      "weight_decay": 5e-8
+    }
+  ],
   "setup": {
     "initial_portfolio": [
       1,
@@ -27,11 +39,9 @@
       0,
       0
     ],
-    "update_to_latest": false,
-    "restore_last_checkpoint": false,
-    "record_assets": false
+    "model_path": "/home/bernhard/repos/pythia/data/models/fpm/model.ckpt",
+    "memory_path": "/home/bernhard/repos/pythia/data/models/fpm"
   },
-
   "training": {
     "learning_rate": 0.00028,
     "decay_steps": 50000,
@@ -42,12 +52,12 @@
     "batch_size": 109,
     "episodes": 1,
     "start": "2015-07-01",
-    "end": "2017-12-17"
+    "end": "2018-06-01"
   },
   "testing": {
-    "start": "2017-12-17"
+    "start": "2015-07-01",
+    "end": "2018-06-01"
   },
-
   "trading": {
     "commission": 0.0025,
     "api": "https://poloniex.com/public",
@@ -68,6 +78,6 @@
     "start": "2015-07-01"
   },
   "log": {
-    "profiling": false
+    "profiling": true
   }
 }

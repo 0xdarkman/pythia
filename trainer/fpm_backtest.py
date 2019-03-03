@@ -2,18 +2,15 @@ import json
 import os
 import random
 import time
-import sys
 
 import numpy as np
 import pandas as pd
 import tensorflow as tf
-
 from tensorflow import Summary
 
-from pythia.core.agents.cnn_ensamble import CNNEnsemble
-from pythia.core.agents.fpm_agent import FpmAgent
 from pythia.core.agents.fpm_memory import FPMMemory
 from pythia.core.environment.fpm_environment import FpmEnvironment
+from pythia.core.fpm_runner import FpmRunner
 from pythia.core.sessions.fpm_session import FpmSession
 from pythia.core.streams.fpm_time_series import FpmTimeSeries
 from pythia.core.streams.poloniex_history import PoloniexHistory
@@ -25,14 +22,13 @@ def _set_seed(seed):
     random.seed(seed)
 
 
-class FpmBackTest:
+class FpmBackTest(FpmRunner):
     def __init__(self, config, data_directory):
-        self.config = config
+        super(FpmBackTest, self).__init__(config)
         self.data_directory = data_directory
-        self.tf_saver = tf.train.Saver()
         self.log = print
         self.show_profiling = self.config["log"].get("profiling", False)
-        self.seed = self.config["setup"].get("fixed_seed", np.random.randint(2**32 - 1))
+        self.seed = self.config["setup"].get("fixed_seed", np.random.randint(2 ** 32 - 1))
         _set_seed(self.seed)
         self.log("[INFO] seed used is: {}".format(self.seed))
 
@@ -43,14 +39,6 @@ class FpmBackTest:
     @property
     def episodes(self):
         return self.config["training"]["episodes"]
-
-    @property
-    def window(self):
-        return self.config["training"]["window"]
-
-    @property
-    def coins(self):
-        return self.config["trading"]["coins"]
 
     @property
     def cash(self):
@@ -71,14 +59,17 @@ class FpmBackTest:
         self._tf_board_writer = self._make_tf_board_writer(output_directory)
         ckpt_path = os.path.join(output_directory, "model.ckpt")
         with tf.Session() as sess:
+            agent = self._make_agent(sess)
             if self.restore and tf.train.checkpoint_exists(ckpt_path):
                 self.log("[INFO] restoring agent from: {}".format(ckpt_path))
-                self.tf_saver.restore(sess, ckpt_path)
+                agent.restore(ckpt_path)
 
-            agent = self._make_agent(sess)
             sess.run(tf.global_variables_initializer())
             self._run_training(agent, ckpt_path, output_directory, sess)
             return self._run_testing(agent)
+
+    def _get_memory(self):
+        return FPMMemory(self.config)
 
     @staticmethod
     def _make_tf_board_writer(out_dir):
@@ -89,28 +80,13 @@ class FpmBackTest:
         h = PoloniexHistory(self.config, self.data_directory)
         h.update()
 
-    def _make_agent(self, tf_sess):
-        ann = CNNEnsemble(tf_sess, len(self.coins), self.window, self.config)
-        mem = FPMMemory(self.config)
-        return FpmAgent(ann, mem, self._make_random_portfolio, self.config)
-
-    def _make_random_portfolio(self):
-        return self._normalize_tensor(np.random.random_sample((len(self.coins) + 1,)))
-
-    @staticmethod
-    def _normalize_tensor(tensor):
-        norm = np.linalg.norm(tensor, ord=1)
-        if norm == 0:
-            norm = np.finfo(tensor.dtype).eps
-        return tensor / norm
-
     def _run_training(self, agent, ckpt_path, output_directory, sess):
         fpm_sess = self._make_session(self.config["training"], agent)
         reward = 0
         for i in range(self.episodes):
             reward = fpm_sess.run()
             self.log("[INFO] Episode {}: saving agent to: {}".format(i, ckpt_path))
-            self.tf_saver.save(sess, ckpt_path)
+            fpm_sess.agent.save(ckpt_path)
             self.log("[PERFORMANCE] Last reward of episode {}: {:.4f}".format(i, reward))
             self._log_reward(reward)
             self._tf_board_writer.flush()
@@ -130,7 +106,7 @@ class FpmBackTest:
             with open(os.path.join(self.data_directory, "{}_{}.csv".format(self.cash, coin))) as r:
                 df = pd.read_csv(r, index_col='timestamp')
                 df.index = pd.to_datetime(df.index, unit='s')
-                data_frames.append(df[config["start"]:config["end"]])
+                data_frames.append(df[config["start"]:config.get("end", None)])
 
         return FpmTimeSeries(*data_frames)
 
@@ -142,7 +118,7 @@ class FpmBackTest:
         return s
 
     def _run_testing(self, agent):
-        fpm_sess = self._make_session(self.config["training"], agent)
+        fpm_sess = self._make_session(self.config["testing"], agent)
         reward = fpm_sess.run()
         self._log_reward(reward)
         self._tf_board_writer.flush()

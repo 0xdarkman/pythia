@@ -1,6 +1,6 @@
+import numpy as np
 import tensorflow as tf
 import tflearn
-import numpy as np
 
 DEFAULT_PADDING = "valid"
 DEFAULT_ACTIVATION = "relu"
@@ -20,6 +20,8 @@ class CNNEnsemble:
         self.input_future_prices = tf.placeholder(tf.float32, shape=[None, assets])
         self.out_nn = self._build_output_network()
         self.train_op = self._build_train_operation()
+
+        self._saver = tf.train.Saver(tf.trainable_variables())
 
     def _build_output_network(self):
         layers_cnf = self.config["layers"]
@@ -100,3 +102,9 @@ class CNNEnsemble:
                                                                            self.input_prev_omega: omegas,
                                                                            self.input_future_prices: future_prices})
         return result[-1]
+
+    def save(self, path):
+        self._saver.save(self.session, path)
+
+    def restore(self, path):
+        self._saver.restore(self.session, path)

@@ -6,7 +6,7 @@
 **/.ipynb_checkpoints
 dist/
 output/
-data/
+data/**
 .idea
 *.egg-info/
 start_local_ml_job.ps1

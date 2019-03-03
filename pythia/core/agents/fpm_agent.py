@@ -29,3 +29,9 @@ class FpmAgent:
     def _next_action_from(self, action):
         self._previous_portfolio = action
         return self._previous_portfolio
+
+    def save(self, path):
+        self._ann.save(path)
+
+    def restore(self, path):
+        self._ann.restore(path)
