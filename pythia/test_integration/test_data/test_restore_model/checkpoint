@@ -1,0 +1,2 @@
+model_checkpoint_path: "/home/bernhard/repos/pythia/pythia/test_integration/test_data/test_model/point.ckpt"
+all_model_checkpoint_paths: "/home/bernhard/repos/pythia/pythia/test_integration/test_data/test_model/point.ckpt"
