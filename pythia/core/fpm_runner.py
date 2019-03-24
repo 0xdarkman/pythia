@@ -7,8 +7,9 @@ from pythia.core.agents.fpm_agent import FpmAgent
 
 
 class FpmRunner(ABC):
-    def __init__(self, config):
+    def __init__(self, config, logger):
         self.config = config
+        self.logger = logger
 
     @property
     def window(self):
@@ -20,7 +21,7 @@ class FpmRunner(ABC):
 
     def _make_agent(self, tf_sess):
         ann = CNNEnsemble(tf_sess, len(self.coins), self.window, self.config)
-        return FpmAgent(ann, self._get_memory(), self._make_random_portfolio, self.config)
+        return FpmAgent(ann, self._get_memory(), self._make_random_portfolio, self.config, self.logger)
 
     @abstractmethod
     def _get_memory(self):

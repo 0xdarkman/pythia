@@ -39,8 +39,8 @@
       0,
       0
     ],
-    "model_path": "/home/bernhard/repos/pythia/data/models/fpm/model.ckpt",
-    "memory_path": "/home/bernhard/repos/pythia/data/models/fpm"
+    "fixed_seed": 4045085808,
+    "restore_path": "/home/bernhard/repos/pythia/data/models/fpm"
   },
   "training": {
     "learning_rate": 0.00028,
@@ -49,14 +49,10 @@
     "window": 31,
     "size": 1e5,
     "beta": 5e-5,
-    "batch_size": 109,
-    "episodes": 1,
-    "start": "2015-07-01",
-    "end": "2018-06-01"
+    "batch_size": 109
   },
   "testing": {
-    "start": "2015-07-01",
-    "end": "2018-06-01"
+    "start": "2015-07-01"
   },
   "trading": {
     "commission": 0.0025,

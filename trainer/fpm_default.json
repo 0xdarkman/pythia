@@ -27,6 +27,7 @@
       0,
       0
     ],
+    "fixed_seed": 4045085808,
     "update_to_latest": false,
     "restore_last_checkpoint": false,
     "record_assets": false
@@ -41,11 +42,10 @@
     "beta": 5e-5,
     "batch_size": 109,
     "episodes": 1,
-    "start": "2015-07-01",
-    "end": "2017-12-17"
+    "start": "2015-07-01"
   },
   "testing": {
-    "start": "2017-12-17"
+    "start": "2015-07-01"
   },
 
   "trading": {

@@ -1,3 +1,5 @@
+import os
+
 import numpy as np
 
 
@@ -51,13 +53,36 @@ class Storage:
             yield self.future
 
     def __init__(self, size, n_indicators, n_symbols, window_size):
-        self.state_matrix = np.empty((size, n_indicators, n_symbols, window_size))
-        self.symbs_matrix = np.empty((size, n_symbols, 2))
         self.window = window_size
         self.capacity = size
         self._num_assets = n_symbols
-        self._size = 0
-        self.offset = 0
+        self._numpy_data = {"state": np.empty((self.capacity, n_indicators, self._num_assets, self.window)),
+                            "symbs": np.empty((self.capacity, self._num_assets, 2)),
+                            "progress": np.zeros((2,), dtype=int)}
+
+    @property
+    def state_matrix(self):
+        return self._numpy_data['state']
+
+    @property
+    def symbs_matrix(self):
+        return self._numpy_data['symbs']
+
+    @property
+    def _size(self):
+        return self._numpy_data['progress'][0]
+
+    @_size.setter
+    def _size(self, value):
+        self._numpy_data['progress'][0] = value
+
+    @property
+    def offset(self):
+        return self._numpy_data['progress'][1]
+
+    @offset.setter
+    def offset(self, value):
+        self._numpy_data['progress'][1] = value
 
     def append(self, prices, portfolio):
         index = self._size % self.capacity
@@ -97,6 +122,27 @@ class Storage:
     @property
     def empty(self):
         return len(self) == 0
+
+    def save(self, file):
+        np.savez_compressed(file, **self._numpy_data)
+
+    def restore(self, file):
+        loaded = np.load(file)
+        for key in self._numpy_data:
+            self._numpy_data[key] = loaded[key]
+        self._validate_restoration()
+
+    def _validate_restoration(self):
+        if self.state_matrix.shape[0] != self.capacity:
+            raise FPMMemory.RestorationError("The capacity configured ({}) doesn't match the capacity loaded ({})."
+                                             .format(self.capacity, self.state_matrix.shape[0]))
+        if self.state_matrix.shape[-1] != self.window:
+            raise FPMMemory.RestorationError("The window configured ({}) doesn't match the window loaded ({})."
+                                             .format(self.window, self.state_matrix.shape[-1]))
+        if self.state_matrix.shape[2] != self._num_assets:
+            raise FPMMemory.RestorationError(
+                "The number of symbols configured ({}) doesn't match the number of symbols loaded ({}).".format(
+                    self.window, self.state_matrix.shape[-1]))
 
 
 class FPMMemory:
@@ -177,5 +223,17 @@ class FPMMemory:
             self._storage[i].portfolio = batch.predictions[w_idx][1:]
             w_idx += 1
 
+    def save(self, file):
+        d = os.path.dirname(file)
+        if not os.path.exists(d):
+            os.makedirs(d)
+        self._storage.save(file)
+
+    def restore(self, file):
+        self._storage.restore(file)
+
     class DataMismatchError(ValueError):
+        pass
+
+    class RestorationError(IOError):
         pass

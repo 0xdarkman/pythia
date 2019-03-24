@@ -14,6 +14,7 @@ from pythia.core.fpm_runner import FpmRunner
 from pythia.core.sessions.fpm_session import FpmSession
 from pythia.core.streams.fpm_time_series import FpmTimeSeries
 from pythia.core.streams.poloniex_history import PoloniexHistory
+from pythia.logger import Logger
 
 
 def _set_seed(seed):
@@ -23,14 +24,13 @@ def _set_seed(seed):
 
 
 class FpmBackTest(FpmRunner):
-    def __init__(self, config, data_directory):
-        super(FpmBackTest, self).__init__(config)
+    def __init__(self, config, data_directory, log_fn):
+        super(FpmBackTest, self).__init__(config, log_fn)
         self.data_directory = data_directory
-        self.log = print
         self.show_profiling = self.config["log"].get("profiling", False)
         self.seed = self.config["setup"].get("fixed_seed", np.random.randint(2 ** 32 - 1))
         _set_seed(self.seed)
-        self.log("[INFO] seed used is: {}".format(self.seed))
+        self.logger.info("Seed used is: {}".format(self.seed))
 
         self._tf_board_writer = None
         self._last_intermediate = None
@@ -57,15 +57,13 @@ class FpmBackTest(FpmRunner):
             self._update_to_latest()
 
         self._tf_board_writer = self._make_tf_board_writer(output_directory)
-        ckpt_path = os.path.join(output_directory, "model.ckpt")
         with tf.Session() as sess:
             agent = self._make_agent(sess)
-            if self.restore and tf.train.checkpoint_exists(ckpt_path):
-                self.log("[INFO] restoring agent from: {}".format(ckpt_path))
-                agent.restore(ckpt_path)
+            if self.restore and tf.train.checkpoint_exists(os.path.join(output_directory, agent.model_file_name)):
+                agent.restore(output_directory)
 
             sess.run(tf.global_variables_initializer())
-            self._run_training(agent, ckpt_path, output_directory, sess)
+            self._run_training(agent, output_directory)
             return self._run_testing(agent)
 
     def _get_memory(self):
@@ -76,24 +74,23 @@ class FpmBackTest(FpmRunner):
         return tf.summary.FileWriter(os.path.join(out_dir, "log"))
 
     def _update_to_latest(self):
-        self.log("[INFO] Updating Poloniex Historical data...")
+        self.logger.info("Updating Poloniex Historical data...")
         h = PoloniexHistory(self.config, self.data_directory)
         h.update()
 
-    def _run_training(self, agent, ckpt_path, output_directory, sess):
+    def _run_training(self, agent, output_directory):
         fpm_sess = self._make_session(self.config["training"], agent)
         reward = 0
         for i in range(self.episodes):
             reward = fpm_sess.run()
-            self.log("[INFO] Episode {}: saving agent to: {}".format(i, ckpt_path))
-            fpm_sess.agent.save(ckpt_path)
-            self.log("[PERFORMANCE] Last reward of episode {}: {:.4f}".format(i, reward))
+            fpm_sess.agent.save(output_directory)
+            self.logger.info("Last reward of episode {}: {:.4f}".format(i, reward))
             self._log_reward(reward)
             self._tf_board_writer.flush()
             if self.config["setup"]["record_assets"]:
                 np.save(os.path.join(output_directory, "assets.gz"))
 
-        self.log("[INFO] Finished training with final reward of {}".format(reward))
+        self.logger.info("Finished training with final reward of {}".format(reward))
 
     def _make_session(self, series_cfg, agent):
         series = self._load_time_series(series_cfg)
@@ -122,13 +119,13 @@ class FpmBackTest(FpmRunner):
         reward = fpm_sess.run()
         self._log_reward(reward)
         self._tf_board_writer.flush()
-        self.log("[INFO] Finished testing with final reward of {}".format(reward))
+        self.logger.info("Finished testing with final reward of {}".format(reward))
         return reward
 
     def _log_reward(self, reward):
         if self.show_profiling:
             self._log_performance()
-        self.log("[PERFORMANCE] Intermediate reward {:.4f}".format(reward))
+        self.logger.info("Intermediate reward {:.4f}".format(reward))
         stat_reward = Summary(value=[Summary.Value(tag="reward", simple_value=reward)])
         self._tf_board_writer.add_summary(stat_reward)
 
@@ -136,7 +133,7 @@ class FpmBackTest(FpmRunner):
         now = time.perf_counter()
         if self._last_intermediate is not None:
             delta = now - self._last_intermediate
-            self.log("[PROFILE] Intermediate calculations took {:.4f}".format(delta))
+            self.logger.info("Intermediate calculations took {:.4f}".format(delta))
         self._last_intermediate = now
 
     def _record_assets(self, env):
@@ -147,9 +144,10 @@ if __name__ == '__main__':
     with open(os.path.join(os.path.dirname(os.path.realpath(__file__)), "fpm_default.json"), "r") as f:
         cfg = json.load(f)
 
-    backTest = FpmBackTest(cfg, R"/home/bernhard/repos/pythia/data/recordings/poloniex/processed")
-    r = backTest.run(R"/home/bernhard/repos/pythia/data/models/fpm")
-    print("[FINISH] New reward: {}".format(r))
-    print("[FINISH] Saving seed {}".format(backTest.seed))
-    with open(R"/home/bernhard/repos/pythia/data/seed.txt", 'a+') as f:
-        f.write("{},{}\n".format(backTest.seed, r))
+    with Logger() as logger:
+        backTest = FpmBackTest(cfg, R"/home/bernhard/repos/pythia/data/recordings/poloniex/processed", logger)
+        r = backTest.run(R"/home/bernhard/repos/pythia/data/models/fpm")
+        logger.info("[FINISH] New reward: {}".format(r))
+        logger.info("[FINISH] Saving seed {}".format(backTest.seed))
+        with open(R"/home/bernhard/repos/pythia/data/seed.txt", 'a+') as f:
+            f.write("{},{}\n".format(backTest.seed, r))

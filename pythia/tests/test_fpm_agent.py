@@ -1,3 +1,5 @@
+import os
+
 import pytest
 
 from pythia.core.agents.fpm_agent import FpmAgent
@@ -11,6 +13,8 @@ class MemorySpy:
         self.received_state = None
         self.received_weights_to_update = None
         self.queried_batch_size = None
+        self.received_save_file = None
+        self.received_restore_file = None
 
     def set_batch(self, batch):
         self.batch = batch
@@ -37,6 +41,12 @@ class MemorySpy:
     def update(self, batch):
         self.received_weights_to_update = batch.predictions
 
+    def save(self, file):
+        self.received_save_file = file
+
+    def restore(self, file):
+        self.received_restore_file = file
+
 
 class AnnSpy:
     def __init__(self):
@@ -44,6 +54,8 @@ class AnnSpy:
         self.training_predictions = None
         self.predicted = None
         self.received_batch = None
+        self.received_save_file = None
+        self.received_restore_file = None
 
     def set_predictions(self, portfolio):
         self.portfolio = portfolio
@@ -58,6 +70,20 @@ class AnnSpy:
     def train(self, states, future_prices):
         self.received_batch = (states, future_prices)
         return self.training_predictions
+
+    def save(self, file):
+        self.received_save_file = file
+
+    def restore(self, file):
+        self.received_restore_file = file
+
+
+class LoggerSpy:
+    def __init__(self):
+        self.received_info_logs = list()
+
+    def info(self, msg):
+        self.received_info_logs.append(msg)
 
 
 class PriceStub:
@@ -108,6 +134,11 @@ def memory():
 
 
 @pytest.fixture
+def logger():
+    return LoggerSpy()
+
+
+@pytest.fixture
 def initial_portfolio():
     return PortfolioStub()
 
@@ -123,8 +154,8 @@ def config(initial_portfolio, batch_size):
 
 
 @pytest.fixture
-def agent(ann, memory, config):
-    return FpmAgent(ann, memory, lambda: RandomPortfolio(), config)
+def agent(ann, memory, config, logger):
+    return FpmAgent(ann, memory, lambda: RandomPortfolio(), config, logger)
 
 
 def make_prices(index=0):
@@ -207,3 +238,31 @@ def test_agent_does_not_train_on_empty_batches(agent, ann, memory):
     memory.set_batch(make_empty_batch())
     agent.step(make_prices(1))
     assert ann.received_batch is None
+
+
+def test_agent_saves_model_and_memory(agent, ann, memory):
+    path = "save_directory"
+    agent.save(path)
+    assert ann.received_save_file == os.path.join(path, agent.model_file_name)
+    assert memory.received_save_file == os.path.join(path, agent.memory_file_name)
+
+
+def test_agent_restores_model_and_memory(agent, ann, memory):
+    path = "restore_directory"
+    agent.restore(path)
+    assert ann.received_restore_file == os.path.join(path, agent.model_file_name)
+    assert memory.received_restore_file == os.path.join(path, agent.memory_file_name)
+
+
+def test_info_logs_saving(agent, logger):
+    path = "save_directory"
+    agent.save(path)
+    assert os.path.join(path, agent.model_file_name) in logger.received_info_logs[0]
+    assert os.path.join(path, agent.memory_file_name) in logger.received_info_logs[1]
+
+
+def test_info_logs_restoring(agent, logger):
+    path = "restore_directory"
+    agent.restore(path)
+    assert os.path.join(path, agent.model_file_name) in logger.received_info_logs[0]
+    assert os.path.join(path, agent.memory_file_name) in logger.received_info_logs[1]

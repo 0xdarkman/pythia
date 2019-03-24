@@ -1,10 +1,17 @@
+import os
+
+
 class FpmAgent:
-    def __init__(self, ann, memory, random_gen, config):
+    model_file_name = "model.ckpt"
+    memory_file_name = "memory.npz"
+
+    def __init__(self, ann, memory, random_gen, config, logger):
         self._ann = ann
         self._memory = memory
         self._random_generator = random_gen
         self._previous_portfolio = config["setup"]["initial_portfolio"]
         self._batch_size = config["training"]["batch_size"]
+        self._logger = logger
 
     def step(self, prices):
         self._memory.record(prices, self._previous_portfolio)
@@ -31,7 +38,17 @@ class FpmAgent:
         return self._previous_portfolio
 
     def save(self, path):
-        self._ann.save(path)
+        model = os.path.join(path, self.model_file_name)
+        memory = os.path.join(path, self.memory_file_name)
+        self._logger.info("Saving agent model to: {}".format(model))
+        self._logger.info("Saving agent memory to: {}".format(memory))
+        self._ann.save(model)
+        self._memory.save(memory)
 
     def restore(self, path):
-        self._ann.restore(path)
+        model = os.path.join(path, self.model_file_name)
+        memory = os.path.join(path, self.memory_file_name)
+        self._logger.info("Restoring agent model from: {}".format(model))
+        self._logger.info("Restoring agent memory from: {}".format(memory))
+        self._ann.restore(model)
+        self._memory.restore(memory)
