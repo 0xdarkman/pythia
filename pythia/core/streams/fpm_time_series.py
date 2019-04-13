@@ -1,4 +1,4 @@
-class FpmTimeSeries:
+class FpmHistoricalSeries:
     def __init__(self, *symbols):
         if len(symbols) == 0:
             raise self.NoSymbolsError()

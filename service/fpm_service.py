@@ -5,14 +5,12 @@ import random
 
 import numpy as np
 # TODO: Remove
-import pandas as pd
 import tensorflow as tf
 
 from pythia.core.agents.fpm_memory import FPMMemory
 from pythia.core.environment.fpm_environment import FpmEnvironment
 from pythia.core.fpm_runner import FpmRunner
 from pythia.core.sessions.fpm_session import FpmSession
-from pythia.core.streams.fpm_time_series import FpmTimeSeries
 from pythia.logger import Logger
 
 
@@ -27,16 +25,6 @@ class FpmService(FpmRunner):
         super(FpmService, self).__init__(config, log_fn)
         self.tf_saver = tf.train.Saver()
         self.config = config
-
-        # TODO: Remove
-        seed = self.config["setup"].get("fixed_seed", np.random.randint(2 ** 32 - 1))
-        _set_seed(seed)
-        self.logger.info("Seed used is: {}".format(seed))
-        self.data_directory = R"/home/bernhard/repos/pythia/data/recordings/poloniex/processed"
-
-    @property  # TODO: Remove
-    def cash(self):
-        return self.config["trading"]["cash"]
 
     @property
     def restore_path(self):
@@ -60,26 +48,19 @@ class FpmService(FpmRunner):
         return FPMMemory(self.config)
 
     def _run_testing(self, agent):
-        fpm_sess = self._make_session(self.config["testing"], agent)
+        fpm_sess = self._make_session(self.config["online"], agent)
         reward = fpm_sess.run()
         self._log_reward(reward)
         self.logger.info("Finished testing with final reward of {}".format(reward))
         return reward
 
-    def _make_session(self, series_cfg, agent):
-        series = self._load_time_series(series_cfg)
+    def _make_session(self, online_cfg, agent):
+        series = self._load_time_series(online_cfg)
         fpm_sess = self._make_session_for_agent(agent, series)
         return fpm_sess
 
     def _load_time_series(self, config):
-        data_frames = []
-        for coin in self.coins:
-            with open(os.path.join(self.data_directory, "{}_{}.csv".format(self.cash, coin))) as r:
-                df = pd.read_csv(r, index_col='timestamp')
-                df.index = pd.to_datetime(df.index, unit='s')
-                data_frames.append(df[config["start"]:config.get("end", None)])
-
-        return FpmTimeSeries(*data_frames)
+        return None
 
     def _make_session_for_agent(self, agent, series):
         env = FpmEnvironment(series, self.config)

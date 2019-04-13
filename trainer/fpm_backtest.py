@@ -12,7 +12,7 @@ from pythia.core.agents.fpm_memory import FPMMemory
 from pythia.core.environment.fpm_environment import FpmEnvironment
 from pythia.core.fpm_runner import FpmRunner
 from pythia.core.sessions.fpm_session import FpmSession
-from pythia.core.streams.fpm_time_series import FpmTimeSeries
+from pythia.core.streams.fpm_time_series import FpmHistoricalSeries
 from pythia.core.streams.poloniex_history import PoloniexHistory
 from pythia.logger import Logger
 
@@ -105,7 +105,7 @@ class FpmBackTest(FpmRunner):
                 df.index = pd.to_datetime(df.index, unit='s')
                 data_frames.append(df[config["start"]:config.get("end", None)])
 
-        return FpmTimeSeries(*data_frames)
+        return FpmHistoricalSeries(*data_frames)
 
     def _make_session_for_agent(self, agent, series):
         env = FpmEnvironment(series, self.config)

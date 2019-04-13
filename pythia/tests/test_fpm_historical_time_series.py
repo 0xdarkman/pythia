@@ -1,11 +1,11 @@
 import pandas as pd
 import pytest
 
-from pythia.core.streams.fpm_time_series import FpmTimeSeries
+from pythia.core.streams.fpm_time_series import FpmHistoricalSeries
 
 
 def make_series(*symbols):
-    return FpmTimeSeries(*symbols)
+    return FpmHistoricalSeries(*symbols)
 
 
 def uniform_data(*values):
@@ -32,7 +32,7 @@ def prices(*values):
 
 
 def test_time_series_needs_at_least_one_symbol():
-    with pytest.raises(FpmTimeSeries.NoSymbolsError):
+    with pytest.raises(FpmHistoricalSeries.NoSymbolsError):
         make_series()
 
 
