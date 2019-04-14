@@ -78,13 +78,13 @@ class RandomStub:
 
 class TelemetryStub:
     def __init__(self):
-        self.last_chart_ts = None
+        self.last_chart_ts = dict()
 
-    def set_last_chart_ts(self, t):
-        self.last_chart_ts = t
+    def set_last_chart_ts_of(self, pair, t):
+        self.last_chart_ts[pair] = t
 
-    def find_last_chart_ts(self, default):
-        return default if self.last_chart_ts is None else self.last_chart_ts
+    def find_last_chart_ts(self, pair, default):
+        return self.last_chart_ts.get(pair, default)
 
 
 class TelemetrySpy(TelemetryStub):
@@ -215,7 +215,7 @@ def test_writes_received_chart_data_to_telemetry(connection, api, telemetry, sta
 
 
 def test_gets_next_interval_from_last_telemetry_chart(connection, api, telemetry, time, start, period):
-    telemetry.set_last_chart_ts(start + period)
+    telemetry.set_last_chart_ts_of("CASH_SYMBOL", start + period)
     time.set(start + period * 2)
     connection.get_next_prices("CASH", "SYMBOL")
     assert api.return_chart_data.received_calls[0] == ("CASH", "SYMBOL", period, start + period * 2)

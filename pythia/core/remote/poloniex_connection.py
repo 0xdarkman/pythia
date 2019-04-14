@@ -41,14 +41,15 @@ class PoloniexConnection:
         self._buffer = deque()
 
     def get_next_prices(self, cash, symbol):
-        next_ts = self._telemetry.find_last_chart_ts(self._start_time) + self._period
+        pair = "{}_{}".format(cash, symbol)
+        next_ts = self._telemetry.find_last_chart_ts(pair, self._start_time) + self._period
         self._wait_for_interval(next_ts)
 
         if len(self._buffer) == 0:
             self._buffer = deque(self._request_charts(cash, symbol, next_ts))
 
         chart = _take_keys(self._buffer.popleft(), "close", "high", "low", "date")
-        self._telemetry.write_chart({"{}_{}".format(cash, symbol): chart})
+        self._telemetry.write_chart({pair: chart})
         return _take_keys(chart, "close", "high", "low")
 
     def _request_charts(self, cash, symbol, ts):
