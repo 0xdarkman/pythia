@@ -12,7 +12,6 @@ def uniform_prices(value):
 
 
 class ConnectionStub:
-
     def __init__(self):
         self.should_timeout = False
         self.return_values = dict()
@@ -23,21 +22,20 @@ class ConnectionStub:
     def set_return_price_of(self, symbol, return_value):
         self.return_values[symbol] = return_value
 
-    def get_prices(self, cash, symbol):
+    def get_next_prices(self, cash, symbol):
         if self.should_timeout:
             raise TimeoutError
         return self.return_values.get(symbol, uniform_return(0))
 
 
 class ConnectionSpy(ConnectionStub):
-
     def __init__(self):
         super().__init__()
         self.received_price_queries = list()
 
-    def get_prices(self, cash, symbol):
+    def get_next_prices(self, cash, symbol):
         self.received_price_queries.append((cash, symbol,))
-        return super().get_prices(cash, symbol)
+        return super().get_next_prices(cash, symbol)
 
 
 @pytest.fixture

@@ -37,7 +37,7 @@ class FpmLiveSeries(FpmTimeSeries):
     def __next__(self):
         try:
             def price_list_of(symbol):
-                r = self.connection.get_prices(self.cash, symbol)
+                r = self.connection.get_next_prices(self.cash, symbol)
                 return [r["close"], r["high"], r["low"]]
 
             return [price_list_of(s) for s in self.symbols]
