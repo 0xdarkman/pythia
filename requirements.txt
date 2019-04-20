@@ -6,3 +6,4 @@ tensorflow
 tensorboard
 tflearn
 pandas
+requests

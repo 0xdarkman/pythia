@@ -2,6 +2,8 @@ import random
 import time
 from collections import deque
 
+import requests
+
 from pythia.core.remote.poloniex_api import return_chart_data
 
 RANDOM_DELAY = (30, 120)
@@ -11,7 +13,7 @@ def _retry_timeout(f, n):
     for _ in range(0, n):
         try:
             return f()
-        except TimeoutError:
+        except requests.exceptions.RequestException:
             pass
 
     raise PoloniexConnection.TimeoutError("{} timed out after {} retries".format(str(f), n))

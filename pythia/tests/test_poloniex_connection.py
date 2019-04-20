@@ -4,6 +4,7 @@ import pytest
 
 import pythia.core.remote.poloniex_connection as sut
 from pythia.core.remote.poloniex_connection import PoloniexConnection
+from pythia.tests.fpm_doubles import TimeSpy, RandomStub
 
 CHART_KEYS = ("date", "high", "low", "open", "close", "volume", "quoteVolume", "weightedAverage")
 
@@ -18,11 +19,11 @@ FILLED_CHART = [uniform_chart(1)]
 
 class PoloniexApiStub:
     def __init__(self):
-        self.should_timeout = False
+        self.has_request_error = False
         self.chart_return_data = deque()
 
-    def set_to_timeout(self):
-        self.should_timeout = True
+    def set_to_have_request_error(self):
+        self.has_request_error = True
 
     def set_chart_returns(self, *data):
         self.chart_return_data = deque(data)
@@ -36,44 +37,15 @@ class PoloniexApiSpy(PoloniexApiStub):
 
         def __call__(self, *args, **kwargs):
             self.received_calls.append(args)
-            if self.api.should_timeout:
-                raise TimeoutError
+            import requests.exceptions
+            if self.api.has_request_error:
+                raise requests.exceptions.HTTPError("A Http Error")
 
             return FILLED_CHART if len(self.api.chart_return_data) == 0 else self.api.chart_return_data.popleft()
 
     def __init__(self):
         super().__init__()
         self.return_chart_data = self.ReturnChartData(self)
-
-
-class TimeStub:
-    def __init__(self, t):
-        self.t = t
-
-    def set(self, t):
-        self.t = t
-
-    def time(self, *args, **kwargs):
-        return self.t
-
-
-class TimeSpy(TimeStub):
-    def __init__(self, t):
-        super().__init__(t)
-        self.sleeps = 0
-        self.recorded_sleeps = list()
-
-    def sleep(self, seconds):
-        self.sleeps = seconds
-        self.recorded_sleeps.append(seconds)
-
-
-class RandomStub:
-    def __init__(self):
-        self.last_random_value = 42
-
-    def randint(self, start, end):
-        return self.last_random_value
 
 
 class TelemetryStub:
@@ -166,8 +138,8 @@ def test_queries_the_poloniex_api_with_starting_parameters(connection, config, a
     assert api.return_chart_data.received_calls[0] == (cash, symbol, period, start + period)
 
 
-def test_queries_are_repeated_when_timing_out_until_retry_count_is_reached(connection, config, api):
-    api.set_to_timeout()
+def test_queries_are_repeated_when_request_has_error_until_retry_count_is_reached(connection, config, api):
+    api.set_to_have_request_error()
     with pytest.raises(PoloniexConnection.TimeoutError):
         connection.get_next_prices("CASH", "SYMBOL")
 

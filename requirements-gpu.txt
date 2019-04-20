@@ -6,3 +6,4 @@ tensorflow-gpu==1.12
 tensorboard==1.12
 tflearn
 pandas
+requests
