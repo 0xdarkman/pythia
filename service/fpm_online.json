@@ -51,9 +51,6 @@
     "beta": 5e-5,
     "batch_size": 109
   },
-  "testing": {
-    "start": "2015-07-01"
-  },
   "trading": {
     "commission": 0.0025,
     "api": "https://poloniex.com/public",
@@ -71,9 +68,13 @@
       "FCT"
     ],
     "period": 1800,
-    "start": "2015-07-01"
+    "start": 1551434400,
+    "retry": 10
   },
   "log": {
-    "profiling": true
+    "profiling": true,
+    "log_file": "/home/bernhard/repos/pythia/data/log/main.log",
+    "telemetry_path": "/home/bernhard/repos/pythia/data/telemetry",
+    "telemetry_limit": 1000
   }
 }

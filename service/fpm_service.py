@@ -10,7 +10,10 @@ import tensorflow as tf
 from pythia.core.agents.fpm_memory import FPMMemory
 from pythia.core.environment.fpm_environment import FpmEnvironment
 from pythia.core.fpm_runner import FpmRunner
+from pythia.core.remote.poloniex_connection import PoloniexConnection
+from pythia.core.remote.telemetry import Telemetry
 from pythia.core.sessions.fpm_session import FpmSession
+from pythia.core.streams.fpm_time_series import FpmLiveSeries
 from pythia.logger import Logger
 
 
@@ -25,6 +28,8 @@ class FpmService(FpmRunner):
         super(FpmService, self).__init__(config, log_fn)
         self.tf_saver = tf.train.Saver()
         self.config = config
+        log_cfg = self.config["log"]
+        self.telemetry = Telemetry(log_cfg["telemetry_path"], log_cfg["telemetry_limit"])
 
     @property
     def restore_path(self):
@@ -48,19 +53,20 @@ class FpmService(FpmRunner):
         return FPMMemory(self.config)
 
     def _run_testing(self, agent):
-        fpm_sess = self._make_session(self.config["online"], agent)
+        fpm_sess = self._make_session(self.config["trading"], agent)
         reward = fpm_sess.run()
         self._log_reward(reward)
         self.logger.info("Finished testing with final reward of {}".format(reward))
         return reward
 
-    def _make_session(self, online_cfg, agent):
-        series = self._load_time_series(online_cfg)
+    def _make_session(self, trading_cfg, agent):
+        series = self._load_time_series(trading_cfg)
         fpm_sess = self._make_session_for_agent(agent, series)
         return fpm_sess
 
     def _load_time_series(self, config):
-        return None
+        connection = PoloniexConnection(self.telemetry, config)
+        return FpmLiveSeries(connection, config)
 
     def _make_session_for_agent(self, agent, series):
         env = FpmEnvironment(series, self.config)
