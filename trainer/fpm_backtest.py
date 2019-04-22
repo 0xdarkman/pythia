@@ -9,7 +9,7 @@ import tensorflow as tf
 from tensorflow import Summary
 
 from pythia.core.agents.fpm_memory import FPMMemory
-from pythia.core.environment.fpm_environment import FpmEnvironment
+from pythia.core.environment.fpm_environment import FpmBackTestEnvironment
 from pythia.core.fpm_runner import FpmRunner
 from pythia.core.sessions.fpm_session import FpmSession
 from pythia.core.streams.fpm_time_series import FpmHistoricalSeries
@@ -108,7 +108,7 @@ class FpmBackTest(FpmRunner):
         return FpmHistoricalSeries(*data_frames)
 
     def _make_session_for_agent(self, agent, series):
-        env = FpmEnvironment(series, self.config)
+        env = FpmBackTestEnvironment(series, self.config)
         recorder = self._record_assets if self.config["setup"]["record_assets"] else None
         s = FpmSession(env, agent, self._log_reward, recorder)
         s.log_interval = 1000

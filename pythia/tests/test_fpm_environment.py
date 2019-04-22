@@ -3,7 +3,7 @@ from collections import deque
 import numpy as np
 import pytest
 
-from pythia.core.environment.fpm_environment import FpmEnvironment
+from pythia.core.environment.fpm_environment import FpmBackTestEnvironment
 from pythia.tests.fpm_doubles import Prices
 
 
@@ -45,7 +45,7 @@ def starting_cash(config):
 @pytest.fixture
 def env(series, config):
     series.set_prices(*(prices(i) for i in range(1, 100)))
-    return FpmEnvironment(series, config)
+    return FpmBackTestEnvironment(series, config)
 
 
 def prices(*closings):
@@ -75,13 +75,13 @@ def prep_env_series(env, series, *closings):
 
 def test_that_environment_raises_an_error_when_time_series_is_empty(env, series):
     series.set_prices()
-    with pytest.raises(FpmEnvironment.TimeSeriesError):
+    with pytest.raises(FpmBackTestEnvironment.TimeSeriesError):
         env.reset()
 
 
 def test_that_environment_raises_an_error_when_time_series_contains_only_one_element(env, series):
     series.set_prices(prices(1))
-    with pytest.raises(FpmEnvironment.TimeSeriesError):
+    with pytest.raises(FpmBackTestEnvironment.TimeSeriesError):
         env.reset()
 
 
@@ -194,7 +194,7 @@ def test_reward_deducts_commission_fee(env, series, starting_cash):
 
 def test_reward_is_correctly_calculated_with_multiple_assets(config, series, starting_cash):
     config["trading"]["coins"] = ["SYM1", "SYM2"]
-    env = FpmEnvironment(series, config)
+    env = FpmBackTestEnvironment(series, config)
     prev_env_with_prices(env, series, prices(0.5, 2.0), prices(2.0, 0.5), prices(0.5, 0.5), prices(1, 2),
                          prices(0.5, 1), prices(0.6, 1.2), prices(1.2, 0.8))
     assert get_reward(env.step(action([0.0, 1.0, 0.0]))) == starting_cash * 4
@@ -208,6 +208,6 @@ def test_reward_is_correctly_calculated_with_multiple_assets(config, series, sta
 def test_reward_handles_commission_correctly_with_multiple_assets(config, series, starting_cash):
     config["trading"]["coins"] = ["SYM1", "SYM2"]
     config["trading"]["commission"] = 0.1
-    env = FpmEnvironment(series, config)
+    env = FpmBackTestEnvironment(series, config)
     prev_env_with_prices(env, series, prices(0.5, 0.5), prices(2.0, 2.0), prices(0.1, 0.1))
     assert get_reward(env.step(action([0.0, 1.0, 0.0]))) == starting_cash * 3.6

@@ -1,7 +1,7 @@
 import numpy as np
 
 
-class FpmEnvironment:
+class FpmBackTestEnvironment:
     def __init__(self, time_series, config):
         self._start_cash = config["trading"]["cash_amount"]
         self._total_assets = len(config["trading"]["coins"]) + 1
