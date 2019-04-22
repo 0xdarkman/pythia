@@ -8,7 +8,7 @@ import numpy as np
 import tensorflow as tf
 
 from pythia.core.agents.fpm_memory import FPMMemory
-from pythia.core.environment.fpm_environment import FpmBackTestEnvironment
+from pythia.core.environment.fpm_environment import FpmEnvironment
 from pythia.core.fpm_runner import FpmRunner
 from pythia.core.remote.poloniex_connection import PoloniexConnection
 from pythia.core.remote.telemetry import Telemetry
@@ -69,7 +69,7 @@ class FpmService(FpmRunner):
         return FpmLiveSeries(connection, config)
 
     def _make_session_for_agent(self, agent, series):
-        env = FpmBackTestEnvironment(series, self.config)
+        env = FpmEnvironment(series, self.config)
         s = FpmSession(env, agent, self._log_reward, None)
         s.log_interval = 1000
         return s
