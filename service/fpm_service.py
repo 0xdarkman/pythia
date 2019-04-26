@@ -71,7 +71,7 @@ class FpmService(FpmRunner):
     def _make_session_for_agent(self, agent, series):
         env = FpmEnvironment(series, self.config)
         s = FpmSession(env, agent, self._log_reward, None)
-        s.log_interval = 1000
+        s.log_interval = 1
         return s
 
     def _log_reward(self, reward):

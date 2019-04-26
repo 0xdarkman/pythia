@@ -27,7 +27,6 @@ class WaitTimeUpdate:
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         _previous_request_times.append(self._now)
-        pass
 
     def calc_remaining(self):
         num_requests = len(_previous_request_times)
@@ -56,8 +55,10 @@ def return_chart_data(cash, symbol, period, start, end=None):
     if period not in VALID_PERIODS:
         raise InvalidParameterError("Period {} is not valid. Valid periods are: {}".format(period, VALID_PERIODS))
 
-    result = _delayed_get(PUBLIC_API, _make_chart_payload(cash, symbol, period, start, end), timeout=3.05)
+    payload = _make_chart_payload(cash, symbol, period, start, end)
+    result = _delayed_get(PUBLIC_API, payload, timeout=3.05)
     result.raise_for_status()
+
     return result.json()
 
 

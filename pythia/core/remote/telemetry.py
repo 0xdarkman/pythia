@@ -1,6 +1,7 @@
 import os
-
+from os import listdir
 from os import path
+from os import remove
 
 open_file = open
 
@@ -28,7 +29,7 @@ class Telemetry:
             lines = f.read().strip().splitlines()
         if len(lines) >= self._limit:
             with open_file(file, "w") as f:
-                f.writelines(lines[1:])
+                f.writelines(os.linesep.join(lines[1:]))
                 f.write(os.linesep)
 
     def _get_file_for_pair(self, pair):
@@ -42,3 +43,7 @@ class Telemetry:
         with open_file(file, "r") as f:
             lines = f.read().strip().splitlines()
             return int(lines[-1].split(',')[0])
+
+    def reset(self):
+        for f in listdir(self._folder):
+            remove(path.join(self._folder, f))

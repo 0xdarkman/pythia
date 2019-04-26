@@ -10,14 +10,17 @@ from pythia.tests.fpm_doubles import Prices
 class PricesTimeSeriesStub:
     def __init__(self):
         self.prices = deque()
-        self.iter = None
-        self.reset()
+        self._reset_iter()
 
     def set_prices(self, *prices):
         self.prices = prices
-        self.reset()
+        self._reset_iter()
 
     def reset(self):
+        self._reset_iter()
+        return next(self)
+
+    def _reset_iter(self):
         self.iter = iter(deque(self.prices))
 
     def __iter__(self):

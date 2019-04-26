@@ -66,7 +66,9 @@ def test_raise_stop_iteration_when_reaching_end_of_series():
 
 
 def test_can_reset_series():
-    s = make_series(uniform_data(1))
-    next(s)
-    s.reset()
-    next(s)
+    s = make_series(uniform_data(1, 2))
+    assert s.reset() == uniform_prices(1)
+    assert next(s) == uniform_prices(2)
+
+    assert s.reset() == uniform_prices(1)
+    assert next(s) == uniform_prices(2)

@@ -67,9 +67,10 @@
       "XEM",
       "FCT"
     ],
+    "training_data_dir": "/home/bernhard/repos/pythia/data/recordings/poloniex/processed",
     "period": 1800,
     "start": 1551434400,
-    "retry": 10
+    "retry": 300
   },
   "log": {
     "profiling": true,

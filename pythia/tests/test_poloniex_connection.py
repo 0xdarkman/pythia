@@ -63,9 +63,13 @@ class TelemetrySpy(TelemetryStub):
     def __init__(self):
         super().__init__()
         self.received_chart_data = None
+        self.received_reset_call = False
 
     def write_chart(self, chart):
         self.received_chart_data = chart
+
+    def reset(self):
+        self.received_reset_call = True
 
 
 def prices_from(chart):
@@ -104,7 +108,7 @@ def retries(config):
 @pytest.fixture(autouse=True)
 def time(start, period):
     prev_time = sut.time
-    sut.time = TimeSpy(start + period)
+    sut.time = TimeSpy(start + 2 * period)
     yield sut.time
     sut.time = prev_time
 
@@ -135,7 +139,7 @@ def assert_random_delayed_repeat(t, a, r, n):
 @pytest.mark.parametrize("cash,symbol", [("CSH1", "SYM1"), ("CSH2", "SYM2")])
 def test_queries_the_poloniex_api_with_starting_parameters(connection, config, api, cash, symbol, start, period):
     connection.get_next_prices(cash, symbol)
-    assert api.return_chart_data.received_calls[0] == (cash, symbol, period, start + period)
+    assert api.return_chart_data.received_calls[0] == (cash, symbol, period, start + period, start + period)
 
 
 def test_queries_are_repeated_when_request_has_error_until_retry_count_is_reached(connection, config, api):
@@ -154,13 +158,13 @@ def test_returns_closing_high_and_low_price_of_single_chart_return(connection, c
 
 def test_sleeps_to_next_period_when_necessary(connection, api, time, random, start, period):
     time_to_next = int(period / 2)
-    time.set(start + (period - time_to_next))
+    time.set(start + (2 * period - time_to_next))
     connection.get_next_prices("CASH", "SYMBOL")
     assert time.sleeps == time_to_next + random.last_random_value
 
 
 def test_add_random_delay_when_requesting_at_exact_time_of_next_interval(connection, api, time, random, start, period):
-    next_interval = start + period
+    next_interval = start + 2 * period
     time.set(next_interval)
     connection.get_next_prices("CASH", "SYMBOL")
     assert time.sleeps == random.last_random_value
@@ -190,7 +194,14 @@ def test_gets_next_interval_from_last_telemetry_chart(connection, api, telemetry
     telemetry.set_last_chart_ts_of("CASH_SYMBOL", start + period)
     time.set(start + period * 2)
     connection.get_next_prices("CASH", "SYMBOL")
-    assert api.return_chart_data.received_calls[0] == ("CASH", "SYMBOL", period, start + period * 2)
+    assert api.return_chart_data.received_calls[0] == ("CASH", "SYMBOL", period, start + period * 2, start + period * 2)
+
+
+def test_queries_chart_data_up_to_last_complete_period(connection, api, telemetry, time, start, period):
+    telemetry.set_last_chart_ts_of("CASH_SYMBOL", start)
+    time.set(start + period * 3 + 10)
+    connection.get_next_prices("CASH", "SYMBOL")
+    assert api.return_chart_data.received_calls[0] == ("CASH", "SYMBOL", period, start + period, start + period * 2)
 
 
 def test_returns_oldest_chart_when_multiple_charts_are_returned(connection, api):
@@ -216,3 +227,15 @@ def test_multiple_charts_are_buffered(connection, api):
     api.set_chart_returns([uniform_chart(1), uniform_chart(2)])
     connection.get_next_prices("CASH", "SYMBOL")
     assert len(api.return_chart_data.received_calls) == 1
+
+
+def test_charts_are_buffered_per_symbol(connection, api):
+    api.set_chart_returns([uniform_chart(1), uniform_chart(2)])
+    connection.get_next_prices("CASH", "SYM1")
+    api.set_chart_returns([uniform_chart(3)])
+    assert connection.get_next_prices("CASH", "SYM2") == prices_from(uniform_chart(3))
+
+
+def test_reset_resets_the_telemetry_object(connection, telemetry):
+    connection.reset()
+    assert telemetry.received_reset_call

@@ -25,9 +25,8 @@ class FpmEnvironment:
     def reset(self):
         self.assets = self._make_assets()
         self.last_action = self._make_initial_action()
-        self.time_series.reset()
         try:
-            s = next(self.time_series)
+            s = self.time_series.reset()
             self.last_y = self._calc_y_from_prices(s)
             self.next_prices = next(self.time_series)
             return s

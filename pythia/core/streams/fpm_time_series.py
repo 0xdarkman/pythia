@@ -1,3 +1,8 @@
+import os
+
+import pandas as pd
+
+
 class FpmTimeSeries:
     def __iter__(self):
         return self
@@ -12,7 +17,11 @@ class FpmHistoricalSeries(FpmTimeSeries):
             raise self.NoSymbolsError()
 
         self.symbols = symbols
-        self.reset()
+        self._reset_iters()
+
+    # noinspection PyAttributeOutsideInit
+    def _reset_iters(self):
+        self.symbol_iters = [s.iterrows() for s in self.symbols]
 
     def __next__(self):
         def make_price(symbol):
@@ -21,9 +30,9 @@ class FpmHistoricalSeries(FpmTimeSeries):
 
         return [make_price(s) for s in self.symbol_iters]
 
-    # noinspection PyAttributeOutsideInit
     def reset(self):
-        self.symbol_iters = [s.iterrows() for s in self.symbols]
+        self._reset_iters()
+        return self.__next__()
 
 
 class FpmLiveSeries(FpmTimeSeries):
@@ -31,6 +40,8 @@ class FpmLiveSeries(FpmTimeSeries):
         self.connection = connection
         self.cash = config["cash"]
         self.symbols = config["coins"]
+        self.start = config["start"]
+        self.data_dir = config["training_data_dir"]
         if len(self.symbols) == 0:
             raise self.NoSymbolsError()
 
@@ -43,6 +54,16 @@ class FpmLiveSeries(FpmTimeSeries):
             return [price_list_of(s) for s in self.symbols]
         except TimeoutError:
             raise self.TimeoutError("The connection to query the next prices timed out")
+
+    def reset(self):
+        self.connection.reset()
+        initial_prices = []
+        for sym in self.symbols:
+            df = pd.read_csv(os.path.join(self.data_dir, "{}_{}.csv".format(self.cash, sym)), index_col='timestamp')
+            row = df.loc[self.start]
+            initial_prices.append([row.close, row.high, row.low])
+
+        return initial_prices
 
     class TimeoutError(TimeoutError):
         pass

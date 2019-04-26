@@ -37,7 +37,7 @@ class FileSpy(FileStub):
         self.received_text += text
 
     def writelines(self, lines):
-        self.received_text = "\n".join(lines)
+        self.received_text = "".join(lines)
 
 
 class FileStreamSpy:
@@ -75,6 +75,25 @@ class IsFileStub:
         return self.isfile
 
 
+class ListDirStub:
+    def __init__(self):
+        self.fs = []
+
+    def files(self, *fs):
+        self.fs = list(fs)
+
+    def __call__(self, _):
+        return self.fs
+
+
+class RemoveSpy:
+    def __init__(self):
+        self.received_files = []
+
+    def __call__(self, file):
+        self.received_files.append(file)
+
+
 @pytest.fixture(autouse=True)
 def file_open():
     prev_open = sut.open_file
@@ -94,6 +113,22 @@ def isfile():
     sut.path.isfile = IsFileStub()
     yield sut.path.isfile
     sut.path.isfile = prev_isfile
+
+
+@pytest.fixture(autouse=True)
+def listdir():
+    prev_listdir = sut.listdir
+    sut.listdir = ListDirStub()
+    yield sut.listdir
+    sut.listdir = prev_listdir
+
+
+@pytest.fixture(autouse=True)
+def remove():
+    prev_remove = sut.remove
+    sut.remove = RemoveSpy()
+    yield sut.remove
+    sut.remove = prev_remove
 
 
 @pytest.fixture
@@ -149,3 +184,9 @@ def test_rotate_file_if_limit_is_reached(telemetry, file, limit):
     telemetry.write_chart({"CASH_SYMBOL": uniform_chart(limit)})
     assert file.recorded_modes[-2] == "w"
     assert file.received_text == "".join(uniform_csv(i) for i in range(1, limit)) + uniform_csv(limit)
+
+
+def test_reset_clears_all_files(telemetry, listdir, remove, folder):
+    listdir.files("A.csv", "B.csv")
+    telemetry.reset()
+    assert remove.received_files == [folder + "A.csv", folder + "B.csv"]

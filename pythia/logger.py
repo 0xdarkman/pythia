@@ -23,7 +23,8 @@ class Logger:
         return self
 
     def file_writer(self, msg):
-        self.log_stream.write(msg)
+        self.log_stream.write(msg + "\n")
+        self.log_stream.flush()
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         if self.log_stream is not None:
