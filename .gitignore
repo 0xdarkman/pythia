@@ -13,3 +13,5 @@ start_local_ml_job.ps1
 start_remote_ml_job.ps1
 venv*
 aseed.txt
+.coverage
+instance/
