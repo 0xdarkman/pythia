@@ -18,4 +18,8 @@ def create_app(test_config=None):
     from . import auth
     app.register_blueprint(auth.bp)
 
+    from . import monitor
+    app.register_blueprint(monitor.bp)
+    app.add_url_rule('/monitor', endpoint='index')
+
     return app

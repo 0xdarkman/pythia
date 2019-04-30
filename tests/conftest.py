@@ -1,6 +1,5 @@
 import json
 import os
-import platform
 import shutil
 import tempfile
 
@@ -9,20 +8,29 @@ from werkzeug.security import generate_password_hash
 
 from frontend import create_app
 
+VALID_PASSWORD = "secret"
+VALID_NAME = "name"
+
 
 def make_tmp():
-    if platform.system() == 'Linux':
-        d = os.path.join("/dev/shm", tempfile.mktemp())
-        os.makedirs(d)
-        return d
     return tempfile.mkdtemp()
 
 
 @pytest.fixture
-def app():
+def username():
+    return VALID_NAME
+
+
+@pytest.fixture
+def password():
+    return VALID_PASSWORD
+
+
+@pytest.fixture
+def app(username, password):
     tmp = make_tmp()
     with open(os.path.join(tmp, 'static.json'), 'w') as f:
-        json.dump({'user': 'test', 'password': generate_password_hash('test')}, f)
+        json.dump({'user': username, 'password': generate_password_hash(password)}, f)
     yield create_app({'TESTING': True, 'DATA_DIR': tmp})
     shutil.rmtree(tmp)
 
@@ -30,3 +38,19 @@ def app():
 @pytest.fixture
 def client(app):
     return app.test_client()
+
+
+class AuthActions:
+    def __init__(self, client):
+        self._client = client
+
+    def login(self, username=VALID_NAME, password=VALID_PASSWORD):
+        return self._client.post('/auth/login', data={'username': username, 'password': password})
+
+    def logout(self):
+        return self._client.get('/auth/logout')
+
+
+@pytest.fixture
+def auth(client):
+    return AuthActions(client)
