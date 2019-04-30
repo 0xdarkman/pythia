@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+
+{% block navigation %}
+    {% if g.valid_session %}
+        <li><a href="{{ url_for('auth.logout') }}">Log Out</a></li>
+    {% endif %}
+{% endblock %}
+
+{% block header %}
+    <h1>{% block title %}Monitor{% endblock %}</h1>
+{% endblock %}
+
+{% block content %}
+    Pythia Service
+{% endblock %}

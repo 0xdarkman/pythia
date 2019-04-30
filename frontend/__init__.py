@@ -13,6 +13,9 @@ def create_app(test_config=None):
         app.config['SECRET_KEY'] = 'dev'
         app.config.from_mapping(test_config)
 
+    if app.env == "development":
+        app.config['SECRET_KEY'] = 'dev'
+
     os.makedirs(app.instance_path, exist_ok=True)
 
     from . import auth

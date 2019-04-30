@@ -1,3 +1,5 @@
+import os
+
 import pytest
 
 from frontend import create_app
@@ -31,6 +33,13 @@ def makedirs(monkeypatch):
     return Recorder
 
 
+@pytest.fixture
+def environment():
+    prev = os.environ
+    yield os.environ
+    os.environ = prev
+
+
 def test_creating_non_test_env_by_default():
     assert not create_app().testing
 
@@ -57,3 +66,8 @@ def test_create_instance_path(makedirs):
 def test_default_creation_uses_instance_path_as_data_dir():
     app = create_app()
     assert app.config['DATA_DIR'] == app.instance_path
+
+
+def test_development_environment_sets_secret_to_dev(environment):
+    environment['FLASK_ENV'] = "development"
+    assert create_app().config['SECRET_KEY'] == 'dev'

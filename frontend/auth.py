@@ -1,4 +1,6 @@
-from flask import Blueprint, request, redirect, url_for, session, g
+import functools
+
+from flask import Blueprint, request, redirect, url_for, session, g, render_template
 from werkzeug.security import check_password_hash
 
 from frontend.persistence import get_static
@@ -21,7 +23,7 @@ def login():
             session['valid'] = True
             return redirect(url_for('index'))
 
-    return "Valid login"
+    return render_template('auth/login.html')
 
 
 @bp.route('/logout')
@@ -33,3 +35,14 @@ def logout():
 @bp.before_app_request
 def validate_session():
     g.valid_session = session.get('valid')
+
+
+def login_required(view):
+    @functools.wraps(view)
+    def wrapped_view(**kwargs):
+        if not g.valid_session:
+            return redirect(url_for('auth.login'))
+
+        return view(**kwargs)
+
+    return wrapped_view

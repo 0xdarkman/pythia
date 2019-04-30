@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<title>{% block title %}{% endblock %} - Pythia</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+<nav>
+    <h1>Pythia</h1>
+    <ul>
+        {% block navigation %}{% endblock %}
+    </ul>
+</nav>
+<section class="content">
+    <header>
+        {% block header %}{% endblock %}
+    </header>
+    {% for message in get_flashed_messages() %}
+        <div class="flash">{{ message }}</div>
+    {% endfor %}
+    {% block content %}{% endblock %}
+</section>
