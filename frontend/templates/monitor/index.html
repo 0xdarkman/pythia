@@ -8,8 +8,25 @@
 
 {% block header %}
     <h1>{% block title %}Monitor{% endblock %}</h1>
+    <script>
+        $(document).ready(function () {
+            $.get("{{ url_for('monitor.status') }}", function (data, status) {
+                if (data.status === "error" || status !== "success") {
+                    $('#service-status').text("An Error occurred!");
+                    return
+                }
+
+                if (data.active)
+                    $('#service-status').text(`Status: Active since ${data.since}`);
+                else
+                    $('#service-status').text("Status: Inactive");
+
+            });
+        });
+    </script>
 {% endblock %}
 
 {% block content %}
-    Pythia Service
+    <h2>Pythia Service</h2>
+    <p><span id="service-status"></span></p>
 {% endblock %}
