@@ -27,10 +27,10 @@
       0,
       0
     ],
-    "fixed_seed": 4045085808,
     "update_to_latest": false,
     "restore_last_checkpoint": false,
-    "record_assets": false
+    "record_assets": false,
+    "agent": "RandomAgent"
   },
 
   "training": {

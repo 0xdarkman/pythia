@@ -4,6 +4,7 @@ import numpy as np
 
 from pythia.core.agents.cnn_ensamble import CNNEnsemble
 from pythia.core.agents.fpm_agent import FpmAgent
+from pythia.core.agents.random_agent import RandomAgent
 
 
 class FpmRunner(ABC):
@@ -19,9 +20,19 @@ class FpmRunner(ABC):
     def coins(self):
         return self.config["trading"]["coins"]
 
+    @property
+    def agent(self):
+        return self.config["setup"]["agent"]
+
     def _make_agent(self, tf_sess):
-        ann = CNNEnsemble(tf_sess, len(self.coins), self.window, self.config)
-        return FpmAgent(ann, self._get_memory(), self._make_random_portfolio, self.config, self.logger)
+        self.logger.info("Using agent: {}".format(self.agent))
+        if self.agent == "FpmAgent":
+            ann = CNNEnsemble(tf_sess, len(self.coins), self.window, self.config)
+            return FpmAgent(ann, self._get_memory(), self._make_random_portfolio, self.config, self.logger)
+        elif self.agent == "RandomAgent":
+            return RandomAgent(self._make_random_portfolio)
+        else:
+            raise UnknownConfiguration("The requested agent '{}' is unknown.".format(self.agent))
 
     @abstractmethod
     def _get_memory(self):
@@ -36,3 +47,7 @@ class FpmRunner(ABC):
         if norm == 0:
             norm = np.finfo(tensor.dtype).eps
         return tensor / norm
+
+
+class UnknownConfiguration(AttributeError):
+    pass
