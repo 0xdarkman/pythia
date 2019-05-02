@@ -8,3 +8,4 @@ tflearn
 pandas
 requests
 flask
+sh

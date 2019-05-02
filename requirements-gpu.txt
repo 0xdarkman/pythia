@@ -7,3 +7,4 @@ tensorboard==1.12
 tflearn
 pandas
 requests
+sh

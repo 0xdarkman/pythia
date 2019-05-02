@@ -30,7 +30,7 @@ def password():
 def app(username, password):
     tmp = make_tmp()
     with open(os.path.join(tmp, 'static.json'), 'w') as f:
-        json.dump({'user': username, 'password': generate_password_hash(password)}, f)
+        json.dump({'user': username, 'password': generate_password_hash(password), 'main_log': "main.log"}, f)
     yield create_app({'TESTING': True, 'DATA_DIR': tmp})
     shutil.rmtree(tmp)
 

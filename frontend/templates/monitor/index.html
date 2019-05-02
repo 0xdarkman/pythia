@@ -10,6 +10,12 @@
     <h1>{% block title %}Monitor{% endblock %}</h1>
     <script>
         $(document).ready(function () {
+            updateStatus();
+            updateLogs();
+            $('#amount').change(updateLogs())
+        });
+
+        function updateStatus() {
             $.get("{{ url_for('monitor.status') }}", function (data, status) {
                 if (data.status === "error" || status !== "success") {
                     $('#service-status').text("An Error occurred!");
@@ -22,11 +28,32 @@
                     $('#service-status').text("Status: Inactive");
 
             });
-        });
+        }
+
+        function updateLogs() {
+            let amount = $('#amount').val();
+            $.get(`/monitor/agent/logs/${amount}`, function (data, status) {
+                let logs = $('#agent_logs');
+                if (status !== "success") {
+                    logs.html('<tr><td>An error occured</td></tr>');
+                    return
+                }
+
+                let rows = '';
+                $.each(data.messages, function (i, item) {
+                    rows += '<tr><td>' + item + '</td></tr>';
+                });
+                logs.html(rows)
+            });
+        }
     </script>
 {% endblock %}
 
 {% block content %}
     <h2>Pythia Service</h2>
     <p><span id="service-status"></span></p>
+    <h3>Logs</h3>
+    <label for="amount">Amount</label>
+    <input name="amount" id="amount" value="50" onchange="updateLogs()">
+    <table id="agent_logs"></table>
 {% endblock %}
