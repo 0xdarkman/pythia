@@ -3,7 +3,7 @@ from collections import deque
 import numpy as np
 import pytest
 
-from pythia.core.environment.fpm_environment import FpmEnvironment
+from pythia.core.environment.fpm_environment import FpmEnvironment, WiggledPrice
 from pythia.tests.fpm_doubles import Prices
 
 
@@ -30,6 +30,26 @@ class PricesTimeSeriesStub:
         return next(self.iter)
 
 
+class RandomStub:
+    def __init__(self):
+        self.returns = np.empty(0)
+
+    def __call__(self, *args, **kwargs):
+        return self.returns
+
+
+class RandomSpy(RandomStub):
+    def __init__(self):
+        super().__init__()
+        self.received_args = None
+        self.received_kwargs = None
+
+    def __call__(self, *args, **kwargs):
+        self.received_args = args
+        self.received_kwargs = kwargs
+        return super().__call__(*args, **kwargs)
+
+
 @pytest.fixture
 def series():
     return PricesTimeSeriesStub()
@@ -37,7 +57,7 @@ def series():
 
 @pytest.fixture
 def config():
-    return {"trading": {"cash_amount": 100, "commission": 0, "coins": ["SYM1"]}}
+    return {"trading": {"cash_amount": 100, "commission": 0, "coins": ["SYM1"]}, "training": {}}
 
 
 @pytest.fixture
@@ -51,10 +71,28 @@ def env(series, config):
     return FpmEnvironment(series, config)
 
 
+@pytest.fixture
+def norm(monkeypatch):
+    spy = RandomSpy()
+    monkeypatch.setattr('numpy.random.normal', spy)
+    return spy
+
+
+@pytest.fixture
+def power(monkeypatch):
+    spy = RandomSpy()
+    monkeypatch.setattr('numpy.random.power', spy)
+    return spy
+
+
 def prices(*closings):
+    return prices_full(*((0, 0, c) for c in closings))
+
+
+def prices_full(*syms):
     entries = dict()
-    for i, c in enumerate(closings):
-        entries[f"SYM{i}"] = {"high": 0.0, "low": 0.0, "close": c}
+    for i, (h, l, c) in enumerate(syms):
+        entries[f"SYM{i}"] = {"high": h, "low": l, "close": c}
     return Prices(entries).to_array()
 
 
@@ -214,3 +252,32 @@ def test_reward_handles_commission_correctly_with_multiple_assets(config, series
     env = FpmEnvironment(series, config)
     prev_env_with_prices(env, series, prices(0.5, 0.5), prices(2.0, 2.0), prices(0.1, 0.1))
     assert get_reward(env.step(action([0.0, 1.0, 0.0]))) == starting_cash * 3.6
+
+
+@pytest.mark.parametrize('last,next,shift,pow', (
+        (np.array([1, 0.5, 0.5]), np.array([[1, 1, 1], [2, 3, 1], [2, 3, 1]]), 0.9, 2),
+        (np.array([1, 2, 3]), np.array([[1, 1, 1], [2.5, 2.9, 1.4], [3, 4, 2]]), 0.1, 1.5),
+))
+def test_wiggle_price_uses_power_distribution_to_interpolate_price(norm, power, last, next, shift, pow):
+    power.returns = shift
+    expected_interpolated = last * shift + next[:0] * (1 - shift)
+    norm.returns = expected_interpolated
+
+    action_price = WiggledPrice(pow)
+    assert (action_price(last, next) == expected_interpolated).all()
+    assert power.received_args[0] == pow
+
+
+def test_wiggle_prices_does_not_modify_last_and_next_prices():
+    last, next = (np.array([1, 0.5, 0.5]), np.array([[1, 1, 1], [2, 3, 1], [2, 3, 1]]))
+    WiggledPrice(2)(last, next)
+    assert (last == np.array([1, 0.5, 0.5])).all()
+    assert (next == np.array([[1, 1, 1], [2, 3, 1], [2, 3, 1]])).all()
+
+
+def test_wiggle_prices_uses_normal_distributen_to_simulated_spread_based_on_min_max_range(norm, power):
+    power.returns = 1
+    last, next = (np.array([1, 0.5, 0.5]), np.array([[1, 1, 1], [2, 3, 1], [2, 3, 1]]))
+    WiggledPrice(2)(last, next)
+    assert (norm.received_args[0] == last).all()
+    assert (norm.received_args[1] == (next[:, 1] - next[:, 2]) / 4).all()

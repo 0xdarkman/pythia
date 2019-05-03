@@ -1,4 +1,4 @@
-class RandomAgent:
+class RuleAgent:
     def __init__(self, generator):
         self._generator = generator
 

@@ -63,7 +63,9 @@ class FpmBackTest(FpmRunner):
                 agent.restore(output_directory)
 
             sess.run(tf.global_variables_initializer())
-            self._run_training(agent, output_directory)
+            r = self._run_training(agent, output_directory)
+            if self.config.get("testing") is None:
+                return r
             return self._run_testing(agent)
 
     def _get_memory(self):
@@ -91,6 +93,7 @@ class FpmBackTest(FpmRunner):
                 np.save(os.path.join(output_directory, "assets.gz"))
 
         self.logger.info("Finished training with final reward of {}".format(reward))
+        return reward
 
     def _make_session(self, series_cfg, agent):
         series = self._load_time_series(series_cfg)

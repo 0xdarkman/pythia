@@ -40,7 +40,8 @@
       0
     ],
     "fixed_seed": 4045085808,
-    "restore_path": "/home/bernhard/repos/pythia/data/models/fpm"
+    "restore_path": "/home/bernhard/repos/pythia/data/models/fpm",
+    "agent": {"type": "FpmAgent" }
   },
   "training": {
     "learning_rate": 0.00028,
